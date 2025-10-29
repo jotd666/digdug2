@@ -1849,7 +1849,7 @@ clear_text_85a0:
 9532: CE 96 1D       LDU    #$961D
 9535: A6 1A          LDA    -$6,X
 9537: 48             ASLA
-9538: AD D6          JSR    [A,U]
+9538: AD D6          JSR    [A,U]   ; [indirect jump]
 953A: 30 88 20       LEAX   $20,X
 953D: 8C 20 70       CMPX   #$2070
 9540: 26 F3          BNE    $9535
@@ -2985,7 +2985,7 @@ A0C3: 27 DF          BEQ    $A0A4
 A0C5: 8E 25 10       LDX    #$2510
 A0C8: CE A0 F1       LDU    #$A0F1
 A0CB: 48             ASLA
-A0CC: AD D6          JSR    [A,U]
+A0CC: AD D6          JSR    [A,U]	; [indirect_jump]
 A0CE: 20 D4          BRA    $A0A4
 A0D0: B6 25 02       LDA    $2502
 A0D3: 27 06          BEQ    $A0DB
@@ -3186,7 +3186,7 @@ A278: 8E 24 D0       LDX    #$24D0
 A27B: CE A2 E9       LDU    #$A2E9
 A27E: A6 1A          LDA    -$6,X
 A280: 48             ASLA
-A281: AD D6          JSR    [A,U]
+A281: AD D6          JSR    [A,U]	; [indirect_jump]
 A283: A6 1A          LDA    -$6,X
 A285: 2B 0F          BMI    $A296
 A287: BD 81 50       JSR    $8150
@@ -4192,13 +4192,13 @@ ABCB: 30 88 20       LEAX   $20,X
 ABCE: 8C 26 70       CMPX   #$2670
 ABD1: 26 E5          BNE    $ABB8
 ABD3: 8E 25 30       LDX    #$2530
-ABD6: CE AC 66       LDU    #$AC66
+ABD6: CE AC 66       LDU    #jump_table_ac66
 ABD9: A6 10          LDA    -$10,X
 ABDB: 27 5C          BEQ    $AC39
 ABDD: A6 1A          LDA    -$6,X
 ABDF: 27 58          BEQ    $AC39
 ABE1: 48             ASLA
-ABE2: AD D6          JSR    [A,U]
+ABE2: AD D6          JSR    [A,U]	; [indirect_jump]
 ABE4: B6 10 D0       LDA    $10D0
 ABE7: 26 50          BNE    $AC39
 ABE9: A6 1A          LDA    -$6,X
