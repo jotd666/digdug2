@@ -1,5 +1,80 @@
+;	PORT_START("P1")    /* 56XX #0 pins 22-29 */
+;	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_4WAY
+;	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_4WAY
+;	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_4WAY
+;	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_4WAY
+;	PORT_START("P2")    /* 56XX #0 pins 22-29 */
+;	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_4WAY PORT_COCKTAIL
+;	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_4WAY PORT_COCKTAIL
+;	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_4WAY PORT_COCKTAIL
+;	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_4WAY PORT_COCKTAIL
+;	PORT_START("BUTTONS")   /* 56XX #0 pins 30-33 and 38-41 */
+;	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 )
+;	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_COCKTAIL
+;	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START1 )
+;	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START2 )
+;	PORT_START("COINS") /* 56XX #0 pins 30-33 and 38-41 */
+;	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
+;	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
+;	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNUSED )
+;	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_SERVICE1 )
+;	PORT_START("DSW0")  // 56XX #1 pins 30-33
+;	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON2 )
+;	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_COCKTAIL
+;	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Cabinet ) )
+;	PORT_DIPSETTING(    0x04, DEF_STR( Upright ) )
+;	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
+;	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_SERVICE )    // service mode again
+;
+;	PORT_START("DSW1")  // 56XX #1 pins 22-29
+;	PORT_SERVICE_DIPLOC(  0x01, IP_ACTIVE_LOW, "SW1:1" )
+;	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Lives ) )        PORT_DIPLOCATION("SW1:2")
+;	PORT_DIPSETTING(    0x02, "3" )
+;	PORT_DIPSETTING(    0x00, "5" )
+;	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Coinage ) )      PORT_DIPLOCATION("SW1:3,4")
+;	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_1C ) )
+;	PORT_DIPSETTING(    0x08, DEF_STR( 2C_1C ) )
+;	PORT_DIPSETTING(    0x04, DEF_STR( 1C_2C ) )
+;	PORT_DIPSETTING(    0x00, DEF_STR( 3C_1C ) )
+;	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Bonus_Life ) )   PORT_DIPLOCATION("SW1:5,6")
+;	PORT_DIPSETTING(    0x30, "30k 80k and ..." )
+;	PORT_DIPSETTING(    0x20, "30k 100k and ..." )
+;	PORT_DIPSETTING(    0x10, "30k 120k and ..." )
+;	PORT_DIPSETTING(    0x00, "30k 150k and..." )
+;	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Level_Select ) ) PORT_DIPLOCATION("SW1:7")
+;	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+;	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+;	PORT_DIPNAME( 0x80, 0x80, "Freeze" )                PORT_DIPLOCATION("SW1:8")
+;	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+;	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+;
+;	PORT_START("DSW2")  // 56XX #1 pins 38-41 multiplexed
+;	PORT_DIPUNUSED_DIPLOC( 0x01, 0x01, "SW2:1" )
+;	PORT_DIPUNUSED_DIPLOC( 0x02, 0x02, "SW2:2" )
+;	PORT_DIPUNUSED_DIPLOC( 0x04, 0x04, "SW2:3" )
+;	PORT_DIPUNUSED_DIPLOC( 0x08, 0x08, "SW2:4" )
+;	PORT_DIPUNUSED_DIPLOC( 0x10, 0x10, "SW2:5" )
+;	PORT_DIPUNUSED_DIPLOC( 0x20, 0x20, "SW2:6" )
+;	PORT_DIPUNUSED_DIPLOC( 0x40, 0x40, "SW2:7" )
+;	PORT_DIPUNUSED_DIPLOC( 0x80, 0x80, "SW2:8" )
+
+;	map(0x0000, 0x0fff).ram().w(FUNC(mappy_state::mappy_videoram_w)).share("videoram");
+;	map(0x1000, 0x27ff).ram().share("spriteram");   // work RAM with embedded sprite RAM
+;	map(0x3800, 0x3fff).w(FUNC(mappy_state::mappy_scroll_w));   // scroll
+;	map(0x4000, 0x43ff).rw(m_namco_15xx, FUNC(namco_15xx_device::sharedram_r), FUNC(namco_15xx_device::sharedram_w));   // shared RAM with the sound CPU
+;	map(0x4800, 0x480f).rw("namcoio_1", FUNC(namcoio_device::read), FUNC(namcoio_device::write));   // custom I/O chips interface
+;	map(0x4810, 0x481f).rw("namcoio_2", FUNC(namcoio_device::read), FUNC(namcoio_device::write));   // custom I/O chips interface
+;	map(0x5000, 0x500f).w("mainlatch", FUNC(ls259_device::write_a0));   // various control bits
+;	map(0x8000, 0x8000).w("watchdog", FUNC(watchdog_timer_device::reset_w));
+;	map(0x8000, 0xffff).rom();  // only a000-ffff in Mappy
+
+
+sync_1000 = $1000
+task_stack_array_1002 = $1002
+
+irq_8000:
 8000: B7 50 02       STA    $5002
-8003: B6 80 00       LDA    $8000
+8003: B6 80 00       LDA    $8000			; WTF???
 8006: B6 10 06       LDA    $1006
 8009: B4 10 05       ANDA   $1005
 800C: B7 10 07       STA    $1007
@@ -35,18 +110,19 @@
 805B: 27 03          BEQ    $8060
 805D: BD 8E 81       JSR    $8E81
 8060: 7C 10 01       INC    $1001
-8063: 7C 10 00       INC    $1000
+8063: 7C 10 00       INC    sync_1000
 8066: B6 10 50       LDA    $1050
 8069: 26 02          BNE    $806D
 806B: 86 3C          LDA    #$3C
 806D: 4A             DECA
 806E: B7 10 50       STA    $1050
 8071: 3B             RTI
-8072: 10 CE 19 00    LDS    #$1900
+
+8072: 10 CE 19 00    LDS    #$1900		; stack top
 8076: 86 10          LDA    #$10
 8078: 1F 8B          TFR    A,DP
 807A: CE 00 00       LDU    #$0000
-807D: 8E 10 00       LDX    #$1000
+807D: 8E 10 00       LDX    #sync_1000
 8080: B6 80 00       LDA    $8000
 8083: EF 81          STU    ,X++
 8085: 8C 28 00       CMPX   #$2800
@@ -71,9 +147,9 @@
 80B9: FD 19 0E       STD    $190E
 80BC: 1C EF          ANDCC  #$EF
 80BE: B7 50 03       STA    $5003
-80C1: B6 10 00       LDA    $1000
+80C1: B6 10 00       LDA    sync_1000
 80C4: 27 FB          BEQ    $80C1
-80C6: 7F 10 00       CLR    $1000
+80C6: 7F 10 00       CLR    sync_1000
 80C9: B6 48 14       LDA    $4814
 80CC: 84 01          ANDA   #$01
 80CE: 10 26 64 E8    LBNE   $E5BA
@@ -108,7 +184,7 @@
 8116: B7 10 DE       STA    $10DE
 8119: 26 0C          BNE    $8127
 811B: 8E 18 00       LDX    #$1800
-811E: 8D 6A          BSR    $818A
+811E: 8D 6A          BSR    task_switch_818A
 8120: 30 02          LEAX   $2,X
 8122: 8C 18 30       CMPX   #$1830
 8125: 26 F7          BNE    $811E
@@ -116,22 +192,24 @@
 812A: 27 03          BEQ    $812F
 812C: BD 8E AD       JSR    $8EAD
 812F: 8E 1F 10       LDX    #$1F10
-8132: 8D 56          BSR    $818A
+8132: 8D 56          BSR    task_switch_818A
 8134: 8D 68          BSR    $819E
 8136: 30 88 20       LEAX   $20,X
 8139: 8C 1F 90       CMPX   #$1F90
 813C: 26 F4          BNE    $8132
 813E: 8E 20 10       LDX    #$2010
-8141: 8D 47          BSR    $818A
+8141: 8D 47          BSR    task_switch_818A
 8143: 8D 59          BSR    $819E
 8145: 30 88 20       LEAX   $20,X
 8148: 8C 27 90       CMPX   #$2790
 814B: 26 F4          BNE    $8141
 814D: 7E 80 BE       JMP    $80BE
-8150: BE 10 02       LDX    $1002
+save_reset_stack_and_jump_8150:
+8150: BE 10 02       LDX    task_stack_array_1002
 8153: 10 EF 84       STS    ,X
-8156: 10 CE 18 FE    LDS    #$18FE
+8156: 10 CE 18 FE    LDS    #$18FE		; pop all addresses except the first one
 815A: 39             RTS
+
 815B: CC 10 10       LDD    #$1010
 815E: 6F 80          CLR    ,X+
 8160: 5A             DECB
@@ -155,11 +233,12 @@
 8185: EC C1          LDD    ,U++
 8187: EF 84          STU    ,X
 8189: 39             RTS
-818A: BF 10 02       STX    $1002
+task_switch_818A:
+818A: BF 10 02       STX    task_stack_array_1002
 818D: 10 EE 84       LDS    ,X
 8190: 39             RTS
 8191: CC 81 99       LDD    #$8199
-8194: BE 10 02       LDX    $1002
+8194: BE 10 02       LDX    task_stack_array_1002
 8197: ED 94          STD    [,X]
 8199: 10 CE 18 FE    LDS    #$18FE
 819D: 39             RTS
@@ -192,7 +271,7 @@
 81D4: CB 08          ADDB   #$08
 81D6: E7 06          STB    $6,X
 81D8: 39             RTS
-81D9: BD 81 50       JSR    $8150
+81D9: BD 81 50       JSR    save_reset_stack_and_jump_8150
 81DC: BD 87 01       JSR    $8701
 81DF: 8E 48 00       LDX    #$4800
 81E2: CC 00 00       LDD    #$0000
@@ -203,21 +282,21 @@
 81EF: ED 81          STD    ,X++
 81F1: 8C 48 20       CMPX   #$4820
 81F4: 26 F9          BNE    $81EF
-81F6: BD 81 50       JSR    $8150
-81F9: BD 81 50       JSR    $8150
+81F6: BD 81 50       JSR    save_reset_stack_and_jump_8150
+81F9: BD 81 50       JSR    save_reset_stack_and_jump_8150
 81FC: B7 50 0B       STA    $500B
 81FF: B7 50 09       STA    $5009
-8202: BD 81 50       JSR    $8150
-8205: BD 81 50       JSR    $8150
+8202: BD 81 50       JSR    save_reset_stack_and_jump_8150
+8205: BD 81 50       JSR    save_reset_stack_and_jump_8150
 8208: 86 04          LDA    #$04
 820A: B7 48 18       STA    $4818
-820D: BD 81 50       JSR    $8150
-8210: BD 81 50       JSR    $8150
+820D: BD 81 50       JSR    save_reset_stack_and_jump_8150
+8210: BD 81 50       JSR    save_reset_stack_and_jump_8150
 8213: BD 85 6A       JSR    $856A
 8216: BD 8C 05       JSR    $8C05
 8219: BD 9A C4       JSR    $9AC4
-821C: BD 81 50       JSR    $8150
-821F: BD 81 50       JSR    $8150
+821C: BD 81 50       JSR    save_reset_stack_and_jump_8150
+821F: BD 81 50       JSR    save_reset_stack_and_jump_8150
 8222: CC 01 03       LDD    #$0103
 8225: B7 48 0A       STA    $480A
 8228: B7 48 0C       STA    $480C
@@ -242,7 +321,7 @@
 8257: 84 04          ANDA   #$04
 8259: B7 10 F0       STA    $10F0
 825C: BD 8F 67       JSR    $8F67
-825F: BD 81 50       JSR    $8150
+825F: BD 81 50       JSR    save_reset_stack_and_jump_8150
 8262: BD 8A B2       JSR    $8AB2
 8265: 4F             CLRA
 8266: B7 10 05       STA    $1005
@@ -266,7 +345,7 @@
 8298: CC 01 08       LDD    #$0108
 829B: B7 10 E2       STA    $10E2
 829E: F7 10 4F       STB    $104F
-82A1: BD 81 50       JSR    $8150
+82A1: BD 81 50       JSR    save_reset_stack_and_jump_8150
 82A4: FC 48 02       LDD    $4802
 82A7: 84 0F          ANDA   #$0F
 82A9: 26 4A          BNE    $82F5
@@ -280,7 +359,7 @@
 82BC: CC 00 05       LDD    #$0005
 82BF: B7 10 E2       STA    $10E2
 82C2: F7 10 4F       STB    $104F
-82C5: BD 81 50       JSR    $8150
+82C5: BD 81 50       JSR    save_reset_stack_and_jump_8150
 82C8: FC 48 02       LDD    $4802
 82CB: 84 0F          ANDA   #$0F
 82CD: 26 26          BNE    $82F5
@@ -291,7 +370,7 @@
 82D8: 7A 10 4F       DEC    $104F
 82DB: 26 E8          BNE    $82C5
 82DD: 7C 10 10       INC    $1010
-82E0: BD 81 50       JSR    $8150
+82E0: BD 81 50       JSR    save_reset_stack_and_jump_8150
 82E3: FC 48 02       LDD    $4802
 82E6: 84 0F          ANDA   #$0F
 82E8: 26 0B          BNE    $82F5
@@ -310,7 +389,7 @@
 830A: BD 85 CA       JSR    $85CA
 830D: BD 86 5B       JSR    $865B
 8310: BD 8A A0       JSR    $8AA0
-8313: BD 81 50       JSR    $8150
+8313: BD 81 50       JSR    save_reset_stack_and_jump_8150
 8316: B6 48 01       LDA    $4801
 8319: 84 0F          ANDA   #$0F
 831B: 27 F0          BEQ    $830D
@@ -330,7 +409,7 @@
 833D: B7 10 DE       STA    $10DE
 8340: 7F 48 01       CLR    $4801
 8343: 7C 48 09       INC    $4809
-8346: BD 81 50       JSR    $8150
+8346: BD 81 50       JSR    save_reset_stack_and_jump_8150
 8349: B6 10 E1       LDA    $10E1
 834C: 26 F8          BNE    $8346
 834E: 20 2F          BRA    $837F
@@ -347,7 +426,7 @@
 8369: BD 8B 3D       JSR    $8B3D
 836C: 7F 48 01       CLR    $4801
 836F: 7C 48 09       INC    $4809
-8372: BD 81 50       JSR    $8150
+8372: BD 81 50       JSR    save_reset_stack_and_jump_8150
 8375: B6 10 E9       LDA    $10E9
 8378: 26 F8          BNE    $8372
 837A: B6 10 05       LDA    $1005
@@ -361,14 +440,14 @@
 8391: 86 3C          LDA    #$3C
 8393: B7 10 4F       STA    $104F
 8396: 7C 40 40       INC    $4040
-8399: BD 81 50       JSR    $8150
+8399: BD 81 50       JSR    save_reset_stack_and_jump_8150
 839C: 7A 10 4F       DEC    $104F
 839F: 26 F8          BNE    $8399
 83A1: BD 85 38       JSR    $8538
 83A4: BD C1 2A       JSR    $C12A
-83A7: BD 81 50       JSR    $8150
+83A7: BD 81 50       JSR    save_reset_stack_and_jump_8150
 83AA: BD 88 24       JSR    $8824
-83AD: BD 81 50       JSR    $8150
+83AD: BD 81 50       JSR    save_reset_stack_and_jump_8150
 83B0: B6 10 D0       LDA    $10D0
 83B3: 26 4A          BNE    $83FF
 83B5: B6 10 D1       LDA    $10D1
@@ -382,7 +461,7 @@
 83CB: B7 40 42       STA    $4042
 83CE: FD 10 DC       STD    $10DC
 83D1: 7C 40 52       INC    $4052
-83D4: BD 81 50       JSR    $8150
+83D4: BD 81 50       JSR    save_reset_stack_and_jump_8150
 83D7: B6 40 52       LDA    $4052
 83DA: BA 10 D7       ORA    $10D7
 83DD: BA 10 D9       ORA    $10D9
@@ -402,7 +481,7 @@
 8405: B7 40 42       STA    $4042
 8408: FD 10 DC       STD    $10DC
 840B: 7F 10 E8       CLR    $10E8
-840E: BD 81 50       JSR    $8150
+840E: BD 81 50       JSR    save_reset_stack_and_jump_8150
 8411: B6 40 51       LDA    $4051
 8414: BA 40 4D       ORA    $404D
 8417: BA 10 4F       ORA    $104F
@@ -439,15 +518,15 @@
 8472: FD 10 DC       STD    $10DC
 8475: 7C 40 44       INC    $4044
 8478: 7C 10 E3       INC    $10E3
-847B: BD 81 50       JSR    $8150
+847B: BD 81 50       JSR    save_reset_stack_and_jump_8150
 847E: B6 40 44       LDA    $4044
 8481: 26 F8          BNE    $847B
 8483: 7F 10 E3       CLR    $10E3
-8486: BD 81 50       JSR    $8150
+8486: BD 81 50       JSR    save_reset_stack_and_jump_8150
 8489: BD 9B 69       JSR    $9B69
 848C: B6 10 E5       LDA    $10E5
 848F: 27 05          BEQ    $8496
-8491: BD 81 50       JSR    $8150
+8491: BD 81 50       JSR    save_reset_stack_and_jump_8150
 8494: 20 F6          BRA    $848C
 8496: B6 17 43       LDA    $1743
 8499: 26 C2          BNE    $845D
@@ -810,15 +889,8 @@ clear_text_85a0:
 887A: 7A 10 09       DEC    $1009
 887D: 26 F9          BNE    $8878
 887F: 39             RTS
-8880: FF E1 24       STU    $E124
-8883: 26 00          BNE    $8885
-8885: 01 25          NEG    $25
-8887: 27 07          BEQ    $8890
-8889: E1 08          CMPB   $8,X
-888B: 0D 08          TST    $08
-888D: 01 0D          NEG    $0D
-888F: 0D BD          TST    $BD
-8891: 81 50          CMPA   #$50
+
+8890: BD 81 50       JSR    save_reset_stack_and_jump_8150                                       
 8893: B6 10 E2       LDA    $10E2
 8896: 27 F8          BEQ    $8890
 8898: 8E 20 10       LDX    #$2010
@@ -867,7 +939,7 @@ clear_text_85a0:
 88FF: BD 85 A0       JSR    clear_text_85a0
 8902: 86 30          LDA    #$30
 8904: B7 20 14       STA    $2014
-8907: BD 81 50       JSR    $8150
+8907: BD 81 50       JSR    save_reset_stack_and_jump_8150
 890A: B6 10 E2       LDA    $10E2
 890D: 10 27 00 E3    LBEQ   $89F4
 8911: B6 10 01       LDA    $1001
@@ -883,7 +955,7 @@ clear_text_85a0:
 892A: 26 DB          BNE    $8907
 892C: 86 3C          LDA    #$3C
 892E: A7 88 24       STA    $24,X
-8931: BD 81 50       JSR    $8150
+8931: BD 81 50       JSR    save_reset_stack_and_jump_8150
 8934: B6 10 E2       LDA    $10E2
 8937: 10 27 00 B9    LBEQ   $89F4
 893B: 7A 20 14       DEC    $2014
@@ -938,12 +1010,12 @@ clear_text_85a0:
 89BF: BD 85 A0       JSR    clear_text_85a0
 89C2: 86 1F          LDA    #$1F
 89C4: B7 20 14       STA    $2014
-89C7: BD 81 50       JSR    $8150
+89C7: BD 81 50       JSR    save_reset_stack_and_jump_8150
 89CA: B6 10 E2       LDA    $10E2
 89CD: 27 25          BEQ    $89F4
 89CF: 7A 20 14       DEC    $2014
 89D2: 26 F3          BNE    $89C7
-89D4: BD 81 50       JSR    $8150
+89D4: BD 81 50       JSR    save_reset_stack_and_jump_8150
 89D7: B6 10 E2       LDA    $10E2
 89DA: 27 18          BEQ    $89F4
 89DC: B6 10 01       LDA    $1001
@@ -1249,7 +1321,7 @@ clear_text_85a0:
 ; pP01ST BONUS FOR   0000 PTSAND
 
 
-8D48: BD 81 50       JSR    $8150
+8D48: BD 81 50       JSR    save_reset_stack_and_jump_8150
 8D4B: B6 10 E6       LDA    $10E6
 8D4E: 27 F8          BEQ    $8D48
 8D50: 8E 12 F7       LDX    #$12F7
@@ -1316,7 +1388,7 @@ clear_text_85a0:
 8DE2: B7 10 5D       STA    $105D
 8DE5: 39             RTS
 
-8DFB: 81 50          CMPA   #$50
+8DFA: BD 81 50       JSR    save_reset_stack_and_jump_8150                                       
 8DFD: B6 10 5E       LDA    $105E
 8E00: 27 F8          BEQ    $8DFA
 8E02: 8E 1F 10       LDX    #$1F10
@@ -1340,7 +1412,7 @@ clear_text_85a0:
 8E2F: E7 88 2F       STB    $2F,X
 8E32: A7 0C          STA    $C,X
 8E34: A7 88 2C       STA    $2C,X
-8E37: BD 81 50       JSR    $8150
+8E37: BD 81 50       JSR    save_reset_stack_and_jump_8150
 8E3A: 8E 1F 10       LDX    #$1F10
 8E3D: A6 12          LDA    -$E,X
 8E3F: AB 0D          ADDA   $D,X
@@ -1496,7 +1568,7 @@ clear_text_85a0:
 8FA6: 94 38          ANDA   $38
 8FA8: 9C B6          CMPX   $B6
 8FAA: 9D 20          JSR    $20
-8FAC: BD 81 50       JSR    $8150
+8FAC: BD 81 50       JSR    save_reset_stack_and_jump_8150
 8FAF: B6 10 1B       LDA    $101B
 8FB2: 27 F8          BEQ    $8FAC
 8FB4: B6 10 04       LDA    $1004
@@ -1528,7 +1600,7 @@ clear_text_85a0:
 8FEC: 84 02          ANDA   #$02
 8FEE: B7 10 14       STA    $1014
 8FF1: 20 B9          BRA    $8FAC
-8FF3: BD 81 50       JSR    $8150
+8FF3: BD 81 50       JSR    save_reset_stack_and_jump_8150
 8FF6: B6 10 1B       LDA    $101B
 8FF9: 27 F8          BEQ    $8FF3
 8FFB: B6 10 04       LDA    $1004
@@ -1605,8 +1677,8 @@ clear_text_85a0:
 9096: 32 55          LEAS   -$B,U
 9098: 50             NEGB
 9099: 20 20          BRA    $90BB
-909B: 20 BD          BRA    $905A
-909D: 81 50          CMPA   #$50
+
+909C: BD 81 50       JSR    save_reset_stack_and_jump_8150
 909F: B6 10 10       LDA    $1010
 90A2: 27 F8          BEQ    $909C
 90A4: 8E 15 80       LDX    #$1580
@@ -1668,7 +1740,7 @@ clear_text_85a0:
 913D: ED 0A          STD    $A,X
 913F: 86 3D          LDA    #$3D
 9141: ED 88 2A       STD    $2A,X
-9144: BD 81 50       JSR    $8150
+9144: BD 81 50       JSR    save_reset_stack_and_jump_8150
 9147: B6 10 10       LDA    $1010
 914A: 27 52          BEQ    $919E
 914C: FC 10 D0       LDD    $10D0
@@ -1697,7 +1769,7 @@ clear_text_85a0:
 918A: 20 B8          BRA    $9144
 918C: 86 4F          LDA    #$4F
 918E: B7 10 4F       STA    $104F
-9191: BD 81 50       JSR    $8150
+9191: BD 81 50       JSR    save_reset_stack_and_jump_8150
 9194: B6 10 10       LDA    $1010
 9197: 27 05          BEQ    $919E
 9199: 7A 10 4F       DEC    $104F
@@ -1744,7 +1816,7 @@ clear_text_85a0:
 920C: BD 87 32       JSR    $8732
 920F: 7E 90 9C       JMP    $909C
 
-9438: BD 81 50       JSR    $8150
+9438: BD 81 50       JSR    save_reset_stack_and_jump_8150
 943B: B6 10 D4       LDA    $10D4
 943E: 27 F8          BEQ    $9438
 9440: 8E 00 00       LDX    #$0000
@@ -1816,7 +1888,7 @@ clear_text_85a0:
 94DE: 80 40          SUBA   #$40
 94E0: 20 10          BRA    $94F2
 94E2: 05 05          LSR    $05
-94E4: BD 81 50       JSR    $8150
+94E4: BD 81 50       JSR    save_reset_stack_and_jump_8150
 94E7: B6 10 E3       LDA    $10E3
 94EA: 27 F8          BEQ    $94E4
 94EC: 8E 20 10       LDX    #$2010
@@ -1842,14 +1914,14 @@ clear_text_85a0:
 951E: CC 02 B4       LDD    #$02B4
 9521: A7 88 48       STA    $48,X
 9524: E7 88 44       STB    $44,X
-9527: BD 81 50       JSR    $8150
+9527: BD 81 50       JSR    save_reset_stack_and_jump_8150
 952A: B6 10 E3       LDA    $10E3
 952D: 27 15          BEQ    $9544
 952F: 8E 20 10       LDX    #$2010
-9532: CE 96 1D       LDU    #$961D
+9532: CE 96 1D       LDU    #table_961D		; [jump_table]
 9535: A6 1A          LDA    -$6,X
 9537: 48             ASLA
-9538: AD D6          JSR    [A,U]   ; [indirect jump]
+9538: AD D6          JSR    [A,U]   ; [indirect_jump]
 953A: 30 88 20       LEAX   $20,X
 953D: 8C 20 70       CMPX   #$2070
 9540: 26 F3          BNE    $9535
@@ -1894,7 +1966,7 @@ clear_text_85a0:
 9598: 30 88 20       LEAX   $20,X
 959B: 8C 20 B0       CMPX   #$20B0
 959E: 26 BC          BNE    $955C
-95A0: BD 81 50       JSR    $8150
+95A0: BD 81 50       JSR    save_reset_stack_and_jump_8150
 95A3: B6 10 E3       LDA    $10E3
 95A6: 27 64          BEQ    $960C
 95A8: B6 10 01       LDA    $1001
@@ -2279,7 +2351,7 @@ clear_text_85a0:
 994E: CC D0 1E       LDD    #$D01E
 9951: D4 D8          ANDB   $D8
 9953: DC 16          LDD    $16
-9955: BD 81 50       JSR    $8150
+9955: BD 81 50       JSR    save_reset_stack_and_jump_8150
 9958: B6 10 E5       LDA    $10E5
 995B: 27 F8          BEQ    $9955
 995D: BD 9A D7       JSR    $9AD7
@@ -2309,7 +2381,7 @@ clear_text_85a0:
 99A2: 86 0B          LDA    #$0B
 99A4: C6 14          LDB    #$14
 99A6: BD 85 A0       JSR    clear_text_85a0
-99A9: BD 81 50       JSR    $8150
+99A9: BD 81 50       JSR    save_reset_stack_and_jump_8150
 99AC: B6 48 05       LDA    $4805
 99AF: 84 08          ANDA   #$08
 99B1: 10 26 01 03    LBNE   $9AB8
@@ -2381,7 +2453,7 @@ clear_text_85a0:
 9A62: F7 40 4A       STB    $404A
 9A65: A7 89 08 00    STA    $0800,X
 9A69: B7 10 1B       STA    $101B
-9A6C: BD 81 50       JSR    $8150
+9A6C: BD 81 50       JSR    save_reset_stack_and_jump_8150
 9A6F: B6 48 05       LDA    $4805
 9A72: 84 08          ANDA   #$08
 9A74: 26 42          BNE    $9AB8
@@ -2568,7 +2640,7 @@ clear_text_85a0:
 9C13: B7 40 4A       STA    $404A
 9C16: 39             RTS
 
-9CB6: BD 81 50       JSR    $8150
+9CB6: BD 81 50       JSR    save_reset_stack_and_jump_8150
 9CB9: B6 10 E1       LDA    $10E1
 9CBC: 27 F8          BEQ    $9CB6
 9CBE: BD 87 06       JSR    $8706
@@ -2577,7 +2649,7 @@ clear_text_85a0:
 9CC7: FD 17 04       STD    $1704
 9CCA: B7 10 1B       STA    $101B
 9CCD: BD 87 C5       JSR    $87C5
-9CD0: BD 81 50       JSR    $8150
+9CD0: BD 81 50       JSR    save_reset_stack_and_jump_8150
 9CD3: B6 10 14       LDA    $1014
 9CD6: 26 31          BNE    $9D09
 9CD8: B6 10 01       LDA    $1001
@@ -2613,7 +2685,7 @@ clear_text_85a0:
 9D18: B7 17 05       STA    $1705
 9D1B: 7C 17 25       INC    $1725
 9D1E: 20 96          BRA    $9CB6
-9D20: BD 81 50       JSR    $8150
+9D20: BD 81 50       JSR    save_reset_stack_and_jump_8150
 9D23: B6 10 E9       LDA    $10E9
 9D26: 27 F8          BEQ    $9D20
 9D28: B6 10 F0       LDA    $10F0
@@ -2690,7 +2762,7 @@ clear_text_85a0:
 9DE5: A6 89 F7 E0    LDA    -$0820,X
 9DE9: E6 89 F8 00    LDB    -$0800,X
 9DED: FD 07 A3       STD    $07A3
-9DF0: BD 81 50       JSR    $8150
+9DF0: BD 81 50       JSR    save_reset_stack_and_jump_8150
 9DF3: 8E 25 10       LDX    #$2510
 9DF6: B6 10 50       LDA    $1050
 9DF9: 26 07          BNE    $9E02
@@ -2744,7 +2816,7 @@ clear_text_85a0:
 9E69: BB 10 34       ADDA   $1034
 9E6C: A7 0A          STA    $A,X
 9E6E: 6F 0C          CLR    $C,X
-9E70: BD 81 50       JSR    $8150
+9E70: BD 81 50       JSR    save_reset_stack_and_jump_8150
 9E73: 8E 25 10       LDX    #$2510
 9E76: B6 10 50       LDA    $1050
 9E79: 26 D6          BNE    $9E51
@@ -2759,7 +2831,7 @@ clear_text_85a0:
 9E91: A6 89 F7 E0    LDA    -$0820,X
 9E95: E6 89 F8 00    LDB    -$0800,X
 9E99: FD 07 A3       STD    $07A3
-9E9C: BD 81 50       JSR    $8150
+9E9C: BD 81 50       JSR    save_reset_stack_and_jump_8150
 9E9F: 7A 10 4F       DEC    $104F
 9EA2: 27 13          BEQ    $9EB7
 9EA4: B6 10 01       LDA    $1001
@@ -2790,11 +2862,11 @@ clear_text_85a0:
 9EDC: 54             LSRB
 9EDD: 20 59          BRA    $9F38
 
-9F03: BD 81 50       JSR    $8150
+9F03: BD 81 50       JSR    save_reset_stack_and_jump_8150
 9F06: B6 10 DA       LDA    $10DA
 9F09: 27 F8          BEQ    $9F03
 9F0B: B7 40 48       STA    $4048
-9F0E: BD 81 50       JSR    $8150
+9F0E: BD 81 50       JSR    save_reset_stack_and_jump_8150
 9F11: B6 10 DA       LDA    $10DA
 9F14: 27 ED          BEQ    $9F03
 9F16: 7A 25 14       DEC    $2514
@@ -2810,7 +2882,7 @@ clear_text_85a0:
 9F2C: BA 10 34       ORA    $1034
 9F2F: B7 25 1A       STA    $251A
 9F32: 20 DA          BRA    $9F0E
-9F34: BD 81 50       JSR    $8150
+9F34: BD 81 50       JSR    save_reset_stack_and_jump_8150
 9F37: B6 10 DA       LDA    $10DA
 9F3A: 27 C7          BEQ    $9F03
 9F3C: 8E 25 10       LDX    #$2510
@@ -2852,7 +2924,7 @@ clear_text_85a0:
 9F8C: BD C0 00       JSR    $C000
 9F8F: BD C0 9F       JSR    $C09F
 9F92: BD C4 80       JSR    $C480
-9F95: BD 81 50       JSR    $8150
+9F95: BD 81 50       JSR    save_reset_stack_and_jump_8150
 9F98: B6 10 DA       LDA    $10DA
 9F9B: 10 27 FF 64    LBEQ   $9F03
 9F9F: 8E 25 10       LDX    #$2510
@@ -2954,22 +3026,17 @@ A072: E7 0D          STB    $D,X
 A074: 6F 08          CLR    $8,X
 A076: 7F 10 DA       CLR    $10DA
 A079: 7E 9F 03       JMP    $9F03
-A07C: 10 00 10       NEG    $10
-A07F: F0 10 00       SUBB   $1000
-A082: 08 F0          ASL    $F0
-A084: 00 10          NEG    $10
-A086: 10 F0 F0 F8    SUBB   $F0F8
-A08A: 00 BD          NEG    $BD
-A08C: 81 50          CMPA   #$50
+
+A08B: BD 81 50       JSR    save_reset_stack_and_jump_8150
 A08E: B6 25 00       LDA    $2500
 A091: 27 F8          BEQ    $A08B
 A093: BD A0 FF       JSR    $A0FF
 A096: BD 8D BB       JSR    $8DBB
-A099: BD 81 50       JSR    $8150
+A099: BD 81 50       JSR    save_reset_stack_and_jump_8150
 A09C: B6 40 40       LDA    $4040
 A09F: 26 F8          BNE    $A099
 A0A1: 7C 10 DC       INC    $10DC
-A0A4: BD 81 50       JSR    $8150
+A0A4: BD 81 50       JSR    save_reset_stack_and_jump_8150
 A0A7: B6 25 00       LDA    $2500
 A0AA: 27 3F          BEQ    $A0EB
 A0AC: B6 10 D1       LDA    $10D1
@@ -2983,7 +3050,7 @@ A0BE: 26 E4          BNE    $A0A4
 A0C0: B6 25 0A       LDA    $250A
 A0C3: 27 DF          BEQ    $A0A4
 A0C5: 8E 25 10       LDX    #$2510
-A0C8: CE A0 F1       LDU    #$A0F1
+A0C8: CE A0 F1       LDU    #table_a0f1		; [jump_table]
 A0CB: 48             ASLA
 A0CC: AD D6          JSR    [A,U]	; [indirect_jump]
 A0CE: 20 D4          BRA    $A0A4
@@ -2994,7 +3061,7 @@ A0D8: 7F 25 02       CLR    $2502
 A0DB: B6 25 01       LDA    $2501
 A0DE: 27 03          BEQ    $A0E3
 A0E0: 7F 25 01       CLR    $2501
-A0E3: BD 81 50       JSR    $8150
+A0E3: BD 81 50       JSR    save_reset_stack_and_jump_8150
 A0E6: B6 25 00       LDA    $2500
 A0E9: 26 F8          BNE    $A0E3
 A0EB: 8E 25 10       LDX    #$2510
@@ -3153,7 +3220,7 @@ A22C: 44             LSRA
 A22D: 8A 54          ORA    #$54
 A22F: A7 0A          STA    $A,X
 A231: 39             RTS
-A232: BD 81 50       JSR    $8150
+A232: BD 81 50       JSR    save_reset_stack_and_jump_8150
 A235: B6 40 40       LDA    $4040
 A238: 26 F8          BNE    $A232
 A23A: FC 10 D0       LDD    $10D0
@@ -3183,13 +3250,13 @@ A271: 8B 48          ADDA   #$48
 A273: A7 0A          STA    $A,X
 A275: 6F 88 BA       CLR    -$46,X
 A278: 8E 24 D0       LDX    #$24D0
-A27B: CE A2 E9       LDU    #$A2E9
+A27B: CE A2 E9       LDU    #table_a2e9			; [jump_table]
 A27E: A6 1A          LDA    -$6,X
 A280: 48             ASLA
 A281: AD D6          JSR    [A,U]	; [indirect_jump]
 A283: A6 1A          LDA    -$6,X
 A285: 2B 0F          BMI    $A296
-A287: BD 81 50       JSR    $8150
+A287: BD 81 50       JSR    save_reset_stack_and_jump_8150
 A28A: B6 25 02       LDA    $2502
 A28D: 27 A3          BEQ    $A232
 A28F: FC 10 D0       LDD    $10D0
@@ -3199,7 +3266,7 @@ A296: BD A5 4F       JSR    $A54F
 A299: B6 25 15       LDA    $2515
 A29C: 48             ASLA
 A29D: B7 25 1A       STA    $251A
-A2A0: BD 81 50       JSR    $8150
+A2A0: BD 81 50       JSR    save_reset_stack_and_jump_8150
 A2A3: FC 10 D0       LDD    $10D0
 A2A6: 26 8A          BNE    $A232
 A2A8: B6 25 02       LDA    $2502
@@ -3512,7 +3579,7 @@ A54F: 8E 24 D0       LDX    #$24D0
 A552: BD 87 32       JSR    $8732
 A555: 8E 24 F0       LDX    #$24F0
 A558: 7E 87 32       JMP    $8732
-A55B: BD 81 50       JSR    $8150
+A55B: BD 81 50       JSR    save_reset_stack_and_jump_8150
 A55E: B6 25 01       LDA    $2501
 A561: 27 F8          BEQ    $A55B
 A563: B7 40 47       STA    $4047
@@ -3539,7 +3606,7 @@ A58F: ED 1E          STD    -$2,X
 A591: 6F 1B          CLR    -$5,X
 A593: BD C4 80       JSR    $C480
 A596: 20 24          BRA    $A5BC
-A598: BD 81 50       JSR    $8150
+A598: BD 81 50       JSR    save_reset_stack_and_jump_8150
 A59B: B6 25 01       LDA    $2501
 A59E: 27 BB          BEQ    $A55B
 A5A0: B7 40 47       STA    $4047
@@ -3583,7 +3650,7 @@ A5F9: 26 06          BNE    $A601
 A5FB: F7 10 40       STB    $1040
 A5FE: 7C 10 D5       INC    $10D5
 A601: BD C0 78       JSR    $C078
-A604: BD 81 50       JSR    $8150
+A604: BD 81 50       JSR    save_reset_stack_and_jump_8150
 A607: B6 25 01       LDA    $2501
 A60A: 10 27 FF 4D    LBEQ   $A55B
 A60E: B6 10 14       LDA    $1014
@@ -3598,7 +3665,7 @@ A625: C1 30          CMPB   #$30
 A627: 27 A6          BEQ    $A5CF
 A629: 20 D6          BRA    $A601
 A62B: BD C0 78       JSR    $C078
-A62E: BD 81 50       JSR    $8150
+A62E: BD 81 50       JSR    save_reset_stack_and_jump_8150
 A631: B6 25 01       LDA    $2501
 A634: 10 27 FF 23    LBEQ   $A55B
 A638: B6 10 14       LDA    $1014
@@ -3643,7 +3710,7 @@ A68E: 04 0C          LSR    $0C
 A690: 04 09          LSR    $09
 A692: 04 0C          LSR    $0C
 A694: 7F 10 D5       CLR    $10D5
-A697: BD 81 50       JSR    $8150
+A697: BD 81 50       JSR    save_reset_stack_and_jump_8150
 A69A: B6 10 D5       LDA    $10D5
 A69D: 27 F8          BEQ    $A697
 A69F: B6 10 3F       LDA    $103F
@@ -3688,7 +3755,7 @@ A6EF: FD 10 43       STD    $1043
 A6F2: 86 04          LDA    #$04
 A6F4: B7 10 45       STA    $1045
 A6F7: 20 06          BRA    $A6FF
-A6F9: BD 81 50       JSR    $8150
+A6F9: BD 81 50       JSR    save_reset_stack_and_jump_8150
 A6FC: BE 10 41       LDX    $1041
 A6FF: 86 02          LDA    #$02
 A701: B7 10 09       STA    $1009
@@ -3820,14 +3887,14 @@ A823: E6 C8 3E       LDB    $3E,U
 A826: E7 89 08 00    STB    $0800,X
 A82A: 20 DE          BRA    $A80A
 
-A859: BD 81 50       JSR    $8150
+A859: BD 81 50       JSR    save_reset_stack_and_jump_8150
 A85C: B6 40 40       LDA    $4040
 A85F: 26 F8          BNE    $A859
 A861: B6 10 D6       LDA    $10D6
 A864: 27 F3          BEQ    $A859
 A866: 86 3C          LDA    #$3C
 A868: B7 10 50       STA    $1050
-A86B: BD 81 50       JSR    $8150
+A86B: BD 81 50       JSR    save_reset_stack_and_jump_8150
 A86E: B6 10 D6       LDA    $10D6
 A871: 27 E6          BEQ    $A859
 A873: B6 10 50       LDA    $1050
@@ -4021,28 +4088,8 @@ AA3C: BD C0 BB       JSR    $C0BB
 AA3F: 6F 0C          CLR    $C,X
 AA41: BE 10 36       LDX    $1036
 AA44: 39             RTS
-AA45: 8C 0E 8C       CMPX   #$0E8C
-AA48: 0C A4          INC    $A4
-AA4A: 0E 98          JMP    $98
-AA4C: 0E 98          JMP    $98
-AA4E: 0C A4          INC    $A4
-AA50: 0C B0          INC    $B0
-AA52: 0E B0          JMP    $B0
-AA54: 0C 80          INC    $80
-AA56: 0E 80          JMP    $80
-AA58: 0C 01          INC    $01
-AA5A: 01 C0          NEG    $C0
-AA5C: 0A C0          DEC    $C0
-AA5E: 08 01          ASL    $01
-AA60: 01 C4          NEG    $C4
-AA62: 0A C4          DEC    $C4
-AA64: 08 01          ASL    $01
-AA66: 01 BC          NEG    $BC
-AA68: 0A BC          DEC    $BC
-AA6A: 08 BC          ASL    $BC
-AA6C: 0A BC          DEC    $BC
-AA6E: 08 BD          ASL    $BD
-AA70: 81 50          CMPA   #$50
+
+AA6F: BD 81 50       JSR    save_reset_stack_and_jump_8150
 AA72: B6 10 D9       LDA    $10D9
 AA75: 27 F8          BEQ    $AA6F
 AA77: 8E 20 10       LDX    #$2010
@@ -4075,10 +4122,10 @@ AAB3: 26 C8          BNE    $AA7D
 AAB5: B6 10 09       LDA    $1009
 AAB8: B7 10 D9       STA    $10D9
 AABB: 20 B2          BRA    $AA6F
-AABD: BD 81 50       JSR    $8150
+AABD: BD 81 50       JSR    save_reset_stack_and_jump_8150
 AAC0: B6 10 D2       LDA    $10D2
 AAC3: 27 F8          BEQ    $AABD
-AAC5: BD 81 50       JSR    $8150
+AAC5: BD 81 50       JSR    save_reset_stack_and_jump_8150
 AAC8: B6 10 D2       LDA    $10D2
 AACB: 27 F0          BEQ    $AABD
 AACD: FC 10 D0       LDD    $10D0
@@ -4119,7 +4166,7 @@ AB13: 3D             MUL
 AB14: C3 00 20       ADDD   #$0020
 AB17: FD 10 4D       STD    $104D
 AB1A: 20 12          BRA    $AB2E
-AB1C: BD 81 50       JSR    $8150
+AB1C: BD 81 50       JSR    save_reset_stack_and_jump_8150
 AB1F: B6 10 D2       LDA    $10D2
 AB22: 27 99          BEQ    $AABD
 AB24: FC 10 D0       LDD    $10D0
@@ -4157,18 +4204,18 @@ AB6E: 8C 26 70       CMPX   #$2670
 AB71: 26 EC          BNE    $AB5F
 AB73: B6 10 49       LDA    $1049
 AB76: 10 26 FF 4B    LBNE   $AAC5
-AB7A: BD 81 50       JSR    $8150
+AB7A: BD 81 50       JSR    save_reset_stack_and_jump_8150
 AB7D: B6 10 D2       LDA    $10D2
 AB80: 26 F8          BNE    $AB7A
 AB82: 7E AA BD       JMP    $AABD
-AB85: BD 81 50       JSR    $8150
+AB85: BD 81 50       JSR    save_reset_stack_and_jump_8150
 AB88: B6 10 D2       LDA    $10D2
 AB8B: 27 F8          BEQ    $AB85
 AB8D: BD AC 90       JSR    $AC90
-AB90: BD 81 50       JSR    $8150
+AB90: BD 81 50       JSR    save_reset_stack_and_jump_8150
 AB93: B6 40 40       LDA    $4040
 AB96: 26 F8          BNE    $AB90
-AB98: BD 81 50       JSR    $8150
+AB98: BD 81 50       JSR    save_reset_stack_and_jump_8150
 AB9B: B6 10 D2       LDA    $10D2
 AB9E: 10 27 00 AD    LBEQ   $AC4F
 ABA2: B6 10 D0       LDA    $10D0
@@ -4192,7 +4239,7 @@ ABCB: 30 88 20       LEAX   $20,X
 ABCE: 8C 26 70       CMPX   #$2670
 ABD1: 26 E5          BNE    $ABB8
 ABD3: 8E 25 30       LDX    #$2530
-ABD6: CE AC 66       LDU    #jump_table_ac66
+ABD6: CE AC 66       LDU    #table_ac66				; [jump_table]
 ABD9: A6 10          LDA    -$10,X
 ABDB: 27 5C          BEQ    $AC39
 ABDD: A6 1A          LDA    -$6,X
@@ -4238,7 +4285,7 @@ AC3C: 8C 26 70       CMPX   #$2670
 AC3F: 26 95          BNE    $ABD6
 AC41: 7E AB 98       JMP    $AB98
 AC44: 7F 10 DF       CLR    $10DF
-AC47: BD 81 50       JSR    $8150
+AC47: BD 81 50       JSR    save_reset_stack_and_jump_8150
 AC4A: B6 10 D2       LDA    $10D2
 AC4D: 26 F8          BNE    $AC47
 AC4F: 8E 25 30       LDX    #$2530
@@ -5342,10 +5389,10 @@ B690: 7E C0 BB       JMP    $C0BB
 
 
 B6DF: 7F 1F 60       CLR    $1F60
-B6E2: BD 81 50       JSR    $8150
+B6E2: BD 81 50       JSR    save_reset_stack_and_jump_8150
 B6E5: B6 1F 60       LDA    $1F60
 B6E8: 27 F8          BEQ    $B6E2
-B6EA: BD 81 50       JSR    $8150
+B6EA: BD 81 50       JSR    save_reset_stack_and_jump_8150
 B6ED: FC 10 D0       LDD    $10D0
 B6F0: 26 ED          BNE    $B6DF
 B6F2: B6 1F 60       LDA    $1F60
@@ -5410,7 +5457,7 @@ B76F: A7 0A          STA    $A,X
 B771: 6C 0B          INC    $B,X
 B773: 6F 0C          CLR    $C,X
 B775: BD C0 BB       JSR    $C0BB
-B778: BD 81 50       JSR    $8150
+B778: BD 81 50       JSR    save_reset_stack_and_jump_8150
 B77B: B6 1F 60       LDA    $1F60
 B77E: 27 7C          BEQ    $B7FC
 B780: FC 10 D0       LDD    $10D0
@@ -5447,7 +5494,7 @@ B7C6: E7 04          STB    $4,X
 B7C8: F7 40 4C       STB    $404C
 B7CB: BD C0 BB       JSR    $C0BB
 B7CE: 6F 0C          CLR    $C,X
-B7D0: BD 81 50       JSR    $8150
+B7D0: BD 81 50       JSR    save_reset_stack_and_jump_8150
 B7D3: B6 1F 60       LDA    $1F60
 B7D6: 27 24          BEQ    $B7FC
 B7D8: FC 10 D0       LDD    $10D0
@@ -5457,7 +5504,7 @@ B7E0: 6A 04          DEC    $4,X
 B7E2: 26 E7          BNE    $B7CB
 B7E4: BD 87 32       JSR    $8732
 B7E7: 7E B6 E2       JMP    $B6E2
-B7EA: BD 81 50       JSR    $8150
+B7EA: BD 81 50       JSR    save_reset_stack_and_jump_8150
 B7ED: 8E 1F 70       LDX    #$1F70
 B7F0: B6 1F 60       LDA    $1F60
 B7F3: 27 0A          BEQ    $B7FF
@@ -6818,7 +6865,7 @@ CE47: 39             RTS
 
 
 
-
+reset_e5ba:
 E5BA: 7F 38 00       CLR    $3800
 E5BD: B6 80 00       LDA    $8000
 E5C0: 1C FF          ANDCC  #$FF
@@ -6880,7 +6927,7 @@ E63D: 7F 80 00       CLR    $8000
 E640: 11 83 07 FF    CMPU   #$07FF
 E644: 26 F1          BNE    $E637
 E646: B7 02 C6       STA    $02C6
-E649: 8E 10 00       LDX    #$1000
+E649: 8E 10 00       LDX    #sync_1000
 E64C: CE 00 00       LDU    #$0000
 E64F: EF 81          STU    ,X++
 E651: 7F 80 00       CLR    $8000
@@ -6940,19 +6987,19 @@ E6CE: 86 01          LDA    #$01
 E6D0: B7 02 86       STA    $0286
 E6D3: 1C EF          ANDCC  #$EF
 E6D5: 7F 50 03       CLR    $5003
-E6D8: 7F 10 00       CLR    $1000
-E6DB: B6 10 00       LDA    $1000
+E6D8: 7F 10 00       CLR    sync_1000
+E6DB: B6 10 00       LDA    sync_1000
 E6DE: 27 FB          BEQ    $E6DB
 E6E0: B6 80 00       LDA    $8000
 E6E3: 7F 50 03       CLR    $5003
-E6E6: 7F 10 00       CLR    $1000
+E6E6: 7F 10 00       CLR    sync_1000
 E6E9: BD EA 17       JSR    $EA17
 E6EC: BD EB B9       JSR    $EBB9
-E6EF: B6 10 00       LDA    $1000
+E6EF: B6 10 00       LDA    sync_1000
 E6F2: 27 FB          BEQ    $E6EF
 E6F4: B6 80 00       LDA    $8000
 E6F7: 7F 50 03       CLR    $5003
-E6FA: 7F 10 00       CLR    $1000
+E6FA: 7F 10 00       CLR    sync_1000
 E6FD: BD EA 17       JSR    $EA17
 E700: BD EB B9       JSR    $EBB9
 E703: 8E 48 00       LDX    #$4800
@@ -6962,34 +7009,34 @@ E70B: 8C 48 20       CMPX   #$4820
 E70E: 26 F9          BNE    $E709
 E710: B7 50 09       STA    $5009
 E713: B7 50 0B       STA    $500B
-E716: B6 10 00       LDA    $1000
+E716: B6 10 00       LDA    sync_1000
 E719: 27 FB          BEQ    $E716
 E71B: B6 80 00       LDA    $8000
 E71E: 7F 50 03       CLR    $5003
-E721: 7F 10 00       CLR    $1000
+E721: 7F 10 00       CLR    sync_1000
 E724: BD EA 17       JSR    $EA17
 E727: BD EB B9       JSR    $EBB9
-E72A: B6 10 00       LDA    $1000
+E72A: B6 10 00       LDA    sync_1000
 E72D: 27 FB          BEQ    $E72A
 E72F: B6 80 00       LDA    $8000
 E732: 7F 50 03       CLR    $5003
-E735: 7F 10 00       CLR    $1000
+E735: 7F 10 00       CLR    sync_1000
 E738: BD EA 17       JSR    $EA17
 E73B: BD EB B9       JSR    $EBB9
 E73E: 86 04          LDA    #$04
 E740: B7 48 18       STA    $4818
-E743: B6 10 00       LDA    $1000
+E743: B6 10 00       LDA    sync_1000
 E746: 27 FB          BEQ    $E743
 E748: B6 80 00       LDA    $8000
 E74B: 7F 50 03       CLR    $5003
-E74E: 7F 10 00       CLR    $1000
+E74E: 7F 10 00       CLR    sync_1000
 E751: BD EA 17       JSR    $EA17
 E754: BD EB B9       JSR    $EBB9
-E757: B6 10 00       LDA    $1000
+E757: B6 10 00       LDA    sync_1000
 E75A: 27 FB          BEQ    $E757
 E75C: B6 80 00       LDA    $8000
 E75F: 7F 50 03       CLR    $5003
-E762: 7F 10 00       CLR    $1000
+E762: 7F 10 00       CLR    sync_1000
 E765: BD EA 17       JSR    $EA17
 E768: BD EB B9       JSR    $EBB9
 E76B: 8E 48 10       LDX    #$4810
@@ -6999,18 +7046,18 @@ E773: E6 C0          LDB    ,U+
 E775: E7 82          STB    ,-X
 E777: 4A             DECA
 E778: 26 F9          BNE    $E773
-E77A: B6 10 00       LDA    $1000
+E77A: B6 10 00       LDA    sync_1000
 E77D: 27 FB          BEQ    $E77A
 E77F: B6 80 00       LDA    $8000
 E782: 7F 50 03       CLR    $5003
-E785: 7F 10 00       CLR    $1000
+E785: 7F 10 00       CLR    sync_1000
 E788: BD EA 17       JSR    $EA17
 E78B: BD EB B9       JSR    $EBB9
-E78E: B6 10 00       LDA    $1000
+E78E: B6 10 00       LDA    sync_1000
 E791: 27 FB          BEQ    $E78E
 E793: B6 80 00       LDA    $8000
 E796: 7F 50 03       CLR    $5003
-E799: 7F 10 00       CLR    $1000
+E799: 7F 10 00       CLR    sync_1000
 E79C: BD EA 17       JSR    $EA17
 E79F: BD EB B9       JSR    $EBB9
 E7A2: B6 03 06       LDA    $0306
@@ -7083,11 +7130,11 @@ E854: 8E 03 18       LDX    #$0318
 E857: CE EB 93       LDU    #$EB93
 E85A: 86 0C          LDA    #$0C
 E85C: BD 85 90       JSR    write_text_8590
-E85F: B6 10 00       LDA    $1000
+E85F: B6 10 00       LDA    sync_1000
 E862: 27 FB          BEQ    $E85F
 E864: B6 80 00       LDA    $8000
 E867: 7F 50 03       CLR    $5003
-E86A: 7F 10 00       CLR    $1000
+E86A: 7F 10 00       CLR    sync_1000
 E86D: BD EA 17       JSR    $EA17
 E870: BD EB B9       JSR    $EBB9
 E873: B6 10 1E       LDA    $101E
@@ -7130,11 +7177,11 @@ E8C4: CB 37          ADDB   #$37
 E8C6: F7 01 F4       STB    $01F4
 E8C9: 7E E8 5F       JMP    $E85F
 E8CC: BD EB 02       JSR    $EB02
-E8CF: B6 10 00       LDA    $1000
+E8CF: B6 10 00       LDA    sync_1000
 E8D2: 27 FB          BEQ    $E8CF
 E8D4: B6 80 00       LDA    $8000
 E8D7: 7F 50 03       CLR    $5003
-E8DA: 7F 10 00       CLR    $1000
+E8DA: 7F 10 00       CLR    sync_1000
 E8DD: BD EA 17       JSR    $EA17
 E8E0: BD EB B9       JSR    $EBB9
 E8E3: B6 10 1E       LDA    $101E
@@ -7155,11 +7202,11 @@ E906: BD 85 BD       JSR    $85BD
 E909: 20 C4          BRA    $E8CF
 E90B: BD EB 20       JSR    $EB20
 E90E: 20 BF          BRA    $E8CF
-E910: B6 10 00       LDA    $1000
+E910: B6 10 00       LDA    sync_1000
 E913: 27 FB          BEQ    $E910
 E915: B6 80 00       LDA    $8000
 E918: 7F 50 03       CLR    $5003
-E91B: 7F 10 00       CLR    $1000
+E91B: 7F 10 00       CLR    sync_1000
 E91E: BD EA 17       JSR    $EA17
 E921: BD EB B9       JSR    $EBB9
 E924: B6 10 1E       LDA    $101E
@@ -7194,11 +7241,11 @@ E96F: CC 4F 4F       LDD    #$4F4F
 E972: ED 81          STD    ,X++
 E974: 8C 03 80       CMPX   #$0380
 E977: 26 F6          BNE    $E96F
-E979: B6 10 00       LDA    $1000
+E979: B6 10 00       LDA    sync_1000
 E97C: 27 FB          BEQ    $E979
 E97E: B6 80 00       LDA    $8000
 E981: 7F 50 03       CLR    $5003
-E984: 7F 10 00       CLR    $1000
+E984: 7F 10 00       CLR    sync_1000
 E987: BD EA 17       JSR    $EA17
 E98A: BD EB B9       JSR    $EBB9
 E98D: B6 10 08       LDA    $1008
@@ -7214,11 +7261,11 @@ E9A5: B7 10 73       STA    $1073
 E9A8: BF 10 76       STX    $1076
 E9AB: 8E 03 80       LDX    #$0380
 E9AE: BF 10 74       STX    $1074
-E9B1: B6 10 00       LDA    $1000
+E9B1: B6 10 00       LDA    sync_1000
 E9B4: 27 FB          BEQ    $E9B1
 E9B6: B6 80 00       LDA    $8000
 E9B9: 7F 50 03       CLR    $5003
-E9BC: 7F 10 00       CLR    $1000
+E9BC: 7F 10 00       CLR    sync_1000
 E9BF: BD EA 17       JSR    $EA17
 E9C2: BD EB B9       JSR    $EBB9
 E9C5: CC 01 20       LDD    #$0120
@@ -7241,11 +7288,11 @@ E9EE: 33 5F          LEAU   -$1,U
 E9F0: FF 10 74       STU    $1074
 E9F3: 11 83 00 00    CMPU   #$0000
 E9F7: 26 B8          BNE    $E9B1
-E9F9: B6 10 00       LDA    $1000
+E9F9: B6 10 00       LDA    sync_1000
 E9FC: 27 FB          BEQ    $E9F9
 E9FE: B6 80 00       LDA    $8000
 EA01: 7F 50 03       CLR    $5003
-EA04: 7F 10 00       CLR    $1000
+EA04: 7F 10 00       CLR    sync_1000
 EA07: BD EA 17       JSR    $EA17
 EA0A: BD EB B9       JSR    $EBB9
 EA0D: B6 40 4A       LDA    $404A
@@ -7418,10 +7465,59 @@ EC11: 39             RTS
 EC12: B7 10 6B       STA    $106B
 EC15: 39             RTS
 
-FFF0: FF 57 E5       
-FFF3: BA E5 BA       
-FFF6: E5 BA          
-FFF8: 80 00          
-FFFA: E5 BA          
-FFFC: E5 BA          
-FFFE: E5 BA          
+table_961d:
+	dc.w	$9639	; $961d
+	dc.w	$967f	; $961f
+	dc.w	$968c	; $9621
+	dc.w	$9911	; $9623
+	dc.w	$96e3	; $9625
+	dc.w	$9729	; $9627
+	dc.w	$9741	; $9629
+	dc.w	$976c	; $962b
+	dc.w	$9781	; $962d
+	dc.w	$9793	; $962f
+	dc.w	$97dc	; $9631
+	dc.w	$982c	; $9633
+	dc.w	$9884	; $9635
+	dc.w	$98e9	; $9637
+	dc.w	$a60d	; $9639
+table_a0f1:
+	dc.w	$2098	; $a0f1 bogus
+	dc.w	$a117	; $a0f3
+	dc.w	$a1cb	; $a0f5
+	dc.w	$a1d2	; $a0f7
+table_a2e9:
+	dc.w	$a2f7	; $a2e9
+	dc.w	$a38a	; $a2eb
+	dc.w	$a33b	; $a2ed
+	dc.w	$a38a	; $a2ef
+	dc.w	$a357	; $a2f1
+	dc.w	$a38a	; $a2f3
+	dc.w	$a4c1	; $a2f5
+	dc.w	$a688	; $a2f7
+table_ac66:
+	dc.w	$ab85	; $ac66
+	dc.w	$ad49	; $ac68
+	dc.w	$b5ed	; $ac6a
+	dc.w	$adec	; $ac6c
+	dc.w	$aed3	; $ac6e
+	dc.w	$c0bb	; $ac70
+	dc.w	$b23f	; $ac72
+	dc.w	$b27a	; $ac74
+	dc.w	$b333	; $ac76
+	dc.w	$b358	; $ac78
+	dc.w	$b381	; $ac7a
+	dc.w	$b0ac	; $ac7c
+	dc.w	$af45	; $ac7e
+	dc.w	$af9b	; $ac80
+	dc.w	$c0bb	; $ac82
+	dc.w	$afa4	; $ac84
+	dc.w	$b015	; $ac86
+	dc.w	$b069	; $ac88
+	dc.w	$ad3c	; $ac8a
+	dc.w	$b062	; $ac8c
+	dc.w	$af0b	; $ac8e
+	dc.w	$8e15	; $ac90
+	dc.w	$88cc	; $ac92
+
+        
