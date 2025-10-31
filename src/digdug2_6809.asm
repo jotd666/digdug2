@@ -184,7 +184,7 @@ irq_8000:
 8116: B7 10 DE       STA    $10DE
 8119: 26 0C          BNE    $8127
 811B: 8E 18 00       LDX    #$1800
-811E: 8D 6A          BSR    task_switch_818A
+811E: 8D 6A          BSR    task_switch_818a
 8120: 30 02          LEAX   $2,X
 8122: 8C 18 30       CMPX   #$1830
 8125: 26 F7          BNE    $811E
@@ -192,13 +192,13 @@ irq_8000:
 812A: 27 03          BEQ    $812F
 812C: BD 8E AD       JSR    $8EAD
 812F: 8E 1F 10       LDX    #$1F10
-8132: 8D 56          BSR    task_switch_818A
+8132: 8D 56          BSR    task_switch_818a
 8134: 8D 68          BSR    $819E
 8136: 30 88 20       LEAX   $20,X
 8139: 8C 1F 90       CMPX   #$1F90
 813C: 26 F4          BNE    $8132
 813E: 8E 20 10       LDX    #$2010
-8141: 8D 47          BSR    task_switch_818A
+8141: 8D 47          BSR    task_switch_818a
 8143: 8D 59          BSR    $819E
 8145: 30 88 20       LEAX   $20,X
 8148: 8C 27 90       CMPX   #$2790
@@ -233,7 +233,7 @@ save_reset_stack_and_jump_8150:
 8185: EC C1          LDD    ,U++
 8187: EF 84          STU    ,X
 8189: 39             RTS
-task_switch_818A:
+task_switch_818a:
 818A: BF 10 02       STX    task_stack_array_1002
 818D: 10 EE 84       LDS    ,X
 8190: 39             RTS
@@ -1035,6 +1035,7 @@ clear_text_85a0:
 8A00: 26 F5          BNE    $89F7
 8A02: 7E 88 90       JMP    $8890
 
+8AA0: B6 10 11       LDA    $1011                                      
 8AA2: 11 48          ASLA
 8AA4: 48             ASLA
 8AA5: 48             ASLA
@@ -1443,6 +1444,7 @@ clear_text_85a0:
 8E78: A7 84          STA    ,X
 8E7A: 7E 8D FA       JMP    $8DFA
 
+8E81: 8E 25 10       LDX    #$2510
 8E84: CE 11 00       LDU    #$1100
 8E87: A6 10          LDA    -$10,X
 8E89: 27 17          BEQ    $8EA2
@@ -1559,15 +1561,7 @@ clear_text_85a0:
 8F7D: 26 F4          BNE    $8F73
 8F7F: 39             RTS
 
-8F9A: 8D 48          BSR    $8FE4
-8F9C: 8D FA          BSR    $8F98
-8F9E: B6 E2 88       LDA    $E288
-8FA1: 90 99          SUBA   $99
-8FA3: 55             LSRB
-8FA4: 94 E4          ANDA   $E4
-8FA6: 94 38          ANDA   $38
-8FA8: 9C B6          CMPX   $B6
-8FAA: 9D 20          JSR    $20
+
 8FAC: BD 81 50       JSR    save_reset_stack_and_jump_8150
 8FAF: B6 10 1B       LDA    $101B
 8FB2: 27 F8          BEQ    $8FAC
@@ -1616,13 +1610,8 @@ clear_text_85a0:
 9014: E6 86          LDB    A,X
 9016: F7 10 13       STB    $1013
 9019: 20 D8          BRA    $8FF3
-901B: FF 00 02       STU    >$0002
-901E: FF 04 FF       STU    $04FF
-9021: FF FF 06       STU    $FF06
-9024: FF FF FF       STU    $FFFF
-9027: FF FF FF       STU    $FFFF
-902A: FF BD 81       STU    $BD81
-902D: 50             NEGB
+
+902B: BD 81 50       JSR    $8150
 902E: 8E 0F C7       LDX    #$0FC7
 9031: 86 0D          LDA    #$0D
 9033: C6 03          LDB    #$03
@@ -4299,8 +4288,8 @@ AC60: 8C 27 90       CMPX   #$2790
 AC63: 26 ED          BNE    $AC52
 AC65: 7E AB 85       JMP    $AB85
 
-AC92: 88 CC          EORA   #$CC
-AC94: 00 0A          NEG    $0A
+AC90: 8E 15 88       LDX    #$1588
+AC93: CC 00 0A       LDD    #$000A
 AC96: B7 10 69       STA    $1069
 AC99: E1 80          CMPB   ,X+
 AC9B: 23 01          BLS    $AC9E
@@ -4515,6 +4504,8 @@ AE7C: A7 1A          STA    -$6,X
 AE7E: E7 04          STB    $4,X
 AE80: 7E C0 BB       JMP    $C0BB
 
+AED3: 6A 04          DEC    $4,X
+AED5: 27 15          BEQ    $AEEC
 AED7: A6 04          LDA    $4,X
 AED9: 84 04          ANDA   #$04
 AEDB: 44             LSRA
@@ -4804,6 +4795,7 @@ B155: BD C0 00       JSR    $C000
 B158: BD C0 9A       JSR    $C09A
 B15B: 7E C0 BB       JMP    $C0BB
 
+B16F: 12             NOP
 B170: E6 05          LDB    $5,X
 B172: A6 0F          LDA    $F,X
 B174: B1 25 1F       CMPA   $251F
@@ -5515,7 +5507,14 @@ B7FC: 8E 1F 70       LDX    #$1F70
 B7FF: BD 87 32       JSR    $8732
 B802: 7E B6 E2       JMP    $B6E2
 
-C00F: 1D             SEX
+C000: E6 03          LDB    $3,X                                        
+C002: 2A 06          BPL    $C00A                                       
+C004: 8D 1C          BSR    $C022                                       
+C006: E6 03          LDB    $3,X                                        
+C008: C4 7F          ANDB   #$7F                                        
+C00A: 4F             CLRA                                               
+C00B: FD 10 6E       STD    $106E                                       
+C00E: E6 1D          LDB    -$3,X                                       
 C010: F3 10 6E       ADDD   $106E
 C013: 85 01          BITA   #$01
 C015: 26 09          BNE    $C020
@@ -5689,7 +5688,11 @@ C18D: 30 86          LEAX   A,X
 C18F: 20 F0          BRA    $C181
 C191: 39             RTS
 
-C1AB: 82 5A          SBCA   #$5A
+C1A2: 8E 16 3C       LDX    #$163C
+C1A5: B6 17 04       LDA    $1704
+C1A8: C6 3C          LDB    #$3C
+C1AA: 6F 82          CLR    ,-X
+C1AC: 5A             DECB
 C1AD: 26 FB          BNE    $C1AA
 C1AF: 4A             DECA
 C1B0: 84 0F          ANDA   #$0F
@@ -5726,6 +5729,7 @@ C1F6: 8C 16 3C       CMPX   #$163C
 C1F9: 26 DD          BNE    $C1D8
 C1FB: 39             RTS
 
+C204: 8E 15 80       LDX    #$1580
 C206: 80 CE          SUBA   #$CE
 C208: C2 50          SBCB   #$50
 C20A: B6 80 00       LDA    $8000
@@ -5991,6 +5995,7 @@ C566: 39             RTS
 C567: CC FF FF       LDD    #$FFFF
 C56A: 39             RTS
 
+C574: 8E 14 80       LDX    #$1480
 C576: 80 4F          SUBA   #$4F
 C578: E6 89 00 80    LDB    $0080,X
 C57C: 2A 07          BPL    $C585
@@ -6657,6 +6662,7 @@ CC18: 8C 15 F0       CMPX   #$15F0
 CC1B: 10 26 FE 34    LBNE   $CA53
 CC1F: 39             RTS
 
+CC6A: 8E 1F 70       LDX    #$1F70
 CC6C: 70 A6 10       NEG    $A610
 CC6F: 27 0E          BEQ    $CC7F
 CC71: CE 15 80       LDU    #$1580
@@ -6766,6 +6772,7 @@ CD64: BD A5 4F       JSR    $A54F
 CD67: 7F 25 02       CLR    $2502
 CD6A: 39             RTS
 
+CD83: E6 0F          LDB    $F,X
 CD85: 54             LSRB
 CD86: 54             LSRB
 CD87: 54             LSRB
@@ -7480,7 +7487,7 @@ table_961d:
 	dc.w	$982c	; $9633
 	dc.w	$9884	; $9635
 	dc.w	$98e9	; $9637
-	dc.w	$a60d	; $9639
+
 table_a0f1:
 	dc.w	$2098	; $a0f1 bogus
 	dc.w	$a117	; $a0f3
@@ -7518,6 +7525,6 @@ table_ac66:
 	dc.w	$b062	; $ac8c
 	dc.w	$af0b	; $ac8e
 	dc.w	$8e15	; $ac90
-	dc.w	$88cc	; $ac92
+
 
         

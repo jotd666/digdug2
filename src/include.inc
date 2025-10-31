@@ -20,6 +20,28 @@
 	.error	"\arg"     | comment out to disable errors
 	.endm
 
+
+	.ifdef	RELEASE
+	.macro	BREAKPOINT comment
+	.endm
+
+	.else
+	
+LOG_BUFFER_SIZE = 0x80000
+	* amiga specific
+	.macro	BREAKPOINT comment
+	move.l	a0,-(a7)
+	lea		comment\@(pc),a0
+	jbsr	osd_break
+	move.l	(a7)+,a0
+	jra		next\@
+comment\@:
+	.asciz	"\comment"
+	.align	2
+next\@:
+	.endm
+	.endif
+	
 	.macro	CHECK_MAX	reg,arg
 	.ifndef	RELEASE
 	cmp.b	#\arg*2,\reg
@@ -153,7 +175,10 @@ okay\@:
 	ERROR	"TODO: insert interrupt disable code here"
 	.endm
 	.macro CLR_I_FLAG
-	ERROR	"TODO: insert interrupt enable code here"
+	illegal
+	illegal
+	illegal
+	*jbsr	osd_enable_interrupts
 	.endm
 
 	.ifdef	MC68020
@@ -442,7 +467,7 @@ cpu_init:
 	rts
 
 get_address:
-	ERROR "`TODO: implement this by adding memory base to a0"
+	*ERROR "`TODO: implement this by adding memory base to a0"
 	rts
 
 | direct page pointer needs to be reloaded in case of irq

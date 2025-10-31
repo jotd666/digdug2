@@ -14,10 +14,10 @@ input_dict = {"system_3300":"read_system_inputs",
 
 }
 
-nb_cases_dict = {0x9538:15,
+nb_cases_dict = {0x9538:14,
 0xa0cc:4,
 0xa281:8,
-0xabe2:23,
+0xabe2:22
 
 }
 
