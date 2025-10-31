@@ -68,11 +68,15 @@ with open(source_dir / "conv.s") as f:
 
         line = re.sub(tablere,subt,line)
 
+        line = line.replace(".long\tl_2098",".long\t-1")  # remove bogus address
+
         address = get_line_address(line)
 
         if address in [0xe5c0,0xe951]:
             line = remove_error(line)
 
+##        elif address == 0x8153:
+##            line = "* TEMP FUCK FUCK\n"
 
         if "GET_ADDRESS" in line:
             val = line.split()[1]

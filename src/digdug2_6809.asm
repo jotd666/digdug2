@@ -1199,11 +1199,7 @@ clear_text_85a0:
 8C05: B6 8C 16       LDA    $8C16
 8C08: B7 10 0C       STA    $100C
 8C0B: 39             RTS
-8C0C: 48             ASLA
-8C0D: 49             ROLA
-8C0E: 47             ASRA
-8C0F: 48             ASLA
-8C10: 20 53          BRA    $8C65
+
 8C17: B6 17 06       LDA  $1706            
 8C1A: 2B 64          BMI    $8C80            
 8C1C: 8E 17 00       LDX    #$1700           
@@ -2843,13 +2839,7 @@ clear_text_85a0:
 9ECE: B7 10 E9       STA    $10E9
 9ED1: F7 17 25       STB    $1725
 9ED4: 7E 9D 20       JMP    $9D20
-9ED7: 53             COMB
-9ED8: 45             LSRA
-9ED9: 4C             INCA
-9EDA: 45             LSRA
-9EDB: 43             COMA
-9EDC: 54             LSRB
-9EDD: 20 59          BRA    $9F38
+
 
 9F03: BD 81 50       JSR    save_reset_stack_and_jump_8150
 9F06: B6 10 DA       LDA    $10DA
@@ -5688,6 +5678,9 @@ C18D: 30 86          LEAX   A,X
 C18F: 20 F0          BRA    $C181
 C191: 39             RTS
 
+C19A: 8E 16 FC       LDX    #$16FC
+C19D: B6 17 44       LDA    $1744
+C1A0: 20 06          BRA    $C1A8
 C1A2: 8E 16 3C       LDX    #$163C
 C1A5: B6 17 04       LDA    $1704
 C1A8: C6 3C          LDB    #$3C
@@ -6206,6 +6199,9 @@ C748: 39             RTS
 C749: B7 1F 60       STA    $1F60
 C74C: F7 1F 74       STB    $1F74
 C74F: 39             RTS
+
+C7D8: 8E 13 00       LDX    #$1300
+C7DB: 20 03          BRA    $C7E0
 C7DD: 8E 13 80       LDX    #$1380                                      
 C7E0: BF 10 36       STX    $1036                                       
 C7E3: CC 00 78       LDD    #$0078                                     
