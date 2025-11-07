@@ -13,13 +13,14 @@
 
 
 
-	.global	cpu_init
 	.global	m6809_direct_page_pointer
 
 	.macro	ERROR	arg
 	.error	"\arg"     | comment out to disable errors
 	.endm
 
+
+NATIVE_STACK_SIZE = 0x3000
 
 	.ifdef	RELEASE
 	.macro	BREAKPOINT comment
@@ -455,16 +456,6 @@ okay\@:
 	READ_BE_WORD	a0
 	GET_UNCHECKED_ADDRESS_FUNC
 	.endm
-* zero all registers but 6809 stack pointer
-cpu_init:
-	moveq	#0,d0
-	moveq	#0,d1
-	moveq	#0,d2
-	moveq	#0,d3
-	moveq	#0,d4
-	moveq	#0,d6
-	moveq	#0,d7
-	rts
 
 get_address:
 	*ERROR "`TODO: implement this by adding memory base to a0"
@@ -474,7 +465,61 @@ get_address:
 m6809_direct_page_pointer:
 	.long	0xA5A5A5A5
 
+	* those macros encode & decode 32 bit addresses into 16 bit addresses
+	* so the data can be stored in the original RAM with game pointers
+	* which allows to replicate the game task switching logic more easily
+	
+	.macro	DECODE_NATIVE_ADDRESS	reg
+	add.l	\reg,\reg
+	add.l	#irq_8000,\reg
+	.endm
+	
+	.macro	ENCODE_NATIVE_ADDRESS	reg
+	sub.l	#irq_8000,\reg
+	* the executable code address is even. "compress" them by dividing by 2
+	* so it's sure that it fits in 16 bits after subbing code start
+	lsr.l	#1,\reg
+	.ifndef	RELEASE
+	cmp.l	#0x10000,\reg
+	jcs		okay\@
+	* we cannot encode this address it doesn't fit in 16 bits
+	BREAKPOINT	"address is too large!"
+	ILLEGAL
+okay\@:
+	.endif
+	.endm
 
+set_native_stack:
+	* game switches stacks: get address where the game will return now
+	GET_REG_ADDRESS 	0,d2
+	MOVE_W_TO_REG	a0,d6
+	DECODE_NATIVE_ADDRESS	d6
+	.ifndef	RELEASE
+	cmp.w	#0x1EFF,d2
+	jcs		0f
+	BREAKPOINT	"X stack value not in range"
+	ILLEGAL
+0:
+	.endif
+	sub.w	#0x190E,d2
+	.ifndef	RELEASE
+	jpl		0f
+	add.w	#0x190E,d2
+	BREAKPOINT	"X stack value not in range"
+	ILLEGAL
+0:
+	.endif
+	* inflate d2 so 68000 code has enough stack space
+	add.w	d2,d2
+	add.w	d2,d2
+	add.w	d2,d2
+	lea		stack_top-NATIVE_STACK_SIZE,a7
+	add.w	d2,a7
+	* store real address
+	move.l	d6,(a7)
+	* and jump here
+	rts
+	
 multiply_ab:
 	and.w	#0xFF,d0
 	and.w	#0xFF,d1
@@ -503,3 +548,6 @@ multiply_ab:
 	jbsr	osd_cpu_logging_control	
 	.endm	
 	.endif
+
+
+	

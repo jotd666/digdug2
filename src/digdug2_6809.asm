@@ -70,11 +70,13 @@
 
 
 sync_1000 = $1000
-task_stack_array_1002 = $1002
+task_stack_pointer_1002 = $1002
+stack_top_1900 = $1900
+watchdog_8000 = $8000
 
 irq_8000:
 8000: B7 50 02       STA    $5002
-8003: B6 80 00       LDA    $8000			; WTF???
+8003: B6 80 00       LDA    watchdog_8000
 8006: B6 10 06       LDA    $1006
 8009: B4 10 05       ANDA   $1005
 800C: B7 10 07       STA    $1007
@@ -118,28 +120,29 @@ irq_8000:
 806E: B7 10 50       STA    $1050
 8071: 3B             RTI
 
-8072: 10 CE 19 00    LDS    #$1900		; stack top
+init_8072:
+8072: 10 CE 19 00    LDS    #stack_top_1900		; stack top
 8076: 86 10          LDA    #$10
 8078: 1F 8B          TFR    A,DP
 807A: CE 00 00       LDU    #$0000
 807D: 8E 10 00       LDX    #sync_1000
-8080: B6 80 00       LDA    $8000
+8080: B6 80 00       LDA    watchdog_8000
 8083: EF 81          STU    ,X++
 8085: 8C 28 00       CMPX   #$2800
 8088: 26 F6          BNE    $8080
 808A: CE 19 0E       LDU    #$190E
 808D: 8E 18 00       LDX    #$1800
-8090: BD 81 6B       JSR    $816B
+8090: BD 81 6B       JSR    init_stack_zone_816b
 8093: 30 02          LEAX   $2,X
 8095: 8C 18 40       CMPX   #$1840
 8098: 26 F6          BNE    $8090
 809A: 8E 1F 10       LDX    #$1F10
-809D: BD 81 5B       JSR    $815B
+809D: BD 81 5B       JSR    zero_and_init_stack_zone_815b
 80A0: 30 88 20       LEAX   $20,X
 80A3: 8C 1F 90       CMPX   #$1F90
 80A6: 26 F5          BNE    $809D
 80A8: 8E 20 10       LDX    #$2010
-80AB: BD 81 5B       JSR    $815B
+80AB: BD 81 5B       JSR    zero_and_init_stack_zone_815b
 80AE: 30 88 20       LEAX   $20,X
 80B1: 8C 27 90       CMPX   #$2790
 80B4: 26 F5          BNE    $80AB
@@ -204,44 +207,62 @@ irq_8000:
 8148: 8C 27 90       CMPX   #$2790
 814B: 26 F4          BNE    $8141
 814D: 7E 80 BE       JMP    $80BE
+
 save_reset_stack_and_jump_8150:
-8150: BE 10 02       LDX    task_stack_array_1002
+8150: BE 10 02       LDX    task_stack_pointer_1002
 8153: 10 EF 84       STS    ,X
-8156: 10 CE 18 FE    LDS    #$18FE		; pop all addresses except the first one
+unwind_stack_8156:
+8156: 10 CE 18 FE    LDS    #stack_top_1900-2		; pop all addresses except the first one
 815A: 39             RTS
 
+; < X pointer on stack buffer top
+; < U 
+zero_and_init_stack_zone_815b:
 815B: CC 10 10       LDD    #$1010
 815E: 6F 80          CLR    ,X+
 8160: 5A             DECB
-8161: 26 FB          BNE    $815E
+8161: 26 FB          BNE    $815E		; put $10 times 0 in X
 8163: 30 88 E0       LEAX   -$20,X
-8166: E7 80          STB    ,X+
+8166: E7 80          STB    ,X+			; put $10 times 0 in original X-$10
 8168: 4A             DECA
 8169: 26 FB          BNE    $8166
-816B: B6 80 00       LDA    $8000
-816E: CC 81 91       LDD    #$8191
+init_stack_zone_816b:
+816B: B6 80 00       LDA    watchdog_8000
+816E: CC 81 91       LDD    #store_to_stack_8191
 8171: EF 84          STU    ,X
 8173: 33 C8 10       LEAU   $10,U
 8176: ED 94          STD    [,X]
 8178: 39             RTS
-8179: CC 81 91       LDD    #$8191
-817C: EE 84          LDU    ,X
-817E: ED C3          STD    ,--U
-8180: EF 84          STU    ,X
-8182: 39             RTS
-8183: EE 84          LDU    ,X
-8185: EC C1          LDD    ,U++
-8187: EF 84          STU    ,X
-8189: 39             RTS
+
+; not reached commenting out
+;8179: CC 81 91       LDD    #$8191
+;817C: EE 84          LDU    ,X
+;817E: ED C3          STD    ,--U
+;8180: EF 84          STU    ,X
+;8182: 39             RTS
+;
+;; not reached
+;8183: EE 84          LDU    ,X
+;8185: EC C1          LDD    ,U++
+;8187: EF 84          STU    ,X
+;8189: 39             RTS
+
 task_switch_818a:
-818A: BF 10 02       STX    task_stack_array_1002
+818A: BF 10 02       STX    task_stack_pointer_1002
+; here we set the stack for the other task
+; values are 190E => 1EFE (xxxe)
 818D: 10 EE 84       LDS    ,X
 8190: 39             RTS
-8191: CC 81 99       LDD    #$8199
-8194: BE 10 02       LDX    task_stack_array_1002
+
+store_to_stack_8191:
+8191: CC 81 99       LDD    #reset_stack_and_jump_8199
+8194: BE 10 02       LDX    task_stack_pointer_1002
 8197: ED 94          STD    [,X]
-8199: 10 CE 18 FE    LDS    #$18FE
+
+reset_stack_and_jump_8199:
+8199: 10 CE 18 FE    LDS    #stack_top_1900-2
 819D: 39             RTS
+
 819E: A6 0C          LDA    $C,X
 81A0: 26 36          BNE    $81D8
 81A2: 6C 0C          INC    $C,X
@@ -2475,7 +2496,7 @@ clear_text_85a0:
 9AC1: 7E 99 55       JMP    $9955
 9AC4: 8E 11 B0       LDX    #$11B0
 9AC7: CE 9C 17       LDU    #$9C17
-9ACA: B6 80 00       LDA    $8000
+9ACA: B6 80 00       LDA    watchdog_8000
 9ACD: EC C1          LDD    ,U++
 9ACF: ED 81          STD    ,X++
 9AD1: 8C 12 00       CMPX   #$1200
@@ -4024,7 +4045,7 @@ A9DC: 11 83 1F F0    CMPU   #$1FF0
 A9E0: 26 F3          BNE    $A9D5
 A9E2: 86 42          LDA    #$42
 A9E4: B7 07 AF       STA    $07AF
-A9E7: B6 80 00       LDA    $8000
+A9E7: B6 80 00       LDA    watchdog_8000
 A9EA: 20 FB          BRA    $A9E7
 A9EC: BF 10 36       STX    $1036
 A9EF: 8E AA 45       LDX    #$AA45
@@ -5639,7 +5660,7 @@ C12A: BD 87 06       JSR    $8706
 C12D: 8E 15 80       LDX    #$1580
 C130: CE D3 88       LDU    #$D388
 C133: 10 8E CE 48    LDY    #$CE48
-C137: B6 80 00       LDA    $8000
+C137: B6 80 00       LDA    watchdog_8000
 C13A: A6 80          LDA    ,X+
 C13C: C6 20          LDB    #$20
 C13E: 3D             MUL
@@ -5707,7 +5728,7 @@ C1CF: 26 F1          BNE    $C1C2
 C1D1: 39             RTS
 C1D2: 8E 16 00       LDX    #$1600
 C1D5: CE D4 78       LDU    #$D478
-C1D8: B6 80 00       LDA    $8000
+C1D8: B6 80 00       LDA    watchdog_8000
 C1DB: A6 80          LDA    ,X+
 C1DD: 27 15          BEQ    $C1F4
 C1DF: BF 10 36       STX    $1036
@@ -5725,7 +5746,7 @@ C1FB: 39             RTS
 C204: 8E 15 80       LDX    #$1580
 C206: 80 CE          SUBA   #$CE
 C208: C2 50          SBCB   #$50
-C20A: B6 80 00       LDA    $8000
+C20A: B6 80 00       LDA    watchdog_8000
 C20D: A6 80          LDA    ,X+
 C20F: 81 09          CMPA   #$09
 C211: 23 04          BLS    $C217
@@ -6352,7 +6373,7 @@ C940: 86 04          LDA    #$04
 C942: 3D             MUL
 C943: C3 00 20       ADDD   #$0020
 C946: ED 1E          STD    -$2,X
-C948: B6 80 00       LDA    $8000
+C948: B6 80 00       LDA    watchdog_8000
 C94B: 39             RTS
 C94C: B7 10 C0       STA    $10C0
 C94F: 84 02          ANDA   #$02
@@ -6870,37 +6891,37 @@ CE47: 39             RTS
 
 reset_e5ba:
 E5BA: 7F 38 00       CLR    $3800
-E5BD: B6 80 00       LDA    $8000
+E5BD: B6 80 00       LDA    watchdog_8000
 E5C0: 1C FF          ANDCC  #$FF
-E5C2: B6 80 00       LDA    $8000
+E5C2: B6 80 00       LDA    watchdog_8000
 E5C5: 7F 50 02       CLR    $5002
 E5C8: 7F 50 0A       CLR    $500A
 E5CB: 7F 50 08       CLR    $5008
 E5CE: 86 08          LDA    #$08
 E5D0: 8E 00 00       LDX    #$0000
 E5D3: A7 84          STA    ,X
-E5D5: 7F 80 00       CLR    $8000
+E5D5: 7F 80 00       CLR    watchdog_8000
 E5D8: A1 80          CMPA   ,X+
 E5DA: 26 3D          BNE    $E619
 E5DC: 8C 28 00       CMPX   #$2800
 E5DF: 26 F2          BNE    $E5D3
 E5E1: 8E 40 40       LDX    #$4040
 E5E4: A7 84          STA    ,X
-E5E6: 7F 80 00       CLR    $8000
+E5E6: 7F 80 00       CLR    watchdog_8000
 E5E9: A1 80          CMPA   ,X+
 E5EB: 26 38          BNE    $E625
 E5ED: 8C 44 00       CMPX   #$4400
 E5F0: 26 F2          BNE    $E5E4
 E5F2: 8E 00 00       LDX    #$0000
 E5F5: E6 84          LDB    ,X
-E5F7: 7F 80 00       CLR    $8000
+E5F7: 7F 80 00       CLR    watchdog_8000
 E5FA: E1 80          CMPB   ,X+
 E5FC: 26 1B          BNE    $E619
 E5FE: 8C 28 00       CMPX   #$2800
 E601: 26 F2          BNE    $E5F5
 E603: 8E 40 40       LDX    #$4040
 E606: E6 84          LDB    ,X
-E608: 7F 80 00       CLR    $8000
+E608: 7F 80 00       CLR    watchdog_8000
 E60B: E1 80          CMPB   ,X+
 E60D: 26 16          BNE    $E625
 E60F: 8C 44 00       CMPX   #$4400
@@ -6926,22 +6947,22 @@ E632: CE 00 00       LDU    #$0000
 E635: C6 20          LDB    #$20
 E637: E7 C0          STB    ,U+
 E639: 6F C9 07 FF    CLR    $07FF,U
-E63D: 7F 80 00       CLR    $8000
+E63D: 7F 80 00       CLR    watchdog_8000
 E640: 11 83 07 FF    CMPU   #$07FF
 E644: 26 F1          BNE    $E637
 E646: B7 02 C6       STA    $02C6
 E649: 8E 10 00       LDX    #sync_1000
 E64C: CE 00 00       LDU    #$0000
 E64F: EF 81          STU    ,X++
-E651: 7F 80 00       CLR    $8000
+E651: 7F 80 00       CLR    watchdog_8000
 E654: 8C 28 00       CMPX   #$2800
 E657: 26 F6          BNE    $E64F
 E659: 8E 40 40       LDX    #$4040
 E65C: EF 81          STU    ,X++
-E65E: 7F 80 00       CLR    $8000
+E65E: 7F 80 00       CLR    watchdog_8000
 E661: 8C 44 00       CMPX   #$4400
 E664: 26 F6          BNE    $E65C
-E666: 10 CE 19 00    LDS    #$1900
+E666: 10 CE 19 00    LDS    #stack_top_1900
 E66A: C6 00          LDB    #$00
 E66C: 1F 9B          TFR    B,DP
 E66E: 7F 10 08       CLR    $1008
@@ -6949,10 +6970,10 @@ E671: 4D             TSTA
 E672: 26 06          BNE    $E67A
 E674: BD 87 01       JSR    $8701
 E677: 7F 02 C6       CLR    $02C6
-E67A: 8E 80 00       LDX    #$8000
+E67A: 8E 80 00       LDX    #watchdog_8000
 E67D: 4F             CLRA
 E67E: AB 80          ADDA   ,X+
-E680: 7F 80 00       CLR    $8000
+E680: 7F 80 00       CLR    watchdog_8000
 E683: 8C C0 00       CMPX   #$C000
 E686: 26 F6          BNE    $E67E
 E688: 81 73          CMPA   #$73
@@ -6960,7 +6981,7 @@ E68A: 26 16          BNE    $E6A2
 E68C: 8E C0 00       LDX    #$C000
 E68F: 4F             CLRA
 E690: AB 80          ADDA   ,X+
-E692: 7F 80 00       CLR    $8000
+E692: 7F 80 00       CLR    watchdog_8000
 E695: 8C FF FF       CMPX   #$FFFF
 E698: 26 F6          BNE    $E690
 E69A: AB 84          ADDA   ,X
@@ -6975,7 +6996,7 @@ E6AB: 86 08          LDA    #$08
 E6AD: B7 10 34       STA    $1034
 E6B0: 8E 48 00       LDX    #$4800
 E6B3: A7 84          STA    ,X
-E6B5: 7F 80 00       CLR    $8000
+E6B5: 7F 80 00       CLR    watchdog_8000
 E6B8: E6 80          LDB    ,X+
 E6BA: C4 0F          ANDB   #$0F
 E6BC: F1 10 34       CMPB   $1034
@@ -6993,14 +7014,14 @@ E6D5: 7F 50 03       CLR    $5003
 E6D8: 7F 10 00       CLR    sync_1000
 E6DB: B6 10 00       LDA    sync_1000
 E6DE: 27 FB          BEQ    $E6DB
-E6E0: B6 80 00       LDA    $8000
+E6E0: B6 80 00       LDA    watchdog_8000
 E6E3: 7F 50 03       CLR    $5003
 E6E6: 7F 10 00       CLR    sync_1000
 E6E9: BD EA 17       JSR    $EA17
 E6EC: BD EB B9       JSR    $EBB9
 E6EF: B6 10 00       LDA    sync_1000
 E6F2: 27 FB          BEQ    $E6EF
-E6F4: B6 80 00       LDA    $8000
+E6F4: B6 80 00       LDA    watchdog_8000
 E6F7: 7F 50 03       CLR    $5003
 E6FA: 7F 10 00       CLR    sync_1000
 E6FD: BD EA 17       JSR    $EA17
@@ -7014,14 +7035,14 @@ E710: B7 50 09       STA    $5009
 E713: B7 50 0B       STA    $500B
 E716: B6 10 00       LDA    sync_1000
 E719: 27 FB          BEQ    $E716
-E71B: B6 80 00       LDA    $8000
+E71B: B6 80 00       LDA    watchdog_8000
 E71E: 7F 50 03       CLR    $5003
 E721: 7F 10 00       CLR    sync_1000
 E724: BD EA 17       JSR    $EA17
 E727: BD EB B9       JSR    $EBB9
 E72A: B6 10 00       LDA    sync_1000
 E72D: 27 FB          BEQ    $E72A
-E72F: B6 80 00       LDA    $8000
+E72F: B6 80 00       LDA    watchdog_8000
 E732: 7F 50 03       CLR    $5003
 E735: 7F 10 00       CLR    sync_1000
 E738: BD EA 17       JSR    $EA17
@@ -7030,14 +7051,14 @@ E73E: 86 04          LDA    #$04
 E740: B7 48 18       STA    $4818
 E743: B6 10 00       LDA    sync_1000
 E746: 27 FB          BEQ    $E743
-E748: B6 80 00       LDA    $8000
+E748: B6 80 00       LDA    watchdog_8000
 E74B: 7F 50 03       CLR    $5003
 E74E: 7F 10 00       CLR    sync_1000
 E751: BD EA 17       JSR    $EA17
 E754: BD EB B9       JSR    $EBB9
 E757: B6 10 00       LDA    sync_1000
 E75A: 27 FB          BEQ    $E757
-E75C: B6 80 00       LDA    $8000
+E75C: B6 80 00       LDA    watchdog_8000
 E75F: 7F 50 03       CLR    $5003
 E762: 7F 10 00       CLR    sync_1000
 E765: BD EA 17       JSR    $EA17
@@ -7051,14 +7072,14 @@ E777: 4A             DECA
 E778: 26 F9          BNE    $E773
 E77A: B6 10 00       LDA    sync_1000
 E77D: 27 FB          BEQ    $E77A
-E77F: B6 80 00       LDA    $8000
+E77F: B6 80 00       LDA    watchdog_8000
 E782: 7F 50 03       CLR    $5003
 E785: 7F 10 00       CLR    sync_1000
 E788: BD EA 17       JSR    $EA17
 E78B: BD EB B9       JSR    $EBB9
 E78E: B6 10 00       LDA    sync_1000
 E791: 27 FB          BEQ    $E78E
-E793: B6 80 00       LDA    $8000
+E793: B6 80 00       LDA    watchdog_8000
 E796: 7F 50 03       CLR    $5003
 E799: 7F 10 00       CLR    sync_1000
 E79C: BD EA 17       JSR    $EA17
@@ -7068,7 +7089,7 @@ E7A5: 85 03          BITA   #$03
 E7A7: 26 37          BNE    $E7E0
 E7A9: C6 01          LDB    #$01
 E7AB: F7 40 B0       STB    $40B0
-E7AE: B6 80 00       LDA    $8000
+E7AE: B6 80 00       LDA    watchdog_8000
 E7B1: F1 40 B0       CMPB   $40B0
 E7B4: 27 F8          BEQ    $E7AE
 E7B6: B6 40 B0       LDA    $40B0
@@ -7082,7 +7103,7 @@ E7C8: 7F 03 06       CLR    $0306
 E7CB: 7F 40 B0       CLR    $40B0
 E7CE: 86 FF          LDA    #$FF
 E7D0: B7 10 CE       STA    $10CE
-E7D3: B6 80 00       LDA    $8000
+E7D3: B6 80 00       LDA    watchdog_8000
 E7D6: 7A 10 CF       DEC    $10CF
 E7D9: 26 F8          BNE    $E7D3
 E7DB: 7A 10 CE       DEC    $10CE
@@ -7135,7 +7156,7 @@ E85A: 86 0C          LDA    #$0C
 E85C: BD 85 90       JSR    write_text_8590
 E85F: B6 10 00       LDA    sync_1000
 E862: 27 FB          BEQ    $E85F
-E864: B6 80 00       LDA    $8000
+E864: B6 80 00       LDA    watchdog_8000
 E867: 7F 50 03       CLR    $5003
 E86A: 7F 10 00       CLR    sync_1000
 E86D: BD EA 17       JSR    $EA17
@@ -7182,7 +7203,7 @@ E8C9: 7E E8 5F       JMP    $E85F
 E8CC: BD EB 02       JSR    $EB02
 E8CF: B6 10 00       LDA    sync_1000
 E8D2: 27 FB          BEQ    $E8CF
-E8D4: B6 80 00       LDA    $8000
+E8D4: B6 80 00       LDA    watchdog_8000
 E8D7: 7F 50 03       CLR    $5003
 E8DA: 7F 10 00       CLR    sync_1000
 E8DD: BD EA 17       JSR    $EA17
@@ -7207,7 +7228,7 @@ E90B: BD EB 20       JSR    $EB20
 E90E: 20 BF          BRA    $E8CF
 E910: B6 10 00       LDA    sync_1000
 E913: 27 FB          BEQ    $E910
-E915: B6 80 00       LDA    $8000
+E915: B6 80 00       LDA    watchdog_8000
 E918: 7F 50 03       CLR    $5003
 E91B: 7F 10 00       CLR    sync_1000
 E91E: BD EA 17       JSR    $EA17
@@ -7233,7 +7254,8 @@ E951: 1C FF          ANDCC  #$FF
 E953: 7F 50 02       CLR    $5002
 E956: 7F 50 0A       CLR    $500A
 E959: 7F 50 08       CLR    $5008
-E95C: 7E 80 72       JMP    $8072
+E95C: 7E 80 72       JMP    init_8072
+
 E95F: 7C 40 55       INC    $4055
 E962: 8E 07 FF       LDX    #$07FF
 E965: 86 20          LDA    #$20
@@ -7246,7 +7268,7 @@ E974: 8C 03 80       CMPX   #$0380
 E977: 26 F6          BNE    $E96F
 E979: B6 10 00       LDA    sync_1000
 E97C: 27 FB          BEQ    $E979
-E97E: B6 80 00       LDA    $8000
+E97E: B6 80 00       LDA    watchdog_8000
 E981: 7F 50 03       CLR    $5003
 E984: 7F 10 00       CLR    sync_1000
 E987: BD EA 17       JSR    $EA17
@@ -7266,7 +7288,7 @@ E9AB: 8E 03 80       LDX    #$0380
 E9AE: BF 10 74       STX    $1074
 E9B1: B6 10 00       LDA    sync_1000
 E9B4: 27 FB          BEQ    $E9B1
-E9B6: B6 80 00       LDA    $8000
+E9B6: B6 80 00       LDA    watchdog_8000
 E9B9: 7F 50 03       CLR    $5003
 E9BC: 7F 10 00       CLR    sync_1000
 E9BF: BD EA 17       JSR    $EA17
@@ -7293,14 +7315,14 @@ E9F3: 11 83 00 00    CMPU   #$0000
 E9F7: 26 B8          BNE    $E9B1
 E9F9: B6 10 00       LDA    sync_1000
 E9FC: 27 FB          BEQ    $E9F9
-E9FE: B6 80 00       LDA    $8000
+E9FE: B6 80 00       LDA    watchdog_8000
 EA01: 7F 50 03       CLR    $5003
 EA04: 7F 10 00       CLR    sync_1000
 EA07: BD EA 17       JSR    $EA17
 EA0A: BD EB B9       JSR    $EBB9
 EA0D: B6 40 4A       LDA    $404A
 EA10: 26 E7          BNE    $E9F9
-EA12: B6 80 00       LDA    $8000
+EA12: B6 80 00       LDA    watchdog_8000
 EA15: 20 FB          BRA    $EA12
 EA17: 8E 48 00       LDX    #$4800
 EA1A: F6 10 17       LDB    $1017

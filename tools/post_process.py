@@ -11,6 +11,7 @@ input_dict = {"system_3300":"read_system_inputs",
 "speech_6000":"get_speech_status",
 "scroll_dir_2042":"set_scroll_direction",
 "audio_register_w_1500":"sound_start",
+"watchdog_8000":"",
 
 }
 
@@ -74,9 +75,37 @@ with open(source_dir / "conv.s") as f:
 
         if address in [0xe5c0,0xe951]:
             line = remove_error(line)
+        elif address == 0x8153:
+            # we have to patch natively: the game saves return address in a 16-bit buffer
+            # (kind of task switch)
+            # we emulate that but for that we need a 32 bit buffer
+            # save_reset_stack_and_jump_8150:
+            # 8150: BE 10 02       LDX    task_stack_array_1002
+            # 8153: 10 EF 84       STS    ,X
+            # 8156: 10 CE 18 FE    LDS    #$18FE        ; pop all addresses except the first one
+            # 815A: 39             RTS
+            # that would be hell to implement
+            # so it's better to encode the real address in 16 bits
 
-##        elif address == 0x8153:
-##            line = "* TEMP FUCK FUCK\n"
+            line = "\tmove.l\t(a7),d0\n\tENCODE_NATIVE_ADDRESS\td0\n\tGET_REG_ADDRESS\t0,d2\n"+change_instruction("MOVE_W_FROM_REG\td0,a0",lines,i)
+        elif address == 0x8156:
+            # set stack to the top, read the value there
+            line += "\tGET_REG_ADDRESS\t0,d5\n\tMOVE_W_TO_REG\ta0,d6\n\tDECODE_NATIVE_ADDRESS\td6\n"
+            # then really set the actual stack to the top and push address there to simulate unwind
+            line += "\tlea\tstack_top-4,a7\n\tmove.l\td6,-(a7)\n"
+        elif address in {0x8191,0x816e}:
+            if ">>" in line:
+                line = remove_instruction(lines,i)  # useless/irrelevant
+            else:
+                # the value is an actual real address => read as long, then encode
+                line = line.replace("move.w","move.l") + "\tENCODE_NATIVE_ADDRESS\td1\n"
+        elif address == 0x8199:
+            line = change_instruction("jra\tunwind_stack_8156",lines,i)  # same (modified) code
+
+        elif address == 0x818D:
+            line += "\tjra\tset_native_stack\n"
+        elif address in {0x8072,0xE666}:
+            line = change_instruction("lea\tstack_top,a7",lines,i)
 
         if "GET_ADDRESS" in line:
             val = line.split()[1]
