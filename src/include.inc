@@ -457,9 +457,33 @@ okay\@:
 	GET_UNCHECKED_ADDRESS_FUNC
 	.endm
 
+	.ifndef	RELEASE
+* dev mode, more checks about the address
 get_address:
-	*ERROR "`TODO: implement this by adding memory base to a0"
+
+0:
+	cmp.w	#0x1000,a0
+	jcc		0f
+	jbsr	osd_get_last_known_pc
+	BREAKPOINT	"video address range 0x0000-0x0FFF, PC in D6"
+	jra		10f
+0:
+	
+	* 0X2000 <= range < 0x4000, ram, video ram & special ram/scroll
+	cmp.w	#0x4000,a0
+	jcs		10f
+	
+	cmp.l	#0x8000,a0
+	jcc		10f				| ROM: OK
+	jbsr	osd_get_last_known_pc
+		jbsr	osd_dump_logs
+
+	BREAKPOINT	"illegal range 0x6000-0x8000, PC in D6"
+10:
+	lea		(a6,a0.l),a0
 	rts
+
+	.endif
 
 
 	* those macros encode & decode 32 bit addresses into 16 bit addresses

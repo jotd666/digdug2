@@ -71,6 +71,7 @@
 
 sync_1000 = $1000
 task_stack_pointer_1002 = $1002
+nb_lives_1703 = $1703
 stack_top_1900 = $1900
 watchdog_8000 = $8000
 
@@ -523,7 +524,7 @@ reset_stack_and_jump_8199:
 8441: B7 10 E0       STA    $10E0
 8444: BD C4 9B       JSR    $C49B
 8447: BD 85 4D       JSR    $854D
-844A: 7A 17 03       DEC    $1703
+844A: 7A 17 03       DEC    nb_lives_1703
 844D: 27 14          BEQ    $8463
 844F: B6 10 04       LDA    $1004
 8452: 10 27 FE FA    LBEQ   $8350
@@ -865,7 +866,7 @@ clear_text_85a0:
 880C: 39             RTS
 
 8815: F6 10 CC       LDB    $10CC           
-8818: F7 17 03       STB    $1703           
+8818: F7 17 03       STB    nb_lives_1703           
 881B: B6 10 04       LDA    $1004           
 881E: 27 03          BEQ    $8823           
 8820: F7 17 43       STB    $1743           
@@ -887,7 +888,7 @@ clear_text_85a0:
 8845: 86 00          LDA    #$00
 8847: C6 0A          LDB    #$0A
 8849: BD 85 BD       JSR    $85BD
-884C: B6 17 03       LDA    $1703
+884C: B6 17 03       LDA    nb_lives_1703
 884F: B0 10 E8       SUBA   $10E8
 8852: 26 01          BNE    $8855
 8854: 39             RTS
@@ -4258,7 +4259,7 @@ ABF5: 27 42          BEQ    $AC39
 ABF7: CE 25 10       LDU    #$2510
 ABFA: BD C4 F4       JSR    $C4F4
 ABFD: B6 10 D3       LDA    $10D3
-AC00: 27 37          BEQ    $AC39
+AC00: 27 37          BEQ    $AC39	; bra => invincible
 AC02: CC 01 06       LDD    #$0106
 AC05: B7 10 D0       STA    $10D0
 AC08: 6C 4F          INC    $F,U
@@ -4983,7 +4984,7 @@ B2F5: A6 0F          LDA    $F,X
 B2F7: 80 0C          SUBA   #$0C
 B2F9: A7 0F          STA    $F,X
 B2FB: B6 10 D3       LDA    $10D3
-B2FE: 27 2A          BEQ    $B32A
+B2FE: 27 2A          BEQ    $B32A	; bra => invincible
 B300: CC 01 06       LDD    #$0106
 B303: B7 10 D0       STA    $10D0
 B306: E7 5A          STB    -$6,U
@@ -6897,7 +6898,7 @@ E5C2: B6 80 00       LDA    watchdog_8000
 E5C5: 7F 50 02       CLR    $5002
 E5C8: 7F 50 0A       CLR    $500A
 E5CB: 7F 50 08       CLR    $5008
-E5CE: 86 08          LDA    #$08
+E5CE: 86 08          LDA    #$08		; branch to E649 to skip ROM/RAM test
 E5D0: 8E 00 00       LDX    #$0000
 E5D3: A7 84          STA    ,X
 E5D5: 7F 80 00       CLR    watchdog_8000
@@ -6951,6 +6952,7 @@ E63D: 7F 80 00       CLR    watchdog_8000
 E640: 11 83 07 FF    CMPU   #$07FF
 E644: 26 F1          BNE    $E637
 E646: B7 02 C6       STA    $02C6
+end_of_rom_ram_test_e649:
 E649: 8E 10 00       LDX    #sync_1000
 E64C: CE 00 00       LDU    #$0000
 E64F: EF 81          STU    ,X++

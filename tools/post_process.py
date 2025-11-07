@@ -107,6 +107,10 @@ with open(source_dir / "conv.s") as f:
         elif address in {0x8072,0xE666}:
             line = change_instruction("lea\tstack_top,a7",lines,i)
 
+        elif address == 0xE5CE:
+            # skip ram/rom test
+            line = change_instruction("jra\tend_of_rom_ram_test_e649   | skip ROM/RAM test",lines,i)
+
         if "GET_ADDRESS" in line:
             val = line.split()[1]
             osd_call = input_dict.get(val)
