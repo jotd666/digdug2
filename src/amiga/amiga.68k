@@ -823,14 +823,14 @@ demo_game:
 	GET_MEMORY_START_AND_DP
 	moveq	#0,d5		| set D5.L to 0
 	jbsr	cpu_init
-	jmp			reset_81a6					| pass control to the cpu core
+	jmp			reset_e5ba					| pass control to the cpu core
 
 
 do_irq:
 	* set base for RAM
 	jbsr	cpu_init
 	GET_MEMORY_START_AND_DP
-	jra			irq_8a57					| pass control to the cpu core
+	jra			irq_8000					| pass control to the cpu core
 	
 * just in case some hardware calls nmi
 _nmi:
@@ -1109,7 +1109,7 @@ is_game_playing:
 skip_level:
 	movem.l	a6/a5,-(a7)
 	GET_MEMORY_START_AND_DP
-	move.b	#1,level_completed_flag_9f(a5)					| no more lives
+	*move.b	#1,level_completed_flag_9f(a5)					| no more lives
 	movem.l	(a7)+,a6/a5
 	rts
 

@@ -1,0 +1,97 @@
+	.global infinite_lives_flag
+	.global invincible_flag
+	.global start_level
+	.global vb_ticks_count
+	.global break_at_startup_flag
+	.global skip_intro_flag
+	.global log_ptr
+	.global highscore_needs_saving_flag
+	.global vbl_sync_counter
+	.global vbl_sync_flag
+	.global no_sync_flag
+	.global m6809_direct_page_pointer
+	.global	stack_top
+	.ifdef	RELEASE
+	.global	ram_buffer
+	.global	rom_buffer
+	.else
+	.global ram_start_0000
+	.global	dev_ram_buffer
+	.endif
+	
+	.ifdef   __amiga__
+	.ascii	"RAM_STRT"
+	.ifndef	RELEASE
+	.endif
+	.else
+	* Neogeo: needs different writable section from ROM code
+    .bss
+	.endif
+
+	.align	2
+
+	.skip	0x3000   | NATIVE_STACK_SIZE
+stack_top:
+ram_buffer:
+	.ifdef	RELEASE
+	.skip	0x8000
+rom_buffer:
+	.skip	0x10000-0x8000
+	.else
+dev_ram_buffer:
+	.skip	0x20000
+ram_start_0000:
+	.long	0
+	.endif
+
+	
+
+high_score_beaten:
+	.word	0
+
+	
+
+| direct page pointer needs to be reloaded in case of irq
+m6809_direct_page_pointer:
+	.long	0xA5A5A5A5
+
+skip_intro_flag:
+	.byte	0
+
+invincible_flag:
+	.byte	0
+infinite_lives_flag:
+	.byte	0
+infinite_time_flag:
+	.byte	0
+music_off_flag:
+	.byte 	0
+
+	.ifndef	RELEASE
+log_ptr:
+	.long	0x100
+	.endif
+	
+highscore_needs_saving_flag:
+	.byte	0
+vb_ticks_count:
+	.byte	0
+current_ticks_count:
+	.byte	0
+vbl_sync_flag:
+	.byte	0
+vbl_sync_counter:
+	.byte	0
+no_sync_flag:
+	.byte 	0
+break_at_startup_flag:
+	.byte	0
+
+* maybe sound-related?? maybe useless
+
+start_level:
+	.byte	0
+	.ascii	"RAM_END!"
+
+
+	

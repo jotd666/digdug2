@@ -461,9 +461,6 @@ get_address:
 	*ERROR "`TODO: implement this by adding memory base to a0"
 	rts
 
-| direct page pointer needs to be reloaded in case of irq
-m6809_direct_page_pointer:
-	.long	0xA5A5A5A5
 
 	* those macros encode & decode 32 bit addresses into 16 bit addresses
 	* so the data can be stored in the original RAM with game pointers
