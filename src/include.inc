@@ -176,10 +176,7 @@ okay\@:
 	ERROR	"TODO: insert interrupt disable code here"
 	.endm
 	.macro CLR_I_FLAG
-	illegal
-	illegal
-	illegal
-	*jbsr	osd_enable_interrupts
+	jbsr	osd_enable_interrupts
 	.endm
 
 	.ifdef	MC68020
@@ -361,7 +358,7 @@ okay\@:
 	.macro SET_DP_FROM_A
 	lsl.w    #8,d0
 	move.l    d0,a0
-	GET_ADDRESS_FUNC
+	GET_UNCHECKED_ADDRESS_FUNC
 	move.l	a0,a5
 	move.l	a5,m6809_direct_page_pointer
 	lsr.w    #8,d0
@@ -469,18 +466,17 @@ get_address:
 	jra		10f
 0:
 	
-	* 0X2000 <= range < 0x4000, ram, video ram & special ram/scroll
-	cmp.w	#0x4000,a0
+	* 0X2000 <= range < 0x4400, ram, shared ram & special ram/scroll
+	cmp.w	#0x4400,a0
 	jcs		10f
 	
 	cmp.l	#0x8000,a0
 	jcc		10f				| ROM: OK
 	jbsr	osd_get_last_known_pc
-		jbsr	osd_dump_logs
 
-	BREAKPOINT	"illegal range 0x6000-0x8000, PC in D6"
+	BREAKPOINT	"illegal range 0x4400-0x8000, PC in D6"
 10:
-	lea		(a6,a0.l),a0
+	GET_UNCHECKED_ADDRESS_FUNC
 	rts
 
 	.endif

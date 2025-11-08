@@ -12,6 +12,16 @@ input_dict = {"system_3300":"read_system_inputs",
 "scroll_dir_2042":"set_scroll_direction",
 "audio_register_w_1500":"sound_start",
 "watchdog_8000":"",
+"namco_io_4800":"",  # sound?
+"video_stuff_5009" : "",
+"video_stuff_5008" : "",
+"video_stuff_5002" : "",
+"video_stuff_5003" : "",
+"video_stuff_5004" : "",
+"video_stuff_500b" : "",
+"video_stuff_500a" : "",
+"io_register_4818" : ""
+
 
 }
 
@@ -51,6 +61,8 @@ with open(source_dir / "conv.s") as f:
             line = line.rstrip() + " [video_address]\n"
 
 
+        if "[unchecked_address" in line:
+            line = line.replace("_ADDRESS","_UNCHECKED_ADDRESS")
         if "[video_address" in line:
             # give me the original instruction
             line = line.replace("_ADDRESS","_UNCHECKED_ADDRESS")
@@ -102,14 +114,27 @@ with open(source_dir / "conv.s") as f:
         elif address == 0x8199:
             line = change_instruction("jra\tunwind_stack_8156",lines,i)  # same (modified) code
 
+        elif address == 0xE7BB:
+            line = line.replace("eq","ra")  # force test
         elif address == 0x818D:
             line += "\tjra\tset_native_stack\n"
         elif address in {0x8072,0xE666}:
             line = change_instruction("lea\tstack_top,a7",lines,i)
 
+        elif address in {0x8012,0x800f}:
+            line = remove_instruction(lines,i)
+        elif address == 0xE703:
+            line = change_instruction("jra\tend_io_regs_clear_e710",lines,i)
+        elif address == 0xE76B:
+            line = change_instruction("jra\tend_write_4810_zone_e77a",lines,i)
+        elif address == 0xEA17:
+            line = change_instruction("rts",lines,i)
         elif address == 0xE5CE:
             # skip ram/rom test
-            line = change_instruction("jra\tend_of_rom_ram_test_e649   | skip ROM/RAM test",lines,i)
+            line = change_instruction("jra\tend_of_memory_clear_e666   | skip ROM/RAM test & memory clear",lines,i)
+        elif address == 0xE67A:
+            # skip ram/rom test & custom io clear
+            line = "\tmoveq\t#0,d0\n"+change_instruction("jra\tcontinue_boot_e6c9   | skip ROM checksum",lines,i)
 
         if "GET_ADDRESS" in line:
             val = line.split()[1]

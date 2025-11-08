@@ -68,20 +68,29 @@
 ;	map(0x8000, 0x8000).w("watchdog", FUNC(watchdog_timer_device::reset_w));
 ;	map(0x8000, 0xffff).rom();  // only a000-ffff in Mappy
 
-
+checksum_failed_flag_0306 = $306
 sync_1000 = $1000
 task_stack_pointer_1002 = $1002
 nb_lives_1703 = $1703
 stack_top_1900 = $1900
 watchdog_8000 = $8000
+video_stuff_5009 = $5009
+video_stuff_5008 = $5008
+video_stuff_5002 = $5002
+video_stuff_5003 = $5003
+video_stuff_5004 = $5004
+video_stuff_500b = $500B
+video_stuff_500a = $500A
+namco_io_4800 = $4800
+io_register_4818 = $4818
 
 irq_8000:
-8000: B7 50 02       STA    $5002
+8000: B7 50 02       STA    video_stuff_5002
 8003: B6 80 00       LDA    watchdog_8000
 8006: B6 10 06       LDA    $1006
 8009: B4 10 05       ANDA   $1005
 800C: B7 10 07       STA    $1007
-800F: 8E 50 04       LDX    #$5004
+800F: 8E 50 04       LDX    #video_stuff_5004
 8012: A7 86          STA    A,X
 8014: B6 10 08       LDA    $1008
 8017: C6 08          LDB    #$08
@@ -150,7 +159,7 @@ init_8072:
 80B6: CC 81 D9       LDD    #$81D9
 80B9: FD 19 0E       STD    $190E
 80BC: 1C EF          ANDCC  #$EF
-80BE: B7 50 03       STA    $5003
+80BE: B7 50 03       STA    video_stuff_5003
 80C1: B6 10 00       LDA    sync_1000
 80C4: 27 FB          BEQ    $80C1
 80C6: 7F 10 00       CLR    sync_1000
@@ -160,11 +169,11 @@ init_8072:
 80D2: B6 48 17       LDA    $4817
 80D5: 84 08          ANDA   #$08
 80D7: 10 26 64 DF    LBNE   $E5BA
-80DB: B6 48 00       LDA    $4800
+80DB: B6 48 00       LDA    namco_io_4800
 80DE: 84 0F          ANDA   #$0F
 80E0: BB 40 54       ADDA   $4054
 80E3: B7 40 54       STA    $4054
-80E6: 7F 48 00       CLR    $4800
+80E6: 7F 48 00       CLR    namco_io_4800
 80E9: B6 10 E7       LDA    $10E7
 80EC: 26 03          BNE    $80F1
 80EE: BD 86 35       JSR    $8635
@@ -295,7 +304,7 @@ reset_stack_and_jump_8199:
 81D8: 39             RTS
 81D9: BD 81 50       JSR    save_reset_stack_and_jump_8150
 81DC: BD 87 01       JSR    $8701
-81DF: 8E 48 00       LDX    #$4800
+81DF: 8E 48 00       LDX    #namco_io_4800
 81E2: CC 00 00       LDD    #$0000
 81E5: A7 80          STA    ,X+
 81E7: 8C 48 09       CMPX   #$4809
@@ -306,12 +315,12 @@ reset_stack_and_jump_8199:
 81F4: 26 F9          BNE    $81EF
 81F6: BD 81 50       JSR    save_reset_stack_and_jump_8150
 81F9: BD 81 50       JSR    save_reset_stack_and_jump_8150
-81FC: B7 50 0B       STA    $500B
-81FF: B7 50 09       STA    $5009
+81FC: B7 50 0B       STA    video_stuff_500B
+81FF: B7 50 09       STA    video_stuff_5009
 8202: BD 81 50       JSR    save_reset_stack_and_jump_8150
 8205: BD 81 50       JSR    save_reset_stack_and_jump_8150
 8208: 86 04          LDA    #$04
-820A: B7 48 18       STA    $4818
+820A: B7 48 18       STA    io_register_4818
 820D: BD 81 50       JSR    save_reset_stack_and_jump_8150
 8210: BD 81 50       JSR    save_reset_stack_and_jump_8150
 8213: BD 85 6A       JSR    $856A
@@ -353,7 +362,7 @@ reset_stack_and_jump_8199:
 8272: B7 10 E7       STA    $10E7
 8275: B7 48 01       STA    $4801
 8278: B7 48 09       STA    $4809
-827B: BD 87 06       JSR    $8706
+827B: BD 87 06       JSR    clear_screen_8706
 827E: BD 8B 3D       JSR    $8B3D
 8281: BD 8B DF       JSR    $8BDF
 8284: FC 48 02       LDD    $4802
@@ -361,7 +370,7 @@ reset_stack_and_jump_8199:
 8289: 26 6A          BNE    $82F5
 828B: C4 0F          ANDB   #$0F
 828D: 26 66          BNE    $82F5
-828F: BD 87 06       JSR    $8706
+828F: BD 87 06       JSR    clear_screen_8706
 8292: BD 86 9E       JSR    $869E
 8295: BD 85 CA       JSR    $85CA
 8298: CC 01 08       LDD    #$0108
@@ -404,7 +413,7 @@ reset_stack_and_jump_8199:
 82F5: 7F 10 10       CLR    $1010
 82F8: 7F 10 E2       CLR    $10E2
 82FB: 7C 10 E3       INC    $10E3
-82FE: BD 87 06       JSR    $8706
+82FE: BD 87 06       JSR    clear_screen_8706
 8301: BD 8B 3D       JSR    $8B3D
 8304: BD 8B DF       JSR    $8BDF
 8307: BD 8C B6       JSR    $8CB6
@@ -421,7 +430,7 @@ reset_stack_and_jump_8199:
 8326: B6 10 EF       LDA    $10EF
 8329: 27 25          BEQ    $8350
 832B: 7C 10 E1       INC    $10E1
-832E: 7F 48 00       CLR    $4800
+832E: 7F 48 00       CLR    namco_io_4800
 8331: B6 48 01       LDA    $4801
 8334: 84 0F          ANDA   #$0F
 8336: 4A             DECA
@@ -440,7 +449,7 @@ reset_stack_and_jump_8199:
 8355: 7C 10 E9       INC    $10E9
 8358: B6 10 05       LDA    $1005
 835B: 26 15          BNE    $8372
-835D: 7F 48 00       CLR    $4800
+835D: 7F 48 00       CLR    namco_io_4800
 8360: B6 48 01       LDA    $4801
 8363: 84 0F          ANDA   #$0F
 8365: 4A             DECA
@@ -455,7 +464,7 @@ reset_stack_and_jump_8199:
 837D: 26 03          BNE    $8382
 837F: BD 84 BC       JSR    $84BC
 8382: BD C4 A8       JSR    $C4A8
-8385: BD 87 06       JSR    $8706
+8385: BD 87 06       JSR    clear_screen_8706
 8388: BD 87 67       JSR    $8767
 838B: BD 87 B3       JSR    $87B3
 838E: BD 88 24       JSR    $8824
@@ -532,7 +541,7 @@ reset_stack_and_jump_8199:
 8459: 10 27 FE F3    LBEQ   $8350
 845D: BD 84 F2       JSR    $84F2
 8460: 7E 83 50       JMP    $8350
-8463: BD 87 06       JSR    $8706
+8463: BD 87 06       JSR    clear_screen_8706
 8466: BD 87 50       JSR    $8750
 8469: CC 00 00       LDD    #$0000
 846C: B7 40 41       STA    $4041
@@ -631,7 +640,7 @@ reset_stack_and_jump_8199:
 8563: B7 10 D2       STA    $10D2
 8566: B7 10 D4       STA    $10D4
 8569: 39             RTS
-856A: 8E 48 00       LDX    #$4800
+856A: 8E 48 00       LDX    #namco_io_4800
 856D: CE 85 88       LDU    #$8588
 8570: A6 88 14       LDA    $14,X
 8573: 84 0C          ANDA   #$0C
@@ -761,25 +770,28 @@ clear_text_85a0:
 86B3: 39             RTS
 86B4:
 ;	.ascii	"CREDIT   TO START PUSHONLY 1 PLAYER]S BUTTON1 OR 2 PLAYERS] BUTTONINSERT COIN"
-8701: 8D 03          BSR    $8706
-8703: 8D 17          BSR    $871C
+8701: 8D 03          BSR    clear_screen_8706
+8703: 8D 17          BSR    fill_screen_871c
 8705: 39             RTS
+clear_screen_8706:
 8706: CC 20 20       LDD    #$2020
 8709: 8E 00 00       LDX    #$0000
-870C: 6F 89 08 00    CLR    $0800,X
-8710: 6F 89 08 01    CLR    $0801,X
-8714: ED 81          STD    ,X++
+870C: 6F 89 08 00    CLR    $0800,X		; [video_address]
+8710: 6F 89 08 01    CLR    $0801,X		; [video_address]
+8714: ED 81          STD    ,X++		; [video_address_word]
 8716: 8C 07 80       CMPX   #$0780
 8719: 26 F1          BNE    $870C
 871B: 39             RTS
+fill_screen_871c:
 871C: CC 20 20       LDD    #$2020
 871F: 8E 07 80       LDX    #$0780
-8722: 6F 89 08 00    CLR    $0800,X
-8726: 6F 89 08 01    CLR    $0801,X
-872A: ED 81          STD    ,X++
+8722: 6F 89 08 00    CLR    $0800,X  		; [video_address]
+8726: 6F 89 08 01    CLR    $0801,X  		; [video_address]
+872A: ED 81          STD    ,X++     	; [video_address_word]
 872C: 8C 08 00       CMPX   #$0800
 872F: 26 F1          BNE    $8722
 8731: 39             RTS
+
 8732: EC 84          LDD    ,X
 8734: FD 10 30       STD    $1030
 8737: EC 06          LDD    $6,X
@@ -2503,7 +2515,7 @@ clear_text_85a0:
 9AD1: 8C 12 00       CMPX   #$1200
 9AD4: 26 F4          BNE    $9ACA
 9AD6: 39             RTS
-9AD7: BD 87 06       JSR    $8706
+9AD7: BD 87 06       JSR    clear_screen_8706
 9ADA: 8E 02 28       LDX    #$0228
 9ADD: CE 9C 67       LDU    #$9C67
 9AE0: 86 06          LDA    #$06
@@ -2650,7 +2662,7 @@ clear_text_85a0:
 9CB6: BD 81 50       JSR    save_reset_stack_and_jump_8150
 9CB9: B6 10 E1       LDA    $10E1
 9CBC: 27 F8          BEQ    $9CB6
-9CBE: BD 87 06       JSR    $8706
+9CBE: BD 87 06       JSR    clear_screen_8706
 9CC1: BD 8B 3D       JSR    $8B3D
 9CC4: CC 01 01       LDD    #$0101
 9CC7: FD 17 04       STD    $1704
@@ -2697,7 +2709,7 @@ clear_text_85a0:
 9D26: 27 F8          BEQ    $9D20
 9D28: B6 10 F0       LDA    $10F0
 9D2B: 10 27 01 99    LBEQ   $9EC8
-9D2F: BD 87 06       JSR    $8706
+9D2F: BD 87 06       JSR    clear_screen_8706
 9D32: B6 10 05       LDA    $1005
 9D35: 27 28          BEQ    $9D5F
 9D37: 8E 07 BC       LDX    #$07BC
@@ -5657,7 +5669,7 @@ C122: E7 80          STB    ,X+
 C124: 7A 10 09       DEC    $1009
 C127: 26 DF          BNE    $C108
 C129: 39             RTS
-C12A: BD 87 06       JSR    $8706
+C12A: BD 87 06       JSR    clear_screen_8706
 C12D: 8E 15 80       LDX    #$1580
 C130: CE D3 88       LDU    #$D388
 C133: 10 8E CE 48    LDY    #$CE48
@@ -6895,9 +6907,9 @@ E5BA: 7F 38 00       CLR    $3800
 E5BD: B6 80 00       LDA    watchdog_8000
 E5C0: 1C FF          ANDCC  #$FF
 E5C2: B6 80 00       LDA    watchdog_8000
-E5C5: 7F 50 02       CLR    $5002
-E5C8: 7F 50 0A       CLR    $500A
-E5CB: 7F 50 08       CLR    $5008
+E5C5: 7F 50 02       CLR    video_stuff_5002
+E5C8: 7F 50 0A       CLR    video_stuff_500A
+E5CB: 7F 50 08       CLR    video_stuff_5008
 E5CE: 86 08          LDA    #$08		; branch to E649 to skip ROM/RAM test
 E5D0: 8E 00 00       LDX    #$0000
 E5D3: A7 84          STA    ,X
@@ -6953,17 +6965,20 @@ E640: 11 83 07 FF    CMPU   #$07FF
 E644: 26 F1          BNE    $E637
 E646: B7 02 C6       STA    $02C6
 end_of_rom_ram_test_e649:
+; clear RAM
 E649: 8E 10 00       LDX    #sync_1000
 E64C: CE 00 00       LDU    #$0000
 E64F: EF 81          STU    ,X++
 E651: 7F 80 00       CLR    watchdog_8000
 E654: 8C 28 00       CMPX   #$2800
 E657: 26 F6          BNE    $E64F
+; clear ... all memory doing a X wrap. Bug? whatever
 E659: 8E 40 40       LDX    #$4040
 E65C: EF 81          STU    ,X++
 E65E: 7F 80 00       CLR    watchdog_8000
 E661: 8C 44 00       CMPX   #$4400
 E664: 26 F6          BNE    $E65C
+end_of_memory_clear_e666:
 E666: 10 CE 19 00    LDS    #stack_top_1900
 E66A: C6 00          LDB    #$00
 E66C: 1F 9B          TFR    B,DP
@@ -6972,6 +6987,8 @@ E671: 4D             TSTA
 E672: 26 06          BNE    $E67A
 E674: BD 87 01       JSR    $8701
 E677: 7F 02 C6       CLR    $02C6
+
+; lower part rom checksum
 E67A: 8E 80 00       LDX    #watchdog_8000
 E67D: 4F             CLRA
 E67E: AB 80          ADDA   ,X+
@@ -6979,7 +6996,8 @@ E680: 7F 80 00       CLR    watchdog_8000
 E683: 8C C0 00       CMPX   #$C000
 E686: 26 F6          BNE    $E67E
 E688: 81 73          CMPA   #$73
-E68A: 26 16          BNE    $E6A2
+E68A: 26 16          BNE    checksum_failed_e6a2
+; upper part rom checksum
 E68C: 8E C0 00       LDX    #$C000
 E68F: 4F             CLRA
 E690: AB 80          ADDA   ,X+
@@ -6988,15 +7006,19 @@ E695: 8C FF FF       CMPX   #$FFFF
 E698: 26 F6          BNE    $E690
 E69A: AB 84          ADDA   ,X
 E69C: 81 77          CMPA   #$77
-E69E: 26 06          BNE    $E6A6
-E6A0: 20 09          BRA    $E6AB
-E6A2: C6 01          LDB    #$01
+E69E: 26 06          BNE    checksum_failed_e6a6
+E6A0: 20 09          BRA    continue_boot_e6ab
+checksum_failed_e6a2:
+E6A2: C6 01          LDB    #$01		; lower part failure
 E6A4: 20 02          BRA    $E6A8
+checksum_failed_e6a6:
 E6A6: C6 02          LDB    #$02
-E6A8: F7 03 06       STB    $0306
+E6A8: F7 03 06       STB    checksum_failed_flag_0306
+continue_boot_e6ab:
+; clear io registers
 E6AB: 86 08          LDA    #$08
 E6AD: B7 10 34       STA    $1034
-E6B0: 8E 48 00       LDX    #$4800
+E6B0: 8E 48 00       LDX    #namco_io_4800
 E6B3: A7 84          STA    ,X
 E6B5: 7F 80 00       CLR    watchdog_8000
 E6B8: E6 80          LDB    ,X+
@@ -7007,63 +7029,66 @@ E6C1: 8C 4C 00       CMPX   #$4C00
 E6C4: 26 ED          BNE    $E6B3
 E6C6: 4A             DECA
 E6C7: 26 E4          BNE    $E6AD
+continue_boot_e6c9:
 E6C9: B7 02 86       STA    $0286
 E6CC: 20 05          BRA    $E6D3
 E6CE: 86 01          LDA    #$01
 E6D0: B7 02 86       STA    $0286
 E6D3: 1C EF          ANDCC  #$EF
-E6D5: 7F 50 03       CLR    $5003
+E6D5: 7F 50 03       CLR    video_stuff_5003
 E6D8: 7F 10 00       CLR    sync_1000
 E6DB: B6 10 00       LDA    sync_1000
 E6DE: 27 FB          BEQ    $E6DB
 E6E0: B6 80 00       LDA    watchdog_8000
-E6E3: 7F 50 03       CLR    $5003
+E6E3: 7F 50 03       CLR    video_stuff_5003
 E6E6: 7F 10 00       CLR    sync_1000
-E6E9: BD EA 17       JSR    $EA17
+E6E9: BD EA 17       JSR    io_stuff_ea17
 E6EC: BD EB B9       JSR    $EBB9
 E6EF: B6 10 00       LDA    sync_1000
 E6F2: 27 FB          BEQ    $E6EF
 E6F4: B6 80 00       LDA    watchdog_8000
-E6F7: 7F 50 03       CLR    $5003
+E6F7: 7F 50 03       CLR    video_stuff_5003
 E6FA: 7F 10 00       CLR    sync_1000
-E6FD: BD EA 17       JSR    $EA17
+E6FD: BD EA 17       JSR    io_stuff_ea17
 E700: BD EB B9       JSR    $EBB9
-E703: 8E 48 00       LDX    #$4800
+; clear IO regs again...
+E703: 8E 48 00       LDX    #namco_io_4800
 E706: CC 00 00       LDD    #$0000
 E709: ED 81          STD    ,X++
 E70B: 8C 48 20       CMPX   #$4820
 E70E: 26 F9          BNE    $E709
-E710: B7 50 09       STA    $5009
-E713: B7 50 0B       STA    $500B
+end_io_regs_clear_e710:
+E710: B7 50 09       STA    video_stuff_5009
+E713: B7 50 0B       STA    video_stuff_500B
 E716: B6 10 00       LDA    sync_1000
 E719: 27 FB          BEQ    $E716
 E71B: B6 80 00       LDA    watchdog_8000
-E71E: 7F 50 03       CLR    $5003
+E71E: 7F 50 03       CLR    video_stuff_5003
 E721: 7F 10 00       CLR    sync_1000
-E724: BD EA 17       JSR    $EA17
+E724: BD EA 17       JSR    io_stuff_ea17
 E727: BD EB B9       JSR    $EBB9
 E72A: B6 10 00       LDA    sync_1000
 E72D: 27 FB          BEQ    $E72A
 E72F: B6 80 00       LDA    watchdog_8000
-E732: 7F 50 03       CLR    $5003
+E732: 7F 50 03       CLR    video_stuff_5003
 E735: 7F 10 00       CLR    sync_1000
-E738: BD EA 17       JSR    $EA17
+E738: BD EA 17       JSR    io_stuff_ea17
 E73B: BD EB B9       JSR    $EBB9
 E73E: 86 04          LDA    #$04
-E740: B7 48 18       STA    $4818
+E740: B7 48 18       STA    io_register_4818
 E743: B6 10 00       LDA    sync_1000
 E746: 27 FB          BEQ    $E743
 E748: B6 80 00       LDA    watchdog_8000
-E74B: 7F 50 03       CLR    $5003
+E74B: 7F 50 03       CLR    video_stuff_5003
 E74E: 7F 10 00       CLR    sync_1000
-E751: BD EA 17       JSR    $EA17
+E751: BD EA 17       JSR    io_stuff_ea17
 E754: BD EB B9       JSR    $EBB9
 E757: B6 10 00       LDA    sync_1000
 E75A: 27 FB          BEQ    $E757
 E75C: B6 80 00       LDA    watchdog_8000
-E75F: 7F 50 03       CLR    $5003
+E75F: 7F 50 03       CLR    video_stuff_5003
 E762: 7F 10 00       CLR    sync_1000
-E765: BD EA 17       JSR    $EA17
+E765: BD EA 17       JSR    io_stuff_ea17
 E768: BD EB B9       JSR    $EBB9
 E76B: 8E 48 10       LDX    #$4810
 E76E: CE EB 3A       LDU    #$EB3A
@@ -7072,21 +7097,22 @@ E773: E6 C0          LDB    ,U+
 E775: E7 82          STB    ,-X
 E777: 4A             DECA
 E778: 26 F9          BNE    $E773
+end_write_4810_zone_e77a:
 E77A: B6 10 00       LDA    sync_1000
 E77D: 27 FB          BEQ    $E77A
 E77F: B6 80 00       LDA    watchdog_8000
-E782: 7F 50 03       CLR    $5003
+E782: 7F 50 03       CLR    video_stuff_5003
 E785: 7F 10 00       CLR    sync_1000
-E788: BD EA 17       JSR    $EA17
+E788: BD EA 17       JSR    io_stuff_ea17
 E78B: BD EB B9       JSR    $EBB9
 E78E: B6 10 00       LDA    sync_1000
 E791: 27 FB          BEQ    $E78E
 E793: B6 80 00       LDA    watchdog_8000
-E796: 7F 50 03       CLR    $5003
+E796: 7F 50 03       CLR    video_stuff_5003
 E799: 7F 10 00       CLR    sync_1000
-E79C: BD EA 17       JSR    $EA17
+E79C: BD EA 17       JSR    io_stuff_ea17
 E79F: BD EB B9       JSR    $EBB9
-E7A2: B6 03 06       LDA    $0306
+E7A2: B6 03 06       LDA    checksum_failed_flag_0306		; [unchecked_address]
 E7A5: 85 03          BITA   #$03
 E7A7: 26 37          BNE    $E7E0
 E7A9: C6 01          LDB    #$01
@@ -7097,11 +7123,12 @@ E7B4: 27 F8          BEQ    $E7AE
 E7B6: B6 40 B0       LDA    $40B0
 E7B9: 81 E4          CMPA   #$E4
 E7BB: 27 0B          BEQ    $E7C8
+; failed protection?? sync with sound cpu?
 E7BD: CC 00 03       LDD    #$0003
 E7C0: B7 40 B0       STA    $40B0
-E7C3: F7 03 06       STB    $0306
+E7C3: F7 03 06       STB    checksum_failed_flag_0306	; [video_address]
 E7C6: 20 18          BRA    $E7E0
-E7C8: 7F 03 06       CLR    $0306
+E7C8: 7F 03 06       CLR    checksum_failed_flag_0306	; [video_address]
 E7CB: 7F 40 B0       CLR    $40B0
 E7CE: 86 FF          LDA    #$FF
 E7D0: B7 10 CE       STA    $10CE
@@ -7110,11 +7137,12 @@ E7D6: 7A 10 CF       DEC    $10CF
 E7D9: 26 F8          BNE    $E7D3
 E7DB: 7A 10 CE       DEC    $10CE
 E7DE: 26 F3          BNE    $E7D3
-E7E0: B6 03 06       LDA    $0306
+E7E0: B6 03 06       LDA    checksum_failed_flag_0306	; [unchecked_address]
 E7E3: BB 02 C6       ADDA   $02C6
 E7E6: BB 02 86       ADDA   $0286
 E7E9: 26 21          BNE    $E80C
-E7EB: 8E 03 06       LDX    #$0306
+; write text
+E7EB: 8E 03 06       LDX    #checksum_failed_flag_0306	; now this is a video address!
 E7EE: CE EB 4E       LDU    #$EB4E
 E7F1: 86 06          LDA    #$06
 E7F3: BD 85 90       JSR    write_text_8590
@@ -7159,9 +7187,9 @@ E85C: BD 85 90       JSR    write_text_8590
 E85F: B6 10 00       LDA    sync_1000
 E862: 27 FB          BEQ    $E85F
 E864: B6 80 00       LDA    watchdog_8000
-E867: 7F 50 03       CLR    $5003
+E867: 7F 50 03       CLR    video_stuff_5003
 E86A: 7F 10 00       CLR    sync_1000
-E86D: BD EA 17       JSR    $EA17
+E86D: BD EA 17       JSR    io_stuff_ea17
 E870: BD EB B9       JSR    $EBB9
 E873: B6 10 1E       LDA    $101E
 E876: 10 27 00 D7    LBEQ   $E951
@@ -7206,9 +7234,9 @@ E8CC: BD EB 02       JSR    $EB02
 E8CF: B6 10 00       LDA    sync_1000
 E8D2: 27 FB          BEQ    $E8CF
 E8D4: B6 80 00       LDA    watchdog_8000
-E8D7: 7F 50 03       CLR    $5003
+E8D7: 7F 50 03       CLR    video_stuff_5003
 E8DA: 7F 10 00       CLR    sync_1000
-E8DD: BD EA 17       JSR    $EA17
+E8DD: BD EA 17       JSR    io_stuff_ea17
 E8E0: BD EB B9       JSR    $EBB9
 E8E3: B6 10 1E       LDA    $101E
 E8E6: 27 69          BEQ    $E951
@@ -7231,9 +7259,9 @@ E90E: 20 BF          BRA    $E8CF
 E910: B6 10 00       LDA    sync_1000
 E913: 27 FB          BEQ    $E910
 E915: B6 80 00       LDA    watchdog_8000
-E918: 7F 50 03       CLR    $5003
+E918: 7F 50 03       CLR    video_stuff_5003
 E91B: 7F 10 00       CLR    sync_1000
-E91E: BD EA 17       JSR    $EA17
+E91E: BD EA 17       JSR    io_stuff_ea17
 E921: BD EB B9       JSR    $EBB9
 E924: B6 10 1E       LDA    $101E
 E927: 27 28          BEQ    $E951
@@ -7253,9 +7281,9 @@ E94A: C6 80          LDB    #$80
 E94C: BD 85 BD       JSR    $85BD
 E94F: 20 BF          BRA    $E910
 E951: 1C FF          ANDCC  #$FF
-E953: 7F 50 02       CLR    $5002
-E956: 7F 50 0A       CLR    $500A
-E959: 7F 50 08       CLR    $5008
+E953: 7F 50 02       CLR    video_stuff_5002
+E956: 7F 50 0A       CLR    video_stuff_500A
+E959: 7F 50 08       CLR    video_stuff_5008
 E95C: 7E 80 72       JMP    init_8072
 
 E95F: 7C 40 55       INC    $4055
@@ -7271,9 +7299,9 @@ E977: 26 F6          BNE    $E96F
 E979: B6 10 00       LDA    sync_1000
 E97C: 27 FB          BEQ    $E979
 E97E: B6 80 00       LDA    watchdog_8000
-E981: 7F 50 03       CLR    $5003
+E981: 7F 50 03       CLR    video_stuff_5003
 E984: 7F 10 00       CLR    sync_1000
-E987: BD EA 17       JSR    $EA17
+E987: BD EA 17       JSR    io_stuff_ea17
 E98A: BD EB B9       JSR    $EBB9
 E98D: B6 10 08       LDA    $1008
 E990: 27 05          BEQ    $E997
@@ -7291,9 +7319,9 @@ E9AE: BF 10 74       STX    $1074
 E9B1: B6 10 00       LDA    sync_1000
 E9B4: 27 FB          BEQ    $E9B1
 E9B6: B6 80 00       LDA    watchdog_8000
-E9B9: 7F 50 03       CLR    $5003
+E9B9: 7F 50 03       CLR    video_stuff_5003
 E9BC: 7F 10 00       CLR    sync_1000
-E9BF: BD EA 17       JSR    $EA17
+E9BF: BD EA 17       JSR    io_stuff_ea17
 E9C2: BD EB B9       JSR    $EBB9
 E9C5: CC 01 20       LDD    #$0120
 E9C8: B7 40 4A       STA    $404A
@@ -7318,15 +7346,17 @@ E9F7: 26 B8          BNE    $E9B1
 E9F9: B6 10 00       LDA    sync_1000
 E9FC: 27 FB          BEQ    $E9F9
 E9FE: B6 80 00       LDA    watchdog_8000
-EA01: 7F 50 03       CLR    $5003
+EA01: 7F 50 03       CLR    video_stuff_5003
 EA04: 7F 10 00       CLR    sync_1000
-EA07: BD EA 17       JSR    $EA17
+EA07: BD EA 17       JSR    io_stuff_ea17
 EA0A: BD EB B9       JSR    $EBB9
 EA0D: B6 40 4A       LDA    $404A
 EA10: 26 E7          BNE    $E9F9
 EA12: B6 80 00       LDA    watchdog_8000
 EA15: 20 FB          BRA    $EA12
-EA17: 8E 48 00       LDX    #$4800
+
+io_stuff_ea17:
+EA17: 8E 48 00       LDX    #namco_io_4800
 EA1A: F6 10 17       LDB    $1017
 EA1D: 58             ASLB
 EA1E: A6 05          LDA    $5,X
@@ -7376,6 +7406,7 @@ EA77: AA 88 17       ORA    $17,X
 EA7A: 84 09          ANDA   #$09
 EA7C: B7 10 1E       STA    $101E
 EA7F: 39             RTS
+
 EA80: 8E 85 88       LDX    #$8588
 EA83: CE EB 42       LDU    #$EB42
 EA86: B6 48 14       LDA    $4814
