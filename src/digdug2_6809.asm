@@ -82,6 +82,7 @@ video_stuff_5004 = $5004
 video_stuff_500b = $500B
 video_stuff_500a = $500A
 namco_io_4800 = $4800
+unknown_4802 = $4802
 io_register_4818 = $4818
 
 irq_8000:
@@ -174,6 +175,7 @@ init_8072:
 80E0: BB 40 54       ADDA   $4054
 80E3: B7 40 54       STA    $4054
 80E6: 7F 48 00       CLR    namco_io_4800
+end_of_io_stuff_80e6:
 80E9: B6 10 E7       LDA    $10E7
 80EC: 26 03          BNE    $80F1
 80EE: BD 86 35       JSR    $8635
@@ -365,7 +367,7 @@ reset_stack_and_jump_8199:
 827B: BD 87 06       JSR    clear_screen_8706
 827E: BD 8B 3D       JSR    $8B3D
 8281: BD 8B DF       JSR    $8BDF
-8284: FC 48 02       LDD    $4802
+8284: FC 48 02       LDD    unknown_4802
 8287: 84 0F          ANDA   #$0F
 8289: 26 6A          BNE    $82F5
 828B: C4 0F          ANDB   #$0F
@@ -377,7 +379,7 @@ reset_stack_and_jump_8199:
 829B: B7 10 E2       STA    $10E2
 829E: F7 10 4F       STB    $104F
 82A1: BD 81 50       JSR    save_reset_stack_and_jump_8150
-82A4: FC 48 02       LDD    $4802
+82A4: FC 48 02       LDD    unknown_4802
 82A7: 84 0F          ANDA   #$0F
 82A9: 26 4A          BNE    $82F5
 82AB: C4 0F          ANDB   #$0F
@@ -391,7 +393,7 @@ reset_stack_and_jump_8199:
 82BF: B7 10 E2       STA    $10E2
 82C2: F7 10 4F       STB    $104F
 82C5: BD 81 50       JSR    save_reset_stack_and_jump_8150
-82C8: FC 48 02       LDD    $4802
+82C8: FC 48 02       LDD    unknown_4802
 82CB: 84 0F          ANDA   #$0F
 82CD: 26 26          BNE    $82F5
 82CF: C4 0F          ANDB   #$0F
@@ -402,7 +404,7 @@ reset_stack_and_jump_8199:
 82DB: 26 E8          BNE    $82C5
 82DD: 7C 10 10       INC    $1010
 82E0: BD 81 50       JSR    save_reset_stack_and_jump_8150
-82E3: FC 48 02       LDD    $4802
+82E3: FC 48 02       LDD    unknown_4802
 82E6: 84 0F          ANDA   #$0F
 82E8: 26 0B          BNE    $82F5
 82EA: C4 0F          ANDB   #$0F
@@ -655,6 +657,10 @@ reset_stack_and_jump_8199:
 8585: A7 08          STA    $8,X
 8587: 39             RTS
 
+; < X: destination video address
+; < U: points on ASCII string
+; < A: length
+
 write_text_8590:
 8590: B7 10 09       STA    $1009
 8593: A6 C0          LDA    ,U+
@@ -723,7 +729,7 @@ clear_text_85a0:
 8643: 86 0E          LDA    #$0E
 8645: C6 06          LDB    #$06
 8647: BD 85 BD       JSR    $85BD
-864A: FC 48 02       LDD    $4802
+864A: FC 48 02       LDD    unknown_4802
 864D: C4 0F          ANDB   #$0F
 864F: F7 07 A3       STB    $07A3
 8652: 84 0F          ANDA   #$0F
@@ -743,7 +749,7 @@ clear_text_85a0:
 8671: CE 86 BD       LDU    #$86BD
 8674: 86 0D          LDA    #$0D
 8676: BD 85 90       JSR    write_text_8590
-8679: FC 48 02       LDD    $4802
+8679: FC 48 02       LDD    unknown_4802
 867C: 84 0F          ANDA   #$0F
 867E: 26 06          BNE    $8686
 8680: C4 0F          ANDB   #$0F
@@ -7143,8 +7149,8 @@ E7E6: BB 02 86       ADDA   $0286
 E7E9: 26 21          BNE    $E80C
 ; write text
 E7EB: 8E 03 06       LDX    #checksum_failed_flag_0306	; now this is a video address!
-E7EE: CE EB 4E       LDU    #$EB4E
-E7F1: 86 06          LDA    #$06
+E7EE: CE EB 4E       LDU    #$EB4E			; "RAM OK"
+E7F1: 86 06          LDA    #$06			; length
 E7F3: BD 85 90       JSR    write_text_8590
 E7F6: 8E 03 04       LDX    #$0304
 E7F9: CE EB 54       LDU    #$EB54

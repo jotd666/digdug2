@@ -229,6 +229,7 @@ start:
 		.global osd_blitz		| for debug
 		.global osd_video_byte_dirty
 		.global osd_video_word_dirty
+		.global osd_read_4802
 		.global osd_read_dsw_1
 		.global osd_read_dsw_2
 		.global osd_read_dsw_3
@@ -949,11 +950,10 @@ _vblank:
     movem.l (a7)+,d0-d7/a0-a6
     rte
 	
-osd_get_speech_status:
-	move.b	#0,d0
+osd_read_4802:
+	move.b	#0xF0,d0
 	rts
-osd_set_speech_status:
-	rts
+
 osd_set_scroll_direction:
 	rts
 	

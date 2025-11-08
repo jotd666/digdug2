@@ -13,6 +13,7 @@ input_dict = {"system_3300":"read_system_inputs",
 "audio_register_w_1500":"sound_start",
 "watchdog_8000":"",
 "namco_io_4800":"",  # sound?
+"unknown_4802":"read_4802",
 "video_stuff_5009" : "",
 "video_stuff_5008" : "",
 "video_stuff_5002" : "",
@@ -87,6 +88,8 @@ with open(source_dir / "conv.s") as f:
 
         if address in [0xe5c0,0xe951]:
             line = remove_error(line)
+        elif address == 0xE7B4:
+            line = remove_instruction(lines,i)  # remove sync loop
         elif address == 0x8153:
             # we have to patch natively: the game saves return address in a 16-bit buffer
             # (kind of task switch)
@@ -123,6 +126,9 @@ with open(source_dir / "conv.s") as f:
 
         elif address in {0x8012,0x800f}:
             line = remove_instruction(lines,i)
+        elif address == 0X80C9:
+            line = change_instruction("jra\tend_of_io_stuff_80e6",lines,i)
+
         elif address == 0xE703:
             line = change_instruction("jra\tend_io_regs_clear_e710",lines,i)
         elif address == 0xE76B:
