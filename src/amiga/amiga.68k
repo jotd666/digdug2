@@ -23,8 +23,8 @@ AFB_68020 = 1
 AFB_68030 = 2
 
 
-NB_POSSIBLE_SPRITES = 0x200
-NB_POSSIBLE_TILES = 0x400
+NB_POSSIBLE_SPRITES = 0x100
+NB_POSSIBLE_TILES = 0x100
 
 NB_SCROLL_ROWS = 28
 NB_SCROLL_ROWS_PART_1 = NB_SCROLL_ROWS/2
@@ -911,7 +911,6 @@ _vblank:
 	* D5 should be left untouched!
 	jbsr		do_irq
 	clr.b	interrupt_mode	
-	*jbsr	process_speech_queue	| process here too (PAL)
 	clr.b	d0
 1:
 	move.b	d0,mid_screen_interrupt_count
@@ -926,7 +925,7 @@ _vblank:
 	* may use it (D5 = S) to create local variables
 	jbsr		do_irq
 	* now D5 can be destroyed
-	jbsr	really_update_scroll
+	*jbsr	really_update_scroll
 	*jbsr	really_update_hw_sprites
 	
 	tst.b	frameskip
@@ -934,7 +933,7 @@ _vblank:
 	eor.b	#1,flip_flop
 	jeq		23f
 0:
-	jbsr		really_update_sprites
+	*jbsr		really_update_sprites
 	
 	
 	.ifne	OPT_ENABLE_DOUBLE_BUFFERING
@@ -951,7 +950,7 @@ _vblank:
     rte
 	
 osd_read_4802:
-	move.b	#0xF0,d0
+	move.b	#0xF0,d0	| this value seems not to change
 	rts
 
 osd_set_scroll_direction:
@@ -1184,7 +1183,7 @@ really_update_tiles:
 	*WAIT_BLIT  | no need in AGA: dual playfield
 	GET_MEMORY_START_AND_DP
 	lea		(VIDEO_ADDRESS,a6),a6
-	lea		(0x800,a6),a5
+	lea		(VIDEO_ADDRESS+0x800,a6),a5
 	lea		tiles_row_flags(pc),a1
 	moveq	#0,d3
 3:
@@ -2266,7 +2265,7 @@ osd_video_dirty_out:
 	moveq	#0,d7
 	rts
 	
-
+	.ifdef	XXX
 * < D7: 0-0x800
 * > D0: 
 compute_tile_xy:
@@ -2279,8 +2278,9 @@ compute_tile_xy:
 	lsr.w	#6,d1		| Y
 	lsl.w	#3,d1		| times 8
 	rts
+	.endif
 
-	.ifdef	XXX
+
 compute_tile_xy_portrait:
 	moveq	#0,d0
 	moveq	#0,d1
@@ -2294,7 +2294,6 @@ compute_tile_xy_portrait:
 	move.b	d7,d0		| this is X
 	lsl.b	#3,d1		| Y times 8
 	rts
-	.endif
 
 
 
@@ -2336,7 +2335,7 @@ update_bg_tile:
 	.endif
 
 
-	bsr		compute_tile_xy
+	bsr		compute_tile_xy_portrait
 	cmp.w	#FG_NB_BYTES_PER_ROW,d0
 	* 0 <= X < FG_NB_BYTES_PER_ROW: we must double the tiles
 	* to simulate tile wrap

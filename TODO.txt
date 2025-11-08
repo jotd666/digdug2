@@ -1,2 +1,4 @@
 - handle STS and tasks with external 32 bit address array
-- implement missing constructs in 6809268k
+- like RallyX tiles have 64 cluts, we have to rip them in a smart way
+- reduce log regs
+- debug stack task shit
