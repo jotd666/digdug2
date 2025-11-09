@@ -108,12 +108,15 @@ with open(source_dir / "conv.s") as f:
             line += "\tGET_REG_ADDRESS\t0,d5\n\tMOVE_W_TO_REG\ta0,d6\n\tDECODE_NATIVE_ADDRESS\td6\n"
             # then really set the actual stack to the top and push address there to simulate unwind
             line += "\tlea\tstack_top-4,a7\n\tmove.l\td6,-(a7)\n"
-        elif address in {0x8191,0x816e}:
+        elif address in {0x8191,0x816e,0x80B6}:
             if ">>" in line:
                 line = remove_instruction(lines,i)  # useless/irrelevant
             else:
                 # the value is an actual real address => read as long, then encode
                 line = line.replace("move.w","move.l") + "\tENCODE_NATIVE_ADDRESS\td1\n"
+                if "MAKE_D" in lines[i+1]:
+                    lines[i+1] = ""
+
         elif address == 0x8199:
             line = change_instruction("jra\tunwind_stack_8156",lines,i)  # same (modified) code
 

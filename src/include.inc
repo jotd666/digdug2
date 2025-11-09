@@ -357,7 +357,7 @@ okay\@:
 
 	.macro SET_DP_FROM_A
 	lsl.w    #8,d0
-	move.l    d0,a0
+	move.w    d0,a0    | DP < 0x80 so it's ok
 	GET_UNCHECKED_ADDRESS_FUNC
 	move.l	a0,a5
 	move.l	a5,m6809_direct_page_pointer
@@ -510,6 +510,7 @@ set_native_stack:
 	* game switches stacks: get address where the game will return now
 	GET_REG_ADDRESS 	0,d2
 	MOVE_W_TO_REG	a0,d6
+	BREAKPOINT 	"decode!!"
 	DECODE_NATIVE_ADDRESS	d6
 	.ifndef	RELEASE
 	cmp.w	#0x1EFF,d2
@@ -518,10 +519,10 @@ set_native_stack:
 	ILLEGAL
 0:
 	.endif
-	sub.w	#0x190E,d2
+	sub.w	#0x1800,d2
 	.ifndef	RELEASE
 	jpl		0f
-	add.w	#0x190E,d2
+	add.w	#0x1800,d2
 	BREAKPOINT	"X stack value not in range"
 	ILLEGAL
 0:

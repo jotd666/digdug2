@@ -157,7 +157,7 @@ init_8072:
 80AE: 30 88 20       LEAX   $20,X
 80B1: 8C 27 90       CMPX   #$2790
 80B4: 26 F5          BNE    $80AB
-80B6: CC 81 D9       LDD    #$81D9
+80B6: CC 81 D9       LDD    #save_reset_stack_81d9
 80B9: FD 19 0E       STD    $190E
 80BC: 1C EF          ANDCC  #$EF
 80BE: B7 50 03       STA    video_stuff_5003
@@ -304,6 +304,7 @@ reset_stack_and_jump_8199:
 81D4: CB 08          ADDB   #$08
 81D6: E7 06          STB    $6,X
 81D8: 39             RTS
+save_reset_stack_81d9:
 81D9: BD 81 50       JSR    save_reset_stack_and_jump_8150
 81DC: BD 87 01       JSR    $8701
 81DF: 8E 48 00       LDX    #namco_io_4800
