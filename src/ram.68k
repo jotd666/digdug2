@@ -30,7 +30,7 @@
 
 	.align	2
 
-	.skip	0x3000   | NATIVE_STACK_SIZE
+	.skip	0x3800   | NATIVE_STACK_SIZE plus 0x800 bytes margin
 stack_top:
 ram_buffer:
 	.ifdef	RELEASE

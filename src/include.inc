@@ -506,33 +506,33 @@ okay\@:
 	.endif
 	.endm
 
+* called from task_switch_818a
 set_native_stack:
 	* game switches stacks: get address where the game will return now
-	GET_REG_ADDRESS 	0,d2
+	MOVE_W_TO_REG	a0,d5
+	BREAKPOINT	"fickkk"
+	GET_REG_ADDRESS	0,d5
 	MOVE_W_TO_REG	a0,d6
-	BREAKPOINT 	"decode!!"
 	DECODE_NATIVE_ADDRESS	d6
 	.ifndef	RELEASE
-	cmp.w	#0x1EFF,d2
+	cmp.w	#0x1EFF,d5
 	jcs		0f
 	BREAKPOINT	"X stack value not in range"
 	ILLEGAL
 0:
 	.endif
-	sub.w	#0x1800,d2
+	sub.w	#0x190E,d5
 	.ifndef	RELEASE
 	jpl		0f
-	add.w	#0x1800,d2
+	add.w	#0x190E,d5
 	BREAKPOINT	"X stack value not in range"
 	ILLEGAL
 0:
 	.endif
 	* inflate d2 so 68000 code has enough stack space
-	add.w	d2,d2
-	add.w	d2,d2
-	add.w	d2,d2
+	lsl.w	#3,d5
 	lea		stack_top-NATIVE_STACK_SIZE,a7
-	add.w	d2,a7
+	add.w	d5,a7
 	* store real address
 	move.l	d6,(a7)
 	* and jump here

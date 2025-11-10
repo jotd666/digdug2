@@ -84,6 +84,7 @@ video_stuff_500a = $500A
 namco_io_4800 = $4800
 unknown_4802 = $4802
 io_register_4818 = $4818
+stack_location_pointer_array_1800 = $1800
 
 irq_8000:
 8000: B7 50 02       STA    video_stuff_5002
@@ -135,31 +136,36 @@ init_8072:
 8072: 10 CE 19 00    LDS    #stack_top_1900		; stack top
 8076: 86 10          LDA    #$10
 8078: 1F 8B          TFR    A,DP
+; clear RAM
 807A: CE 00 00       LDU    #$0000
 807D: 8E 10 00       LDX    #sync_1000
 8080: B6 80 00       LDA    watchdog_8000
 8083: EF 81          STU    ,X++
 8085: 8C 28 00       CMPX   #$2800
 8088: 26 F6          BNE    $8080
+; init the $20 task stack pointers
 808A: CE 19 0E       LDU    #$190E
-808D: 8E 18 00       LDX    #$1800
+808D: 8E 18 00       LDX    #stack_location_pointer_array_1800
 8090: BD 81 6B       JSR    init_stack_zone_816b
 8093: 30 02          LEAX   $2,X
 8095: 8C 18 40       CMPX   #$1840
 8098: 26 F6          BNE    $8090
+; 4 zones of $20 bytes
 809A: 8E 1F 10       LDX    #$1F10
 809D: BD 81 5B       JSR    zero_and_init_stack_zone_815b
 80A0: 30 88 20       LEAX   $20,X
 80A3: 8C 1F 90       CMPX   #$1F90
 80A6: 26 F5          BNE    $809D
+; 64 zones of $20 bytes
 80A8: 8E 20 10       LDX    #$2010
 80AB: BD 81 5B       JSR    zero_and_init_stack_zone_815b
 80AE: 30 88 20       LEAX   $20,X
 80B1: 8C 27 90       CMPX   #$2790
 80B4: 26 F5          BNE    $80AB
+; init first stack return address
 80B6: CC 81 D9       LDD    #save_reset_stack_81d9
 80B9: FD 19 0E       STD    $190E
-80BC: 1C EF          ANDCC  #$EF
+80BC: 1C EF          ANDCC  #$EF	; enable interrupts
 80BE: B7 50 03       STA    video_stuff_5003
 80C1: B6 10 00       LDA    sync_1000
 80C4: 27 FB          BEQ    $80C1
@@ -198,20 +204,26 @@ end_of_io_stuff_80e6:
 8114: 84 01          ANDA   #$01
 8116: B7 10 DE       STA    $10DE
 8119: 26 0C          BNE    $8127
-811B: 8E 18 00       LDX    #$1800
+; now loop on all tasks. When calling "task_switch_818a"
+; it actually switches to other contexts. Either they're empty
+; contexts or they do something, then yield after a while
+811B: 8E 18 00       LDX    #stack_location_pointer_array_1800
+task_loop_811e:
 811E: 8D 6A          BSR    task_switch_818a
 8120: 30 02          LEAX   $2,X
 8122: 8C 18 30       CMPX   #$1830
-8125: 26 F7          BNE    $811E
+8125: 26 F7          BNE    task_loop_811E
 8127: B6 25 00       LDA    $2500
 812A: 27 03          BEQ    $812F
 812C: BD 8E AD       JSR    $8EAD
+; more tasks
 812F: 8E 1F 10       LDX    #$1F10
 8132: 8D 56          BSR    task_switch_818a
 8134: 8D 68          BSR    $819E
 8136: 30 88 20       LEAX   $20,X
 8139: 8C 1F 90       CMPX   #$1F90
 813C: 26 F4          BNE    $8132
+; more tasks
 813E: 8E 20 10       LDX    #$2010
 8141: 8D 47          BSR    task_switch_818a
 8143: 8D 59          BSR    $819E
@@ -238,11 +250,12 @@ zero_and_init_stack_zone_815b:
 8166: E7 80          STB    ,X+			; put $10 times 0 in original X-$10
 8168: 4A             DECA
 8169: 26 FB          BNE    $8166
+* in the end put pointer on inactive task
 init_stack_zone_816b:
 816B: B6 80 00       LDA    watchdog_8000
-816E: CC 81 91       LDD    #store_to_stack_8191
+816E: CC 81 91       LDD    #inactive_task_8191
 8171: EF 84          STU    ,X
-8173: 33 C8 10       LEAU   $10,U
+8173: 33 C8 10       LEAU   $10,U		; move pointer by $10 bytes
 8176: ED 94          STD    [,X]
 8178: 39             RTS
 
@@ -266,7 +279,7 @@ task_switch_818a:
 818D: 10 EE 84       LDS    ,X
 8190: 39             RTS
 
-store_to_stack_8191:
+inactive_task_8191:
 8191: CC 81 99       LDD    #reset_stack_and_jump_8199
 8194: BE 10 02       LDX    task_stack_pointer_1002
 8197: ED 94          STD    [,X]

@@ -105,9 +105,7 @@ with open(source_dir / "conv.s") as f:
             line = "\tmove.l\t(a7),d0\n\tENCODE_NATIVE_ADDRESS\td0\n\tGET_REG_ADDRESS\t0,d2\n"+change_instruction("MOVE_W_FROM_REG\td0,a0",lines,i)
         elif address == 0x8156:
             # set stack to the top, read the value there
-            line += "\tGET_REG_ADDRESS\t0,d5\n\tMOVE_W_TO_REG\ta0,d6\n\tDECODE_NATIVE_ADDRESS\td6\n"
-            # then really set the actual stack to the top and push address there to simulate unwind
-            line += "\tlea\tstack_top-4,a7\n\tmove.l\td6,-(a7)\n"
+            line = change_instruction("lea\tstack_top-4,a7",lines,i)
         elif address in {0x8191,0x816e,0x80B6}:
             if ">>" in line:
                 line = remove_instruction(lines,i)  # useless/irrelevant
