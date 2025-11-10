@@ -232,16 +232,17 @@ task_loop_811e:
 814B: 26 F4          BNE    $8141
 814D: 7E 80 BE       JMP    $80BE
 
-save_reset_stack_and_jump_8150:
+suspend_task_8150:
 8150: BE 10 02       LDX    task_stack_pointer_1002
 8153: 10 EF 84       STS    ,X
 unwind_stack_8156:
-8156: 10 CE 18 FE    LDS    #stack_top_1900-2		; pop all addresses except the first one
+8156: 10 CE 18 FE    LDS    #stack_top_1900-2		; return to scheduler
 815A: 39             RTS
 
 ; < X pointer on stack buffer top
 ; < U 
 zero_and_init_stack_zone_815b:
+; clear $10 bytes before X $10 bytes after
 815B: CC 10 10       LDD    #$1010
 815E: 6F 80          CLR    ,X+
 8160: 5A             DECB
@@ -250,6 +251,7 @@ zero_and_init_stack_zone_815b:
 8166: E7 80          STB    ,X+			; put $10 times 0 in original X-$10
 8168: 4A             DECA
 8169: 26 FB          BNE    $8166
+* X is the same as it was when starting
 * in the end put pointer on inactive task
 init_stack_zone_816b:
 816B: B6 80 00       LDA    watchdog_8000
@@ -318,7 +320,7 @@ reset_stack_and_jump_8199:
 81D6: E7 06          STB    $6,X
 81D8: 39             RTS
 save_reset_stack_81d9:
-81D9: BD 81 50       JSR    save_reset_stack_and_jump_8150
+81D9: BD 81 50       JSR    suspend_task_8150
 81DC: BD 87 01       JSR    $8701
 81DF: 8E 48 00       LDX    #namco_io_4800
 81E2: CC 00 00       LDD    #$0000
@@ -329,21 +331,21 @@ save_reset_stack_81d9:
 81EF: ED 81          STD    ,X++
 81F1: 8C 48 20       CMPX   #$4820
 81F4: 26 F9          BNE    $81EF
-81F6: BD 81 50       JSR    save_reset_stack_and_jump_8150
-81F9: BD 81 50       JSR    save_reset_stack_and_jump_8150
+81F6: BD 81 50       JSR    suspend_task_8150
+81F9: BD 81 50       JSR    suspend_task_8150
 81FC: B7 50 0B       STA    video_stuff_500B
 81FF: B7 50 09       STA    video_stuff_5009
-8202: BD 81 50       JSR    save_reset_stack_and_jump_8150
-8205: BD 81 50       JSR    save_reset_stack_and_jump_8150
+8202: BD 81 50       JSR    suspend_task_8150
+8205: BD 81 50       JSR    suspend_task_8150
 8208: 86 04          LDA    #$04
 820A: B7 48 18       STA    io_register_4818
-820D: BD 81 50       JSR    save_reset_stack_and_jump_8150
-8210: BD 81 50       JSR    save_reset_stack_and_jump_8150
+820D: BD 81 50       JSR    suspend_task_8150
+8210: BD 81 50       JSR    suspend_task_8150
 8213: BD 85 6A       JSR    $856A
 8216: BD 8C 05       JSR    $8C05
 8219: BD 9A C4       JSR    $9AC4
-821C: BD 81 50       JSR    save_reset_stack_and_jump_8150
-821F: BD 81 50       JSR    save_reset_stack_and_jump_8150
+821C: BD 81 50       JSR    suspend_task_8150
+821F: BD 81 50       JSR    suspend_task_8150
 8222: CC 01 03       LDD    #$0103
 8225: B7 48 0A       STA    $480A
 8228: B7 48 0C       STA    $480C
@@ -368,7 +370,7 @@ save_reset_stack_81d9:
 8257: 84 04          ANDA   #$04
 8259: B7 10 F0       STA    $10F0
 825C: BD 8F 67       JSR    $8F67
-825F: BD 81 50       JSR    save_reset_stack_and_jump_8150
+825F: BD 81 50       JSR    suspend_task_8150
 8262: BD 8A B2       JSR    $8AB2
 8265: 4F             CLRA
 8266: B7 10 05       STA    $1005
@@ -392,7 +394,7 @@ save_reset_stack_81d9:
 8298: CC 01 08       LDD    #$0108
 829B: B7 10 E2       STA    $10E2
 829E: F7 10 4F       STB    $104F
-82A1: BD 81 50       JSR    save_reset_stack_and_jump_8150
+82A1: BD 81 50       JSR    suspend_task_8150
 82A4: FC 48 02       LDD    unknown_4802
 82A7: 84 0F          ANDA   #$0F
 82A9: 26 4A          BNE    $82F5
@@ -406,7 +408,7 @@ save_reset_stack_81d9:
 82BC: CC 00 05       LDD    #$0005
 82BF: B7 10 E2       STA    $10E2
 82C2: F7 10 4F       STB    $104F
-82C5: BD 81 50       JSR    save_reset_stack_and_jump_8150
+82C5: BD 81 50       JSR    suspend_task_8150
 82C8: FC 48 02       LDD    unknown_4802
 82CB: 84 0F          ANDA   #$0F
 82CD: 26 26          BNE    $82F5
@@ -417,7 +419,7 @@ save_reset_stack_81d9:
 82D8: 7A 10 4F       DEC    $104F
 82DB: 26 E8          BNE    $82C5
 82DD: 7C 10 10       INC    $1010
-82E0: BD 81 50       JSR    save_reset_stack_and_jump_8150
+82E0: BD 81 50       JSR    suspend_task_8150
 82E3: FC 48 02       LDD    unknown_4802
 82E6: 84 0F          ANDA   #$0F
 82E8: 26 0B          BNE    $82F5
@@ -436,7 +438,7 @@ save_reset_stack_81d9:
 830A: BD 85 CA       JSR    $85CA
 830D: BD 86 5B       JSR    $865B
 8310: BD 8A A0       JSR    $8AA0
-8313: BD 81 50       JSR    save_reset_stack_and_jump_8150
+8313: BD 81 50       JSR    suspend_task_8150
 8316: B6 48 01       LDA    $4801
 8319: 84 0F          ANDA   #$0F
 831B: 27 F0          BEQ    $830D
@@ -456,7 +458,7 @@ save_reset_stack_81d9:
 833D: B7 10 DE       STA    $10DE
 8340: 7F 48 01       CLR    $4801
 8343: 7C 48 09       INC    $4809
-8346: BD 81 50       JSR    save_reset_stack_and_jump_8150
+8346: BD 81 50       JSR    suspend_task_8150
 8349: B6 10 E1       LDA    $10E1
 834C: 26 F8          BNE    $8346
 834E: 20 2F          BRA    $837F
@@ -473,7 +475,7 @@ save_reset_stack_81d9:
 8369: BD 8B 3D       JSR    $8B3D
 836C: 7F 48 01       CLR    $4801
 836F: 7C 48 09       INC    $4809
-8372: BD 81 50       JSR    save_reset_stack_and_jump_8150
+8372: BD 81 50       JSR    suspend_task_8150
 8375: B6 10 E9       LDA    $10E9
 8378: 26 F8          BNE    $8372
 837A: B6 10 05       LDA    $1005
@@ -487,14 +489,14 @@ save_reset_stack_81d9:
 8391: 86 3C          LDA    #$3C
 8393: B7 10 4F       STA    $104F
 8396: 7C 40 40       INC    $4040
-8399: BD 81 50       JSR    save_reset_stack_and_jump_8150
+8399: BD 81 50       JSR    suspend_task_8150
 839C: 7A 10 4F       DEC    $104F
 839F: 26 F8          BNE    $8399
 83A1: BD 85 38       JSR    $8538
 83A4: BD C1 2A       JSR    $C12A
-83A7: BD 81 50       JSR    save_reset_stack_and_jump_8150
+83A7: BD 81 50       JSR    suspend_task_8150
 83AA: BD 88 24       JSR    $8824
-83AD: BD 81 50       JSR    save_reset_stack_and_jump_8150
+83AD: BD 81 50       JSR    suspend_task_8150
 83B0: B6 10 D0       LDA    $10D0
 83B3: 26 4A          BNE    $83FF
 83B5: B6 10 D1       LDA    $10D1
@@ -508,7 +510,7 @@ save_reset_stack_81d9:
 83CB: B7 40 42       STA    $4042
 83CE: FD 10 DC       STD    $10DC
 83D1: 7C 40 52       INC    $4052
-83D4: BD 81 50       JSR    save_reset_stack_and_jump_8150
+83D4: BD 81 50       JSR    suspend_task_8150
 83D7: B6 40 52       LDA    $4052
 83DA: BA 10 D7       ORA    $10D7
 83DD: BA 10 D9       ORA    $10D9
@@ -528,7 +530,7 @@ save_reset_stack_81d9:
 8405: B7 40 42       STA    $4042
 8408: FD 10 DC       STD    $10DC
 840B: 7F 10 E8       CLR    $10E8
-840E: BD 81 50       JSR    save_reset_stack_and_jump_8150
+840E: BD 81 50       JSR    suspend_task_8150
 8411: B6 40 51       LDA    $4051
 8414: BA 40 4D       ORA    $404D
 8417: BA 10 4F       ORA    $104F
@@ -565,15 +567,15 @@ save_reset_stack_81d9:
 8472: FD 10 DC       STD    $10DC
 8475: 7C 40 44       INC    $4044
 8478: 7C 10 E3       INC    $10E3
-847B: BD 81 50       JSR    save_reset_stack_and_jump_8150
+847B: BD 81 50       JSR    suspend_task_8150
 847E: B6 40 44       LDA    $4044
 8481: 26 F8          BNE    $847B
 8483: 7F 10 E3       CLR    $10E3
-8486: BD 81 50       JSR    save_reset_stack_and_jump_8150
+8486: BD 81 50       JSR    suspend_task_8150
 8489: BD 9B 69       JSR    $9B69
 848C: B6 10 E5       LDA    $10E5
 848F: 27 05          BEQ    $8496
-8491: BD 81 50       JSR    save_reset_stack_and_jump_8150
+8491: BD 81 50       JSR    suspend_task_8150
 8494: 20 F6          BRA    $848C
 8496: B6 17 43       LDA    $1743
 8499: 26 C2          BNE    $845D
@@ -944,7 +946,7 @@ fill_screen_871c:
 887D: 26 F9          BNE    $8878
 887F: 39             RTS
 
-8890: BD 81 50       JSR    save_reset_stack_and_jump_8150                                       
+8890: BD 81 50       JSR    suspend_task_8150                                       
 8893: B6 10 E2       LDA    $10E2
 8896: 27 F8          BEQ    $8890
 8898: 8E 20 10       LDX    #$2010
@@ -993,7 +995,7 @@ fill_screen_871c:
 88FF: BD 85 A0       JSR    clear_text_85a0
 8902: 86 30          LDA    #$30
 8904: B7 20 14       STA    $2014
-8907: BD 81 50       JSR    save_reset_stack_and_jump_8150
+8907: BD 81 50       JSR    suspend_task_8150
 890A: B6 10 E2       LDA    $10E2
 890D: 10 27 00 E3    LBEQ   $89F4
 8911: B6 10 01       LDA    $1001
@@ -1009,7 +1011,7 @@ fill_screen_871c:
 892A: 26 DB          BNE    $8907
 892C: 86 3C          LDA    #$3C
 892E: A7 88 24       STA    $24,X
-8931: BD 81 50       JSR    save_reset_stack_and_jump_8150
+8931: BD 81 50       JSR    suspend_task_8150
 8934: B6 10 E2       LDA    $10E2
 8937: 10 27 00 B9    LBEQ   $89F4
 893B: 7A 20 14       DEC    $2014
@@ -1064,12 +1066,12 @@ fill_screen_871c:
 89BF: BD 85 A0       JSR    clear_text_85a0
 89C2: 86 1F          LDA    #$1F
 89C4: B7 20 14       STA    $2014
-89C7: BD 81 50       JSR    save_reset_stack_and_jump_8150
+89C7: BD 81 50       JSR    suspend_task_8150
 89CA: B6 10 E2       LDA    $10E2
 89CD: 27 25          BEQ    $89F4
 89CF: 7A 20 14       DEC    $2014
 89D2: 26 F3          BNE    $89C7
-89D4: BD 81 50       JSR    save_reset_stack_and_jump_8150
+89D4: BD 81 50       JSR    suspend_task_8150
 89D7: B6 10 E2       LDA    $10E2
 89DA: 27 18          BEQ    $89F4
 89DC: B6 10 01       LDA    $1001
@@ -1372,7 +1374,7 @@ fill_screen_871c:
 ; pP01ST BONUS FOR   0000 PTSAND
 
 
-8D48: BD 81 50       JSR    save_reset_stack_and_jump_8150
+8D48: BD 81 50       JSR    suspend_task_8150
 8D4B: B6 10 E6       LDA    $10E6
 8D4E: 27 F8          BEQ    $8D48
 8D50: 8E 12 F7       LDX    #$12F7
@@ -1439,7 +1441,7 @@ fill_screen_871c:
 8DE2: B7 10 5D       STA    $105D
 8DE5: 39             RTS
 
-8DFA: BD 81 50       JSR    save_reset_stack_and_jump_8150                                       
+8DFA: BD 81 50       JSR    suspend_task_8150                                       
 8DFD: B6 10 5E       LDA    $105E
 8E00: 27 F8          BEQ    $8DFA
 8E02: 8E 1F 10       LDX    #$1F10
@@ -1463,7 +1465,7 @@ fill_screen_871c:
 8E2F: E7 88 2F       STB    $2F,X
 8E32: A7 0C          STA    $C,X
 8E34: A7 88 2C       STA    $2C,X
-8E37: BD 81 50       JSR    save_reset_stack_and_jump_8150
+8E37: BD 81 50       JSR    suspend_task_8150
 8E3A: 8E 1F 10       LDX    #$1F10
 8E3D: A6 12          LDA    -$E,X
 8E3F: AB 0D          ADDA   $D,X
@@ -1612,7 +1614,7 @@ fill_screen_871c:
 8F7F: 39             RTS
 
 
-8FAC: BD 81 50       JSR    save_reset_stack_and_jump_8150
+8FAC: BD 81 50       JSR    suspend_task_8150
 8FAF: B6 10 1B       LDA    $101B
 8FB2: 27 F8          BEQ    $8FAC
 8FB4: B6 10 04       LDA    $1004
@@ -1644,7 +1646,7 @@ fill_screen_871c:
 8FEC: 84 02          ANDA   #$02
 8FEE: B7 10 14       STA    $1014
 8FF1: 20 B9          BRA    $8FAC
-8FF3: BD 81 50       JSR    save_reset_stack_and_jump_8150
+8FF3: BD 81 50       JSR    suspend_task_8150
 8FF6: B6 10 1B       LDA    $101B
 8FF9: 27 F8          BEQ    $8FF3
 8FFB: B6 10 04       LDA    $1004
@@ -1717,7 +1719,7 @@ fill_screen_871c:
 9098: 50             NEGB
 9099: 20 20          BRA    $90BB
 
-909C: BD 81 50       JSR    save_reset_stack_and_jump_8150
+909C: BD 81 50       JSR    suspend_task_8150
 909F: B6 10 10       LDA    $1010
 90A2: 27 F8          BEQ    $909C
 90A4: 8E 15 80       LDX    #$1580
@@ -1779,7 +1781,7 @@ fill_screen_871c:
 913D: ED 0A          STD    $A,X
 913F: 86 3D          LDA    #$3D
 9141: ED 88 2A       STD    $2A,X
-9144: BD 81 50       JSR    save_reset_stack_and_jump_8150
+9144: BD 81 50       JSR    suspend_task_8150
 9147: B6 10 10       LDA    $1010
 914A: 27 52          BEQ    $919E
 914C: FC 10 D0       LDD    $10D0
@@ -1808,7 +1810,7 @@ fill_screen_871c:
 918A: 20 B8          BRA    $9144
 918C: 86 4F          LDA    #$4F
 918E: B7 10 4F       STA    $104F
-9191: BD 81 50       JSR    save_reset_stack_and_jump_8150
+9191: BD 81 50       JSR    suspend_task_8150
 9194: B6 10 10       LDA    $1010
 9197: 27 05          BEQ    $919E
 9199: 7A 10 4F       DEC    $104F
@@ -1855,7 +1857,7 @@ fill_screen_871c:
 920C: BD 87 32       JSR    $8732
 920F: 7E 90 9C       JMP    $909C
 
-9438: BD 81 50       JSR    save_reset_stack_and_jump_8150
+9438: BD 81 50       JSR    suspend_task_8150
 943B: B6 10 D4       LDA    $10D4
 943E: 27 F8          BEQ    $9438
 9440: 8E 00 00       LDX    #$0000
@@ -1927,7 +1929,7 @@ fill_screen_871c:
 94DE: 80 40          SUBA   #$40
 94E0: 20 10          BRA    $94F2
 94E2: 05 05          LSR    $05
-94E4: BD 81 50       JSR    save_reset_stack_and_jump_8150
+94E4: BD 81 50       JSR    suspend_task_8150
 94E7: B6 10 E3       LDA    $10E3
 94EA: 27 F8          BEQ    $94E4
 94EC: 8E 20 10       LDX    #$2010
@@ -1953,7 +1955,7 @@ fill_screen_871c:
 951E: CC 02 B4       LDD    #$02B4
 9521: A7 88 48       STA    $48,X
 9524: E7 88 44       STB    $44,X
-9527: BD 81 50       JSR    save_reset_stack_and_jump_8150
+9527: BD 81 50       JSR    suspend_task_8150
 952A: B6 10 E3       LDA    $10E3
 952D: 27 15          BEQ    $9544
 952F: 8E 20 10       LDX    #$2010
@@ -2005,7 +2007,7 @@ fill_screen_871c:
 9598: 30 88 20       LEAX   $20,X
 959B: 8C 20 B0       CMPX   #$20B0
 959E: 26 BC          BNE    $955C
-95A0: BD 81 50       JSR    save_reset_stack_and_jump_8150
+95A0: BD 81 50       JSR    suspend_task_8150
 95A3: B6 10 E3       LDA    $10E3
 95A6: 27 64          BEQ    $960C
 95A8: B6 10 01       LDA    $1001
@@ -2390,7 +2392,7 @@ fill_screen_871c:
 994E: CC D0 1E       LDD    #$D01E
 9951: D4 D8          ANDB   $D8
 9953: DC 16          LDD    $16
-9955: BD 81 50       JSR    save_reset_stack_and_jump_8150
+9955: BD 81 50       JSR    suspend_task_8150
 9958: B6 10 E5       LDA    $10E5
 995B: 27 F8          BEQ    $9955
 995D: BD 9A D7       JSR    $9AD7
@@ -2420,7 +2422,7 @@ fill_screen_871c:
 99A2: 86 0B          LDA    #$0B
 99A4: C6 14          LDB    #$14
 99A6: BD 85 A0       JSR    clear_text_85a0
-99A9: BD 81 50       JSR    save_reset_stack_and_jump_8150
+99A9: BD 81 50       JSR    suspend_task_8150
 99AC: B6 48 05       LDA    $4805
 99AF: 84 08          ANDA   #$08
 99B1: 10 26 01 03    LBNE   $9AB8
@@ -2492,7 +2494,7 @@ fill_screen_871c:
 9A62: F7 40 4A       STB    $404A
 9A65: A7 89 08 00    STA    $0800,X
 9A69: B7 10 1B       STA    $101B
-9A6C: BD 81 50       JSR    save_reset_stack_and_jump_8150
+9A6C: BD 81 50       JSR    suspend_task_8150
 9A6F: B6 48 05       LDA    $4805
 9A72: 84 08          ANDA   #$08
 9A74: 26 42          BNE    $9AB8
@@ -2679,7 +2681,7 @@ fill_screen_871c:
 9C13: B7 40 4A       STA    $404A
 9C16: 39             RTS
 
-9CB6: BD 81 50       JSR    save_reset_stack_and_jump_8150
+9CB6: BD 81 50       JSR    suspend_task_8150
 9CB9: B6 10 E1       LDA    $10E1
 9CBC: 27 F8          BEQ    $9CB6
 9CBE: BD 87 06       JSR    clear_screen_8706
@@ -2688,7 +2690,7 @@ fill_screen_871c:
 9CC7: FD 17 04       STD    $1704
 9CCA: B7 10 1B       STA    $101B
 9CCD: BD 87 C5       JSR    $87C5
-9CD0: BD 81 50       JSR    save_reset_stack_and_jump_8150
+9CD0: BD 81 50       JSR    suspend_task_8150
 9CD3: B6 10 14       LDA    $1014
 9CD6: 26 31          BNE    $9D09
 9CD8: B6 10 01       LDA    $1001
@@ -2724,7 +2726,7 @@ fill_screen_871c:
 9D18: B7 17 05       STA    $1705
 9D1B: 7C 17 25       INC    $1725
 9D1E: 20 96          BRA    $9CB6
-9D20: BD 81 50       JSR    save_reset_stack_and_jump_8150
+9D20: BD 81 50       JSR    suspend_task_8150
 9D23: B6 10 E9       LDA    $10E9
 9D26: 27 F8          BEQ    $9D20
 9D28: B6 10 F0       LDA    $10F0
@@ -2801,7 +2803,7 @@ fill_screen_871c:
 9DE5: A6 89 F7 E0    LDA    -$0820,X
 9DE9: E6 89 F8 00    LDB    -$0800,X
 9DED: FD 07 A3       STD    $07A3
-9DF0: BD 81 50       JSR    save_reset_stack_and_jump_8150
+9DF0: BD 81 50       JSR    suspend_task_8150
 9DF3: 8E 25 10       LDX    #$2510
 9DF6: B6 10 50       LDA    $1050
 9DF9: 26 07          BNE    $9E02
@@ -2855,7 +2857,7 @@ fill_screen_871c:
 9E69: BB 10 34       ADDA   $1034
 9E6C: A7 0A          STA    $A,X
 9E6E: 6F 0C          CLR    $C,X
-9E70: BD 81 50       JSR    save_reset_stack_and_jump_8150
+9E70: BD 81 50       JSR    suspend_task_8150
 9E73: 8E 25 10       LDX    #$2510
 9E76: B6 10 50       LDA    $1050
 9E79: 26 D6          BNE    $9E51
@@ -2870,7 +2872,7 @@ fill_screen_871c:
 9E91: A6 89 F7 E0    LDA    -$0820,X
 9E95: E6 89 F8 00    LDB    -$0800,X
 9E99: FD 07 A3       STD    $07A3
-9E9C: BD 81 50       JSR    save_reset_stack_and_jump_8150
+9E9C: BD 81 50       JSR    suspend_task_8150
 9E9F: 7A 10 4F       DEC    $104F
 9EA2: 27 13          BEQ    $9EB7
 9EA4: B6 10 01       LDA    $1001
@@ -2895,11 +2897,11 @@ fill_screen_871c:
 9ED4: 7E 9D 20       JMP    $9D20
 
 
-9F03: BD 81 50       JSR    save_reset_stack_and_jump_8150
+9F03: BD 81 50       JSR    suspend_task_8150
 9F06: B6 10 DA       LDA    $10DA
 9F09: 27 F8          BEQ    $9F03
 9F0B: B7 40 48       STA    $4048
-9F0E: BD 81 50       JSR    save_reset_stack_and_jump_8150
+9F0E: BD 81 50       JSR    suspend_task_8150
 9F11: B6 10 DA       LDA    $10DA
 9F14: 27 ED          BEQ    $9F03
 9F16: 7A 25 14       DEC    $2514
@@ -2915,7 +2917,7 @@ fill_screen_871c:
 9F2C: BA 10 34       ORA    $1034
 9F2F: B7 25 1A       STA    $251A
 9F32: 20 DA          BRA    $9F0E
-9F34: BD 81 50       JSR    save_reset_stack_and_jump_8150
+9F34: BD 81 50       JSR    suspend_task_8150
 9F37: B6 10 DA       LDA    $10DA
 9F3A: 27 C7          BEQ    $9F03
 9F3C: 8E 25 10       LDX    #$2510
@@ -2957,7 +2959,7 @@ fill_screen_871c:
 9F8C: BD C0 00       JSR    $C000
 9F8F: BD C0 9F       JSR    $C09F
 9F92: BD C4 80       JSR    $C480
-9F95: BD 81 50       JSR    save_reset_stack_and_jump_8150
+9F95: BD 81 50       JSR    suspend_task_8150
 9F98: B6 10 DA       LDA    $10DA
 9F9B: 10 27 FF 64    LBEQ   $9F03
 9F9F: 8E 25 10       LDX    #$2510
@@ -3060,16 +3062,16 @@ A074: 6F 08          CLR    $8,X
 A076: 7F 10 DA       CLR    $10DA
 A079: 7E 9F 03       JMP    $9F03
 
-A08B: BD 81 50       JSR    save_reset_stack_and_jump_8150
+A08B: BD 81 50       JSR    suspend_task_8150
 A08E: B6 25 00       LDA    $2500
 A091: 27 F8          BEQ    $A08B
 A093: BD A0 FF       JSR    $A0FF
 A096: BD 8D BB       JSR    $8DBB
-A099: BD 81 50       JSR    save_reset_stack_and_jump_8150
+A099: BD 81 50       JSR    suspend_task_8150
 A09C: B6 40 40       LDA    $4040
 A09F: 26 F8          BNE    $A099
 A0A1: 7C 10 DC       INC    $10DC
-A0A4: BD 81 50       JSR    save_reset_stack_and_jump_8150
+A0A4: BD 81 50       JSR    suspend_task_8150
 A0A7: B6 25 00       LDA    $2500
 A0AA: 27 3F          BEQ    $A0EB
 A0AC: B6 10 D1       LDA    $10D1
@@ -3094,7 +3096,7 @@ A0D8: 7F 25 02       CLR    $2502
 A0DB: B6 25 01       LDA    $2501
 A0DE: 27 03          BEQ    $A0E3
 A0E0: 7F 25 01       CLR    $2501
-A0E3: BD 81 50       JSR    save_reset_stack_and_jump_8150
+A0E3: BD 81 50       JSR    suspend_task_8150
 A0E6: B6 25 00       LDA    $2500
 A0E9: 26 F8          BNE    $A0E3
 A0EB: 8E 25 10       LDX    #$2510
@@ -3253,7 +3255,7 @@ A22C: 44             LSRA
 A22D: 8A 54          ORA    #$54
 A22F: A7 0A          STA    $A,X
 A231: 39             RTS
-A232: BD 81 50       JSR    save_reset_stack_and_jump_8150
+A232: BD 81 50       JSR    suspend_task_8150
 A235: B6 40 40       LDA    $4040
 A238: 26 F8          BNE    $A232
 A23A: FC 10 D0       LDD    $10D0
@@ -3289,7 +3291,7 @@ A280: 48             ASLA
 A281: AD D6          JSR    [A,U]	; [indirect_jump]
 A283: A6 1A          LDA    -$6,X
 A285: 2B 0F          BMI    $A296
-A287: BD 81 50       JSR    save_reset_stack_and_jump_8150
+A287: BD 81 50       JSR    suspend_task_8150
 A28A: B6 25 02       LDA    $2502
 A28D: 27 A3          BEQ    $A232
 A28F: FC 10 D0       LDD    $10D0
@@ -3299,7 +3301,7 @@ A296: BD A5 4F       JSR    $A54F
 A299: B6 25 15       LDA    $2515
 A29C: 48             ASLA
 A29D: B7 25 1A       STA    $251A
-A2A0: BD 81 50       JSR    save_reset_stack_and_jump_8150
+A2A0: BD 81 50       JSR    suspend_task_8150
 A2A3: FC 10 D0       LDD    $10D0
 A2A6: 26 8A          BNE    $A232
 A2A8: B6 25 02       LDA    $2502
@@ -3612,7 +3614,7 @@ A54F: 8E 24 D0       LDX    #$24D0
 A552: BD 87 32       JSR    $8732
 A555: 8E 24 F0       LDX    #$24F0
 A558: 7E 87 32       JMP    $8732
-A55B: BD 81 50       JSR    save_reset_stack_and_jump_8150
+A55B: BD 81 50       JSR    suspend_task_8150
 A55E: B6 25 01       LDA    $2501
 A561: 27 F8          BEQ    $A55B
 A563: B7 40 47       STA    $4047
@@ -3639,7 +3641,7 @@ A58F: ED 1E          STD    -$2,X
 A591: 6F 1B          CLR    -$5,X
 A593: BD C4 80       JSR    $C480
 A596: 20 24          BRA    $A5BC
-A598: BD 81 50       JSR    save_reset_stack_and_jump_8150
+A598: BD 81 50       JSR    suspend_task_8150
 A59B: B6 25 01       LDA    $2501
 A59E: 27 BB          BEQ    $A55B
 A5A0: B7 40 47       STA    $4047
@@ -3683,7 +3685,7 @@ A5F9: 26 06          BNE    $A601
 A5FB: F7 10 40       STB    $1040
 A5FE: 7C 10 D5       INC    $10D5
 A601: BD C0 78       JSR    $C078
-A604: BD 81 50       JSR    save_reset_stack_and_jump_8150
+A604: BD 81 50       JSR    suspend_task_8150
 A607: B6 25 01       LDA    $2501
 A60A: 10 27 FF 4D    LBEQ   $A55B
 A60E: B6 10 14       LDA    $1014
@@ -3698,7 +3700,7 @@ A625: C1 30          CMPB   #$30
 A627: 27 A6          BEQ    $A5CF
 A629: 20 D6          BRA    $A601
 A62B: BD C0 78       JSR    $C078
-A62E: BD 81 50       JSR    save_reset_stack_and_jump_8150
+A62E: BD 81 50       JSR    suspend_task_8150
 A631: B6 25 01       LDA    $2501
 A634: 10 27 FF 23    LBEQ   $A55B
 A638: B6 10 14       LDA    $1014
@@ -3743,7 +3745,7 @@ A68E: 04 0C          LSR    $0C
 A690: 04 09          LSR    $09
 A692: 04 0C          LSR    $0C
 A694: 7F 10 D5       CLR    $10D5
-A697: BD 81 50       JSR    save_reset_stack_and_jump_8150
+A697: BD 81 50       JSR    suspend_task_8150
 A69A: B6 10 D5       LDA    $10D5
 A69D: 27 F8          BEQ    $A697
 A69F: B6 10 3F       LDA    $103F
@@ -3788,7 +3790,7 @@ A6EF: FD 10 43       STD    $1043
 A6F2: 86 04          LDA    #$04
 A6F4: B7 10 45       STA    $1045
 A6F7: 20 06          BRA    $A6FF
-A6F9: BD 81 50       JSR    save_reset_stack_and_jump_8150
+A6F9: BD 81 50       JSR    suspend_task_8150
 A6FC: BE 10 41       LDX    $1041
 A6FF: 86 02          LDA    #$02
 A701: B7 10 09       STA    $1009
@@ -3920,14 +3922,14 @@ A823: E6 C8 3E       LDB    $3E,U
 A826: E7 89 08 00    STB    $0800,X
 A82A: 20 DE          BRA    $A80A
 
-A859: BD 81 50       JSR    save_reset_stack_and_jump_8150
+A859: BD 81 50       JSR    suspend_task_8150
 A85C: B6 40 40       LDA    $4040
 A85F: 26 F8          BNE    $A859
 A861: B6 10 D6       LDA    $10D6
 A864: 27 F3          BEQ    $A859
 A866: 86 3C          LDA    #$3C
 A868: B7 10 50       STA    $1050
-A86B: BD 81 50       JSR    save_reset_stack_and_jump_8150
+A86B: BD 81 50       JSR    suspend_task_8150
 A86E: B6 10 D6       LDA    $10D6
 A871: 27 E6          BEQ    $A859
 A873: B6 10 50       LDA    $1050
@@ -4122,7 +4124,7 @@ AA3F: 6F 0C          CLR    $C,X
 AA41: BE 10 36       LDX    $1036
 AA44: 39             RTS
 
-AA6F: BD 81 50       JSR    save_reset_stack_and_jump_8150
+AA6F: BD 81 50       JSR    suspend_task_8150
 AA72: B6 10 D9       LDA    $10D9
 AA75: 27 F8          BEQ    $AA6F
 AA77: 8E 20 10       LDX    #$2010
@@ -4155,10 +4157,10 @@ AAB3: 26 C8          BNE    $AA7D
 AAB5: B6 10 09       LDA    $1009
 AAB8: B7 10 D9       STA    $10D9
 AABB: 20 B2          BRA    $AA6F
-AABD: BD 81 50       JSR    save_reset_stack_and_jump_8150
+AABD: BD 81 50       JSR    suspend_task_8150
 AAC0: B6 10 D2       LDA    $10D2
 AAC3: 27 F8          BEQ    $AABD
-AAC5: BD 81 50       JSR    save_reset_stack_and_jump_8150
+AAC5: BD 81 50       JSR    suspend_task_8150
 AAC8: B6 10 D2       LDA    $10D2
 AACB: 27 F0          BEQ    $AABD
 AACD: FC 10 D0       LDD    $10D0
@@ -4199,7 +4201,7 @@ AB13: 3D             MUL
 AB14: C3 00 20       ADDD   #$0020
 AB17: FD 10 4D       STD    $104D
 AB1A: 20 12          BRA    $AB2E
-AB1C: BD 81 50       JSR    save_reset_stack_and_jump_8150
+AB1C: BD 81 50       JSR    suspend_task_8150
 AB1F: B6 10 D2       LDA    $10D2
 AB22: 27 99          BEQ    $AABD
 AB24: FC 10 D0       LDD    $10D0
@@ -4237,18 +4239,18 @@ AB6E: 8C 26 70       CMPX   #$2670
 AB71: 26 EC          BNE    $AB5F
 AB73: B6 10 49       LDA    $1049
 AB76: 10 26 FF 4B    LBNE   $AAC5
-AB7A: BD 81 50       JSR    save_reset_stack_and_jump_8150
+AB7A: BD 81 50       JSR    suspend_task_8150
 AB7D: B6 10 D2       LDA    $10D2
 AB80: 26 F8          BNE    $AB7A
 AB82: 7E AA BD       JMP    $AABD
-AB85: BD 81 50       JSR    save_reset_stack_and_jump_8150
+AB85: BD 81 50       JSR    suspend_task_8150
 AB88: B6 10 D2       LDA    $10D2
 AB8B: 27 F8          BEQ    $AB85
 AB8D: BD AC 90       JSR    $AC90
-AB90: BD 81 50       JSR    save_reset_stack_and_jump_8150
+AB90: BD 81 50       JSR    suspend_task_8150
 AB93: B6 40 40       LDA    $4040
 AB96: 26 F8          BNE    $AB90
-AB98: BD 81 50       JSR    save_reset_stack_and_jump_8150
+AB98: BD 81 50       JSR    suspend_task_8150
 AB9B: B6 10 D2       LDA    $10D2
 AB9E: 10 27 00 AD    LBEQ   $AC4F
 ABA2: B6 10 D0       LDA    $10D0
@@ -4318,7 +4320,7 @@ AC3C: 8C 26 70       CMPX   #$2670
 AC3F: 26 95          BNE    $ABD6
 AC41: 7E AB 98       JMP    $AB98
 AC44: 7F 10 DF       CLR    $10DF
-AC47: BD 81 50       JSR    save_reset_stack_and_jump_8150
+AC47: BD 81 50       JSR    suspend_task_8150
 AC4A: B6 10 D2       LDA    $10D2
 AC4D: 26 F8          BNE    $AC47
 AC4F: 8E 25 30       LDX    #$2530
@@ -5425,10 +5427,10 @@ B690: 7E C0 BB       JMP    $C0BB
 
 
 B6DF: 7F 1F 60       CLR    $1F60
-B6E2: BD 81 50       JSR    save_reset_stack_and_jump_8150
+B6E2: BD 81 50       JSR    suspend_task_8150
 B6E5: B6 1F 60       LDA    $1F60
 B6E8: 27 F8          BEQ    $B6E2
-B6EA: BD 81 50       JSR    save_reset_stack_and_jump_8150
+B6EA: BD 81 50       JSR    suspend_task_8150
 B6ED: FC 10 D0       LDD    $10D0
 B6F0: 26 ED          BNE    $B6DF
 B6F2: B6 1F 60       LDA    $1F60
@@ -5493,7 +5495,7 @@ B76F: A7 0A          STA    $A,X
 B771: 6C 0B          INC    $B,X
 B773: 6F 0C          CLR    $C,X
 B775: BD C0 BB       JSR    $C0BB
-B778: BD 81 50       JSR    save_reset_stack_and_jump_8150
+B778: BD 81 50       JSR    suspend_task_8150
 B77B: B6 1F 60       LDA    $1F60
 B77E: 27 7C          BEQ    $B7FC
 B780: FC 10 D0       LDD    $10D0
@@ -5530,7 +5532,7 @@ B7C6: E7 04          STB    $4,X
 B7C8: F7 40 4C       STB    $404C
 B7CB: BD C0 BB       JSR    $C0BB
 B7CE: 6F 0C          CLR    $C,X
-B7D0: BD 81 50       JSR    save_reset_stack_and_jump_8150
+B7D0: BD 81 50       JSR    suspend_task_8150
 B7D3: B6 1F 60       LDA    $1F60
 B7D6: 27 24          BEQ    $B7FC
 B7D8: FC 10 D0       LDD    $10D0
@@ -5540,7 +5542,7 @@ B7E0: 6A 04          DEC    $4,X
 B7E2: 26 E7          BNE    $B7CB
 B7E4: BD 87 32       JSR    $8732
 B7E7: 7E B6 E2       JMP    $B6E2
-B7EA: BD 81 50       JSR    save_reset_stack_and_jump_8150
+B7EA: BD 81 50       JSR    suspend_task_8150
 B7ED: 8E 1F 70       LDX    #$1F70
 B7F0: B6 1F 60       LDA    $1F60
 B7F3: 27 0A          BEQ    $B7FF
