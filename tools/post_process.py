@@ -43,13 +43,15 @@ def get_line_address(line):
 
 
 # various dirty but at least automatic patches applying on the specific track and field code
+equates_re = re.compile("(\w+)\s*=\s*(\S+)")
 with open(source_dir / "conv.s") as f:
     lines = list(f)
     i = 0
 
     while i < len(lines):
         line = lines[i]
-        if " = " in line:
+        m = equates_re.match(line)
+        if m:
             equates.append(line)
             line = ""
 
@@ -90,19 +92,18 @@ with open(source_dir / "conv.s") as f:
             line = remove_error(line)
         elif address == 0xE7B4:
             line = remove_instruction(lines,i)  # remove sync loop
-        elif address == 0x8153:
-            # we have to patch natively: the game saves return address in a 16-bit buffer
-            # (kind of task switch)
-            # we emulate that but for that we need a 32 bit buffer
-            # save_reset_stack_and_jump_8150:
-            # 8150: BE 10 02       LDX    task_stack_array_1002
-            # 8153: 10 EF 84       STS    ,X
-            # 8156: 10 CE 18 FE    LDS    #$18FE        ; pop all addresses except the first one
-            # 815A: 39             RTS
-            # that would be hell to implement
-            # so it's better to encode the real address in 16 bits
 
-            line = "\tmove.l\t(a7),d0\n\tENCODE_NATIVE_ADDRESS\td0\n\tGET_REG_ADDRESS\t0,d2\n"+change_instruction("MOVE_W_FROM_REG\td0,a0",lines,i)
+        elif address in {0x8132,0x8141}:
+            line = remove_instruction(lines,i)  # remove useless task switch that does nothing
+        elif address == 0x8153:
+            line = """\tBREAKPOINT  "suspend"
+\tmove.l\ta7,d0     | get current stack
+\tsub.l\t#stack_top,d0          | convert to offset
+\tbset\t#15,d0                  | watermark for safety (TEMP)
+\tGET_REG_ADDRESS\t0,d2         | get stack pointers buffer real address
+\tmove.w\td0,(a0)               | store to stack pointers buffer ($18xx)
+* continue to unwind_stack, return to main task scheduler
+"""
         elif address == 0x8156:
             # set stack to the top, read the value there
             line = change_instruction("lea\tstack_top-4,a7",lines,i)
@@ -111,17 +112,49 @@ with open(source_dir / "conv.s") as f:
                 line = remove_instruction(lines,i)  # useless/irrelevant
             else:
                 # the value is an actual real address => read as long, then encode
-                line = line.replace("move.w","move.l") + "\tENCODE_NATIVE_ADDRESS\td1\n"
+                line = line.replace("move.w","move.l")
                 if "MAKE_D" in lines[i+1]:
                     lines[i+1] = ""
+        elif address == 0x80b9:
+            # set startup task in stack
+            line = """\tlea\tstack_top,a0
+\tmove.l\td1,(0xFC,a0)
+"""
+            lines[i+1] = ""
+        elif address == 0x8173:
+            # instead of storing indirect in 18xx (so in stack areas 19xx), read in 18xx, convert to
+            # real stack address then store d1 (inactive task routine) in the real stack buffer
+            lines[i+1] = """\tmove.w\td4,d6
+\tsub.w\t#0x191E,d6 | remove stack buffer base (plus 0x10) to get values 0,0x10,0x20...
+\tlsl.w\t#4,d6      | 256 bytes per task instead of 16 (so we can call osd_xxx functions safely)
+\tadd.w\t#0xFC,d6   | native stack offset in stack buffer (based on stack_top)
+\tmove.w\td6,(a0)   | store offset instead of address
+\tadd.w\t#0x8000,(a0)  | marker (temporary)
+\tmove.w\td6,a0
+\tadd.l\t#stack_top,a0  | real stack address
+\tmove.l\td1,(a0)       | store inactive task in stack
+\trts\n            | skip rest of code
+"""
 
+        elif address == 0x8169:
+            # end of zero_and_init_stack_zone_815b. Setting return address in the buffer is not useful
+            # and would waste a lot of native stack so skip it. Just add 0x10 to U and that's it
+            line += "\tadd.w    #0x10,d4  | move buffer pointer by $10 bytes\n\trts  | no need to init stack stuff\n"
         elif address == 0x8199:
             line = change_instruction("jra\tunwind_stack_8156",lines,i)  # same (modified) code
 
         elif address == 0xE7BB:
             line = line.replace("eq","ra")  # force test
         elif address == 0x818D:
-            line += "\tjra\tset_native_stack\n"
+            line += """\tBREAKPOINT   "task_switch"
+* (a0) contains the encoded stack pointer
+\tmoveq\t#0,d6
+\tmove.w\t(a0),d6
+\tbclr\t#15,d6           | remove watermark
+\tadd.l\t#stack_top,d6   | convert to real pointer
+\tmove.l\td6,a7
+"""
+            lines[i+1] = ""
         elif address in {0x8072,0xE666}:
             line = change_instruction("lea\tstack_top,a7",lines,i)
 

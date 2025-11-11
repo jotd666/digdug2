@@ -222,6 +222,9 @@ end_of_io_stuff_80e6:
 ; it actually switches to other contexts. Either they're empty
 ; contexts or they do something, then yield after a while
 ; (most tasks loop on themselves, but yield in the loop)
+;
+; the 22 tasks are created in create_base_tasks_8f67, within the startup task
+;
 811B: 8E 18 00       LDX    #stack_location_pointer_array_1800
 task_loop_811e:
 811E: 8D 6A          BSR    task_switch_818a
@@ -235,7 +238,7 @@ task_loop_811e:
 ; in update_sprite_logic_819e
 812F: 8E 1F 10       LDX    #stack_location_pointer_array_1F10
 8132: 8D 56          BSR    task_switch_818a		; this does nothing
-8134: 8D 68          BSR    update_sprite_logic_819e
+8134: 8D 68          BSR    update_sprite_logic_819e	; this is useful!
 8136: 30 88 20       LEAX   $20,X
 8139: 8C 1F 90       CMPX   #stack_location_pointer_array_1F10+$80
 813C: 26 F4          BNE    $8132
@@ -243,7 +246,7 @@ task_loop_811e:
 ; in update_sprite_logic_819e
 813E: 8E 20 10       LDX    #stack_location_pointer_array_2010
 8141: 8D 47          BSR    task_switch_818a		; this does nothing
-8143: 8D 59          BSR    update_sprite_logic_819e
+8143: 8D 59          BSR    update_sprite_logic_819e	; this is useful!
 8145: 30 88 20       LEAX   $20,X
 8148: 8C 27 90       CMPX   #stack_location_pointer_array_2010+$780
 814B: 26 F4          BNE    $8141
@@ -251,13 +254,14 @@ task_loop_811e:
 
 
 suspend_task_8150:
-8150: BE 10 02       LDX    task_stack_pointer_1002	; points on pointer of stack pointer ($1800)
-8153: 10 EF 84       STS    ,X						; store current stack value
+8150: BE 10 02       LDX    task_stack_pointer_1002	; points on pointer of stack pointer ($18xx)
+; now X is the task stack pointer pointer
+8153: 10 EF 84       STS    ,X						; store current stack value in task stack pointer
 unwind_stack_8156:
 8156: 10 CE 18 FE    LDS    #stack_top_1900-2		; abandon execution, return to scheduler
 815A: 39             RTS
 
-; < X pointer on stack buffer top
+; < X pointer on stack buffer array ($18xx)
 ; < U stack buffer pointer (starts at $190E)
 zero_and_init_stack_zone_815b:
 ; clear $10 bytes before X $10 bytes after
@@ -269,8 +273,10 @@ zero_and_init_stack_zone_815b:
 8166: E7 80          STB    ,X+			; put $10 times 0 in original X-$10
 8168: 4A             DECA
 8169: 26 FB          BNE    $8166
-* X is the same as it was when starting
-* in the end put pointer on inactive task
+; X is the same as it was when starting
+; in the end put pointer on inactive task
+; < X pointer on stack buffer array ($18xx)
+; < U stack buffer pointer (starts at $190E)
 init_stack_zone_816b:
 816B: B6 80 00       LDA    watchdog_8000
 816E: CC 81 91       LDD    #inactive_task_8191	; this will give control to task loop

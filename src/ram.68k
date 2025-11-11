@@ -30,8 +30,10 @@
 
 	.align	2
 
-	.skip	0x3800   | NATIVE_STACK_SIZE plus 0x800 bytes margin
+	.skip	0x100		| stack size for main process
 stack_top:
+	.skip	0x100*32		| 256 bytes for each task natively (originally 16 bytes only)
+	
 ram_buffer:
 	.ifdef	RELEASE
 	.skip	0x8000
