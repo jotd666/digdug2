@@ -60,6 +60,8 @@
 
 ;	map(0x0000, 0x0fff).ram().w(FUNC(mappy_state::mappy_videoram_w)).share("videoram");
 ;	map(0x1000, 0x27ff).ram().share("spriteram");   // work RAM with embedded sprite RAM
+;   sprites start at $1780 with 3 buffers of $800 bytes that hold attributes, code and coords
+;   64 sprites can be displayed total
 ;	map(0x3800, 0x3fff).w(FUNC(mappy_state::mappy_scroll_w));   // scroll
 ;	map(0x4000, 0x43ff).rw(m_namco_15xx, FUNC(namco_15xx_device::sharedram_r), FUNC(namco_15xx_device::sharedram_w));   // shared RAM with the sound CPU
 ;	map(0x4800, 0x480f).rw("namcoio_1", FUNC(namcoio_device::read), FUNC(namcoio_device::write));   // custom I/O chips interface
@@ -84,7 +86,13 @@ video_stuff_500a = $500A
 namco_io_4800 = $4800
 unknown_4802 = $4802
 io_register_4818 = $4818
+; there are 3 pointer array zones for tasks
 stack_location_pointer_array_1800 = $1800
+stack_location_pointer_array_1f10 = $1F10
+stack_location_pointer_array_2010 = $2010
+start_of_tasks_stack_190e = $190E
+stack_pointer_191e = $191E
+sprite_shadow_ram_1f16 = $1f16
 
 irq_8000:
 8000: B7 50 02       STA    video_stuff_5002
@@ -99,8 +107,9 @@ irq_8000:
 8019: 3D             MUL
 801A: 8E 38 00       LDX    #$3800
 801D: A7 8B          STA    D,X
-801F: 8E 1F 16       LDX    #$1F16
-8022: CE 1F 80       LDU    #$1F80
+; update sprites from sprite shadow ram to sprite ram
+801F: 8E 1F 16       LDX    #sprite_shadow_ram_1f16
+8022: CE 1F 80       LDU    #$1F80	; end of sprite ram (buffer 1)
 8025: EC 04          LDD    $4,X
 8027: ED C9 F8 00    STD    -$0800,U
 802B: EC 02          LDD    $2,X
@@ -108,7 +117,7 @@ irq_8000:
 8031: EC 84          LDD    ,X
 8033: ED C1          STD    ,U++
 8035: 30 88 20       LEAX   $20,X
-8038: 8C 1F 96       CMPX   #$1F96
+8038: 8C 1F 96       CMPX   #sprite_shadow_ram_1f16+$80
 803B: 26 E8          BNE    $8025
 803D: 8E 20 16       LDX    #$2016
 8040: EC 04          LDD    $4,X
@@ -143,33 +152,38 @@ init_8072:
 8083: EF 81          STU    ,X++
 8085: 8C 28 00       CMPX   #$2800
 8088: 26 F6          BNE    $8080
-; init the $20 task stack pointers
-808A: CE 19 0E       LDU    #$190E
+; init the $20 task stack pointers (contiguous), init stack zones
+808A: CE 19 0E       LDU    #start_of_tasks_stack_190E
 808D: 8E 18 00       LDX    #stack_location_pointer_array_1800
 8090: BD 81 6B       JSR    init_stack_zone_816b
-8093: 30 02          LEAX   $2,X
+8093: 30 02          LEAX   $2,X		; step = 2
 8095: 8C 18 40       CMPX   #$1840
 8098: 26 F6          BNE    $8090
-; 4 zones of $20 bytes
-809A: 8E 1F 10       LDX    #$1F10
+; 4 zones of $20 bytes: caution: zeroed from $1F00
+; with extra data in between
+809A: 8E 1F 10       LDX    #stack_location_pointer_array_1F10
 809D: BD 81 5B       JSR    zero_and_init_stack_zone_815b
-80A0: 30 88 20       LEAX   $20,X
+80A0: 30 88 20       LEAX   $20,X		; step = $20 (to store stuff?)
 80A3: 8C 1F 90       CMPX   #$1F90
 80A6: 26 F5          BNE    $809D
-; 64 zones of $20 bytes
-80A8: 8E 20 10       LDX    #$2010
+; 64 zones of $20 bytes: caution: zeroed from $2000
+; with extra data in between
+80A8: 8E 20 10       LDX    #stack_location_pointer_array_2010
 80AB: BD 81 5B       JSR    zero_and_init_stack_zone_815b
-80AE: 30 88 20       LEAX   $20,X
+80AE: 30 88 20       LEAX   $20,X		; step = $20 (to store stuff?)
 80B1: 8C 27 90       CMPX   #$2790
 80B4: 26 F5          BNE    $80AB
-; init first stack return address
-80B6: CC 81 D9       LDD    #save_reset_stack_81d9
-80B9: FD 19 0E       STD    $190E
+; init first stack return address, task will start when task scheduling loop runs
+80B6: CC 81 D9       LDD    #startup_task_81d9
+80B9: FD 19 0E       STD    start_of_tasks_stack_190E
 80BC: 1C EF          ANDCC  #$EF	; enable interrupts
+main_loop_80be:
 80BE: B7 50 03       STA    video_stuff_5003
+sync_loop_80c1:
 80C1: B6 10 00       LDA    sync_1000
-80C4: 27 FB          BEQ    $80C1
+80C4: 27 FB          BEQ    sync_loop_80c1
 80C6: 7F 10 00       CLR    sync_1000
+; update I/O (sound?)
 80C9: B6 48 14       LDA    $4814
 80CC: 84 01          ANDA   #$01
 80CE: 10 26 64 E8    LBNE   $E5BA
@@ -207,40 +221,44 @@ end_of_io_stuff_80e6:
 ; now loop on all tasks. When calling "task_switch_818a"
 ; it actually switches to other contexts. Either they're empty
 ; contexts or they do something, then yield after a while
+; (most tasks loop on themselves, but yield in the loop)
 811B: 8E 18 00       LDX    #stack_location_pointer_array_1800
 task_loop_811e:
 811E: 8D 6A          BSR    task_switch_818a
 8120: 30 02          LEAX   $2,X
-8122: 8C 18 30       CMPX   #$1830
+8122: 8C 18 30       CMPX   #stack_location_pointer_array_1800+$30
 8125: 26 F7          BNE    task_loop_811E
 8127: B6 25 00       LDA    $2500
 812A: 27 03          BEQ    $812F
 812C: BD 8E AD       JSR    $8EAD
-; more tasks
-812F: 8E 1F 10       LDX    #$1F10
-8132: 8D 56          BSR    task_switch_818a
-8134: 8D 68          BSR    $819E
+; more tasks, but they're never activated. The variable area is used, though
+; in update_sprite_logic_819e
+812F: 8E 1F 10       LDX    #stack_location_pointer_array_1F10
+8132: 8D 56          BSR    task_switch_818a		; this does nothing
+8134: 8D 68          BSR    update_sprite_logic_819e
 8136: 30 88 20       LEAX   $20,X
-8139: 8C 1F 90       CMPX   #$1F90
+8139: 8C 1F 90       CMPX   #stack_location_pointer_array_1F10+$80
 813C: 26 F4          BNE    $8132
-; more tasks
-813E: 8E 20 10       LDX    #$2010
-8141: 8D 47          BSR    task_switch_818a
-8143: 8D 59          BSR    $819E
+; more tasks, but they're never activated. The variable area is used, though
+; in update_sprite_logic_819e
+813E: 8E 20 10       LDX    #stack_location_pointer_array_2010
+8141: 8D 47          BSR    task_switch_818a		; this does nothing
+8143: 8D 59          BSR    update_sprite_logic_819e
 8145: 30 88 20       LEAX   $20,X
-8148: 8C 27 90       CMPX   #$2790
+8148: 8C 27 90       CMPX   #stack_location_pointer_array_2010+$780
 814B: 26 F4          BNE    $8141
-814D: 7E 80 BE       JMP    $80BE
+814D: 7E 80 BE       JMP    main_loop_80be
+
 
 suspend_task_8150:
-8150: BE 10 02       LDX    task_stack_pointer_1002
-8153: 10 EF 84       STS    ,X
+8150: BE 10 02       LDX    task_stack_pointer_1002	; points on pointer of stack pointer ($1800)
+8153: 10 EF 84       STS    ,X						; store current stack value
 unwind_stack_8156:
-8156: 10 CE 18 FE    LDS    #stack_top_1900-2		; return to scheduler
+8156: 10 CE 18 FE    LDS    #stack_top_1900-2		; abandon execution, return to scheduler
 815A: 39             RTS
 
 ; < X pointer on stack buffer top
-; < U 
+; < U stack buffer pointer (starts at $190E)
 zero_and_init_stack_zone_815b:
 ; clear $10 bytes before X $10 bytes after
 815B: CC 10 10       LDD    #$1010
@@ -255,9 +273,9 @@ zero_and_init_stack_zone_815b:
 * in the end put pointer on inactive task
 init_stack_zone_816b:
 816B: B6 80 00       LDA    watchdog_8000
-816E: CC 81 91       LDD    #inactive_task_8191
+816E: CC 81 91       LDD    #inactive_task_8191	; this will give control to task loop
 8171: EF 84          STU    ,X
-8173: 33 C8 10       LEAU   $10,U		; move pointer by $10 bytes
+8173: 33 C8 10       LEAU   $10,U		; move stack buffer pointer by $10 bytes
 8176: ED 94          STD    [,X]
 8178: 39             RTS
 
@@ -274,22 +292,31 @@ init_stack_zone_816b:
 ;8187: EF 84          STU    ,X
 ;8189: 39             RTS
 
+; switch to task
+; only call in task loop (for all 3 task lists)
+; X contains $1800... or $2010...
 task_switch_818a:
-818A: BF 10 02       STX    task_stack_pointer_1002
+818A: BF 10 02       STX    task_stack_pointer_1002	; store pointer on stack pointer
 ; here we set the stack for the other task
 ; values are 190E => 1EFE (xxxe)
+; get what it points to and sets it as stack pointer
+; efficiently retrieving context that was saved earlier on suspend_task_8150
 818D: 10 EE 84       LDS    ,X
+; and jump to previous suspended task
 8190: 39             RTS
 
 inactive_task_8191:
 8191: CC 81 99       LDD    #reset_stack_and_jump_8199
 8194: BE 10 02       LDX    task_stack_pointer_1002
-8197: ED 94          STD    [,X]
+8197: ED 94          STD    [,X]		; change return value of the current active task to return to task loop
 
 reset_stack_and_jump_8199:
-8199: 10 CE 18 FE    LDS    #stack_top_1900-2
-819D: 39             RTS
+8199: 10 CE 18 FE    LDS    #stack_top_1900-2		; set main init task stack
+819D: 39             RTS							; and jump to task scheduler loop
 
+; not sure of what it does, but if skipped, sprites
+; are just not shown
+update_sprite_logic_819e:
 819E: A6 0C          LDA    $C,X
 81A0: 26 36          BNE    $81D8
 81A2: 6C 0C          INC    $C,X
@@ -319,7 +346,8 @@ reset_stack_and_jump_8199:
 81D4: CB 08          ADDB   #$08
 81D6: E7 06          STB    $6,X
 81D8: 39             RTS
-save_reset_stack_81d9:
+
+startup_task_81d9:
 81D9: BD 81 50       JSR    suspend_task_8150
 81DC: BD 87 01       JSR    $8701
 81DF: 8E 48 00       LDX    #namco_io_4800
@@ -369,7 +397,7 @@ save_reset_stack_81d9:
 8254: B6 48 16       LDA    $4816
 8257: 84 04          ANDA   #$04
 8259: B7 10 F0       STA    $10F0
-825C: BD 8F 67       JSR    $8F67
+825C: BD 8F 67       JSR    create_base_tasks_8f67
 825F: BD 81 50       JSR    suspend_task_8150
 8262: BD 8A B2       JSR    $8AB2
 8265: 4F             CLRA
@@ -1101,6 +1129,7 @@ fill_screen_871c:
 8AAB: 79 10 11       ROL    $1011
 8AAE: B6 10 11       LDA    $1011
 8AB1: 39             RTS
+
 8AB2: 8E 0F FD       LDX    #$0FFD
 8AB5: 86 00          LDA    #$00
 8AB7: C6 07          LDB    #$07
@@ -1602,8 +1631,10 @@ fill_screen_871c:
 8F60: 11 83 11 78    CMPU   #$1178
 8F64: 26 CF          BNE    $8F35
 8F66: 39             RTS
-8F67: 8E 19 1E       LDX    #$191E
-8F6A: 10 8E 8F 80    LDY    #$8F80
+
+create_base_tasks_8f67:
+8F67: 8E 19 1E       LDX    #stack_pointer_191e
+8F6A: 10 8E 8F 80    LDY    #table_8f80
 8F6E: 86 16          LDA    #$16
 8F70: B7 10 09       STA    $1009
 8F73: EC A1          LDD    ,Y++
@@ -1613,7 +1644,11 @@ fill_screen_871c:
 8F7D: 26 F4          BNE    $8F73
 8F7F: 39             RTS
 
-
+table_8f80:
+	.word	$902b,$8ff3,$8fac,$909c,$a08b,$9f03,$a232,$a55b
+	.word	$a697,$aa6f,$aabd,$ab85,$a859,$8d48,$8dfa,$b6e2
+	.word	$8890,$9955,$94e4,$9438,$9cb6,$9d20 
+	 
 8FAC: BD 81 50       JSR    suspend_task_8150
 8FAF: B6 10 1B       LDA    $101B
 8FB2: 27 F8          BEQ    $8FAC
