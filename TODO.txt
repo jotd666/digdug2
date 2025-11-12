@@ -1,6 +1,4 @@
-- encode stack values (in suspend) with an offset like the code
-  and associate them to real stack areas
-  rewrite: inactive_task_8191 then it should work!
+- understand zone 48xx (namco io)
   
 - like RallyX tiles have 64 cluts, we have to rip them in a smart way
 - report 2 last optimization phases in 6809 converter

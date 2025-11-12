@@ -96,18 +96,29 @@ with open(source_dir / "conv.s") as f:
         elif address in {0x8132,0x8141}:
             line = remove_instruction(lines,i)  # remove useless task switch that does nothing
         elif address == 0x8153:
-            line = """\tBREAKPOINT  "suspend"
-\tmove.l\ta7,d0     | get current stack
+            line = """\tmove.l\ta7,d0     | get current stack
 \tsub.l\t#stack_top,d0          | convert to offset
 \tbset\t#15,d0                  | watermark for safety (TEMP)
 \tGET_REG_ADDRESS\t0,d2         | get stack pointers buffer real address
 \tmove.w\td0,(a0)               | store to stack pointers buffer ($18xx)
 * continue to unwind_stack, return to main task scheduler
 """
+        elif address == 0x8f67:
+            line = change_instruction("lea\tstack_top+0x1FC,a2   | second stack buffer almost top",lines,i)
+        elif address == 0x8f73:
+            line = """\tmove.l\t(a3)+,d0                     | [$8f73: ldd    ,y++] get address from table
+\tmove.l\td0,(a2)                       | [$8f75: std    ,x] put start address on top of task stack
+\tadd.w\t#0x100,a2                      | [$8f77: leax   $10,x] next stack buffer
+"""
+            j = i+1
+            # remove existing code until loop counter check
+            while ("0x1009" not in lines[j]):
+                lines[j] = ""
+                j+=1
         elif address == 0x8156:
             # set stack to the top, read the value there
             line = change_instruction("lea\tstack_top-4,a7",lines,i)
-        elif address in {0x8191,0x816e,0x80B6}:
+        elif address in {0x816e,0x80B6}:
             if ">>" in line:
                 line = remove_instruction(lines,i)  # useless/irrelevant
             else:
@@ -135,7 +146,33 @@ with open(source_dir / "conv.s") as f:
 \tmove.l\td1,(a0)       | store inactive task in stack
 \trts\n            | skip rest of code
 """
+        elif address == 0x8191:
+            # replace part of "inactive_task_8191"
+            line = """* complete rewrite to avoid stack overwrite issues
+* as when using the macros and possibly debug/osd/trace calls, the stack is used
+* which isn't the case in the original implementation
+\tlea    stack_top-4,a7  | change stack now to task scheduler stack so routine doesn't corrupt itself
+\tmove.l\t#reset_stack_and_jump_8199,d1
+\tGET_ADDRESS\ttask_stack_pointer_1002
+\tmoveq\t#0,d6
+\tmove.w\t(a0),d6
+\tGET_REG_ADDRESS\t0,d6
+\tmove.w\t(a0),d6
+\tbclr\t#15,d6
+\tadd.l\t#stack_top,d6
+\tmove.l\td6,a0
+\tmove.l\td1,(a0)    | set reset routine in task stack
+\trts   | and return to task scheduler loop
 
+"""
+            j = i+1
+            while (not lines[j].startswith("reset_stack_and_jump_8199")):
+                lines[j] = ""
+                j+=1
+
+        elif address == 0x81DF:
+            # skip zero of namco io buffers
+            line = change_instruction("jra\tend_zero_io_81f6",lines,i)
         elif address == 0x8169:
             # end of zero_and_init_stack_zone_815b. Setting return address in the buffer is not useful
             # and would waste a lot of native stack so skip it. Just add 0x10 to U and that's it
@@ -146,8 +183,7 @@ with open(source_dir / "conv.s") as f:
         elif address == 0xE7BB:
             line = line.replace("eq","ra")  # force test
         elif address == 0x818D:
-            line += """\tBREAKPOINT   "task_switch"
-* (a0) contains the encoded stack pointer
+            line += """* (a0) contains the encoded stack pointer
 \tmoveq\t#0,d6
 \tmove.w\t(a0),d6
 \tbclr\t#15,d6           | remove watermark

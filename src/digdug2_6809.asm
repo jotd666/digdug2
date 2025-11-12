@@ -365,6 +365,7 @@ startup_task_81d9:
 81EF: ED 81          STD    ,X++
 81F1: 8C 48 20       CMPX   #$4820
 81F4: 26 F9          BNE    $81EF
+end_zero_io_81f6:
 81F6: BD 81 50       JSR    suspend_task_8150
 81F9: BD 81 50       JSR    suspend_task_8150
 81FC: B7 50 0B       STA    video_stuff_500B
@@ -980,9 +981,10 @@ fill_screen_871c:
 887D: 26 F9          BNE    $8878
 887F: 39             RTS
 
+task_entry_11_8890:
 8890: BD 81 50       JSR    suspend_task_8150                                       
 8893: B6 10 E2       LDA    $10E2
-8896: 27 F8          BEQ    $8890
+8896: 27 F8          BEQ    task_entry_11_8890
 8898: 8E 20 10       LDX    #$2010
 889B: CE 8A 05       LDU    #$8A05
 889E: BD 8A A0       JSR    $8AA0
@@ -1123,7 +1125,7 @@ fill_screen_871c:
 89FA: 30 88 20       LEAX   $20,X
 89FD: 8C 24 30       CMPX   #$2430
 8A00: 26 F5          BNE    $89F7
-8A02: 7E 88 90       JMP    $8890
+8A02: 7E 88 90       JMP    task_entry_11_8890
 
 8AA0: B6 10 11       LDA    $1011                                      
 8AA2: 11 48          ASLA
@@ -1408,10 +1410,10 @@ fill_screen_871c:
 
 ; pP01ST BONUS FOR   0000 PTSAND
 
-
+task_entry_0e_8d48:
 8D48: BD 81 50       JSR    suspend_task_8150
 8D4B: B6 10 E6       LDA    $10E6
-8D4E: 27 F8          BEQ    $8D48
+8D4E: 27 F8          BEQ    task_entry_0e_8d48
 8D50: 8E 12 F7       LDX    #$12F7
 8D53: 86 04          LDA    #$04
 8D55: E6 86          LDB    A,X
@@ -1423,7 +1425,7 @@ fill_screen_871c:
 8D61: C1 0B          CMPB   #$0B
 8D63: 25 19          BCS    $8D7E
 8D65: 7A 10 E6       DEC    $10E6
-8D68: 20 DE          BRA    $8D48
+8D68: 20 DE          BRA    task_entry_0e_8d48
 8D6A: B7 10 34       STA    $1034
 8D6D: 6F 86          CLR    A,X
 8D6F: 8B 04          ADDA   #$04
@@ -1449,7 +1451,7 @@ fill_screen_871c:
 8D9B: 2A 08          BPL    $8DA5
 8D9D: F7 10 CB       STB    $10CB
 8DA0: 7A 10 E6       DEC    $10E6
-8DA3: 20 A3          BRA    $8D48
+8DA3: 20 A3          BRA    task_entry_0e_8d48
 8DA5: 8E 12 88       LDX    #$1288
 8DA8: B6 10 34       LDA    $1034
 8DAB: A1 80          CMPA   ,X+
@@ -1458,7 +1460,7 @@ fill_screen_871c:
 8DB1: 8C 12 F0       CMPX   #$12F0
 8DB4: 26 F5          BNE    $8DAB
 8DB6: 7A 10 E6       DEC    $10E6
-8DB9: 20 8D          BRA    $8D48
+8DB9: 20 8D          BRA    task_entry_0e_8d48
 8DBB: 8E 12 88       LDX    #$1288
 8DBE: CC 00 00       LDD    #$0000
 8DC1: ED 81          STD    ,X++
@@ -1476,9 +1478,10 @@ fill_screen_871c:
 8DE2: B7 10 5D       STA    $105D
 8DE5: 39             RTS
 
+task_entry_0f_8dfa:
 8DFA: BD 81 50       JSR    suspend_task_8150                                       
 8DFD: B6 10 5E       LDA    $105E
-8E00: 27 F8          BEQ    $8DFA
+8E00: 27 F8          BEQ    task_entry_0f_8dfa
 8E02: 8E 1F 10       LDX    #$1F10
 8E05: 7A 10 5F       DEC    $105F
 8E08: B6 10 5F       LDA    $105F
@@ -1521,7 +1524,7 @@ fill_screen_871c:
 8E60: 8E 1F 30       LDX    #$1F30
 8E63: BD 87 32       JSR    $8732
 8E66: 7A 10 5E       DEC    $105E
-8E69: 27 8F          BEQ    $8DFA
+8E69: 27 8F          BEQ    task_entry_0f_8dfa
 8E6B: B6 10 5E       LDA    $105E
 8E6E: 8E 14 78       LDX    #$1478
 8E71: E6 01          LDB    $1,X
@@ -1529,7 +1532,7 @@ fill_screen_871c:
 8E75: 4A             DECA
 8E76: 26 F9          BNE    $8E71
 8E78: A7 84          STA    ,X
-8E7A: 7E 8D FA       JMP    $8DFA
+8E7A: 7E 8D FA       JMP    task_entry_0f_8dfa
 
 8E81: 8E 25 10       LDX    #$2510
 8E84: CE 11 00       LDU    #$1100
@@ -1643,21 +1646,41 @@ create_base_tasks_8f67:
 8F6A: 10 8E 8F 80    LDY    #table_8f80
 8F6E: 86 16          LDA    #$16
 8F70: B7 10 09       STA    $1009
-8F73: EC A1          LDD    ,Y++
-8F75: ED 84          STD    ,X
+8F73: EC A1          LDD    ,Y++	; get routine address
+8F75: ED 84          STD    ,X		; put it in stack top
 8F77: 30 88 10       LEAX   $10,X
 8F7A: 7A 10 09       DEC    $1009
 8F7D: 26 F4          BNE    $8F73
 8F7F: 39             RTS
 
 table_8f80:
-	.word	$902b,$8ff3,$8fac,$909c,$a08b,$9f03,$a232,$a55b
-	.word	$a697,$aa6f,$aabd,$ab85,$a859,$8d48,$8dfa,$b6e2
-	.word	$8890,$9955,$94e4,$9438,$9cb6,$9d20 
+	.word	task_entry_01_902b
+	.word	task_entry_02_8ff3
+	.word	task_entry_03_8fac
+	.word	task_entry_04_909c
+	.word	task_entry_05_a08b
+	.word	task_entry_06_9f03
+	.word	task_entry_07_a232
+	.word	task_entry_08_a55b
+	.word	task_entry_09_a697
+	.word	task_entry_0a_aa6f
+	.word	task_entry_0b_aabd
+	.word	task_entry_0c_ab85
+	.word	task_entry_0d_a859
+	.word	task_entry_0e_8d48
+	.word	task_entry_0f_8dfa
+	.word	task_entry_10_b6e2
+	.word	task_entry_11_8890
+	.word	task_entry_12_9955
+	.word	task_entry_13_94e4
+	.word	task_entry_14_9438
+	.word	task_entry_15_9cb6
+	.word	task_entry_16_9d20 
 	 
+task_entry_03_8fac:
 8FAC: BD 81 50       JSR    suspend_task_8150
 8FAF: B6 10 1B       LDA    $101B
-8FB2: 27 F8          BEQ    $8FAC
+8FB2: 27 F8          BEQ    task_entry_03_8fac
 8FB4: B6 10 04       LDA    $1004
 8FB7: B4 10 05       ANDA   $1005
 8FBA: B4 10 06       ANDA   $1006
@@ -1683,13 +1706,15 @@ table_8f80:
 8FE4: 5C             INCB
 8FE5: C4 03          ANDB   #$03
 8FE7: F7 10 14       STB    $1014
-8FEA: 20 C0          BRA    $8FAC
+8FEA: 20 C0          BRA    task_entry_03_8fac
 8FEC: 84 02          ANDA   #$02
 8FEE: B7 10 14       STA    $1014
-8FF1: 20 B9          BRA    $8FAC
+8FF1: 20 B9          BRA    task_entry_03_8fac
+
+task_entry_02_8ff3:
 8FF3: BD 81 50       JSR    suspend_task_8150
 8FF6: B6 10 1B       LDA    $101B
-8FF9: 27 F8          BEQ    $8FF3
+8FF9: 27 F8          BEQ    task_entry_02_8ff3
 8FFB: B6 10 04       LDA    $1004
 8FFE: B4 10 05       ANDA   $1005
 9001: B4 10 06       ANDA   $1006
@@ -1702,9 +1727,10 @@ table_8f80:
 9011: 8E 90 1B       LDX    #$901B
 9014: E6 86          LDB    A,X
 9016: F7 10 13       STB    $1013
-9019: 20 D8          BRA    $8FF3
+9019: 20 D8          BRA    task_entry_02_8ff3
 
-902B: BD 81 50       JSR    $8150
+task_entry_01_902b:
+902B: BD 81 50       JSR    suspend_task_8150
 902E: 8E 0F C7       LDX    #$0FC7
 9031: 86 0D          LDA    #$0D
 9033: C6 03          LDB    #$03
@@ -1714,7 +1740,8 @@ table_8f80:
 903D: C6 03          LDB    #$03
 903F: BD 85 BD       JSR    $85BD
 9042: 8D 02          BSR    $9046
-9044: 20 E5          BRA    $902B
+9044: 20 E5          BRA    task_entry_01_902b
+
 9046: B6 10 0A       LDA    $100A
 9049: 2A 01          BPL    $904C
 904B: 39             RTS
@@ -1760,9 +1787,10 @@ table_8f80:
 9098: 50             NEGB
 9099: 20 20          BRA    $90BB
 
+task_entry_04_909c:
 909C: BD 81 50       JSR    suspend_task_8150
 909F: B6 10 10       LDA    $1010
-90A2: 27 F8          BEQ    $909C
+90A2: 27 F8          BEQ    task_entry_04_909c
 90A4: 8E 15 80       LDX    #$1580
 90A7: CE 92 12       LDU    #$9212
 90AA: 86 3C          LDA    #$3C
@@ -1896,11 +1924,12 @@ table_8f80:
 9206: BD 87 32       JSR    $8732
 9209: 8E 27 70       LDX    #$2770
 920C: BD 87 32       JSR    $8732
-920F: 7E 90 9C       JMP    $909C
+920F: 7E 90 9C       JMP    task_entry_04_909c
 
+task_entry_14_9438:
 9438: BD 81 50       JSR    suspend_task_8150
 943B: B6 10 D4       LDA    $10D4
-943E: 27 F8          BEQ    $9438
+943E: 27 F8          BEQ    task_entry_14_9438
 9440: 8E 00 00       LDX    #$0000
 9443: F6 10 08       LDB    $1008
 9446: C4 F8          ANDB   #$F8
@@ -1956,23 +1985,24 @@ table_8f80:
 94B4: BA 10 D0       ORA    $10D0
 94B7: BA 10 D1       ORA    $10D1
 94BA: BA 10 DA       ORA    $10DA
-94BD: 10 26 FF 77    LBNE   $9438
+94BD: 10 26 FF 77    LBNE   task_entry_14_9438
 94C1: 7C 10 EC       INC    $10EC
 94C4: 7C 10 EB       INC    $10EB
 94C7: BD CC 7F       JSR    $CC7F
 94CA: 7F 10 EC       CLR    $10EC
 94CD: B6 10 CB       LDA    $10CB
-94D0: 10 27 FF 64    LBEQ   $9438
+94D0: 10 27 FF 64    LBEQ   task_entry_14_9438
 94D4: 7C 10 E6       INC    $10E6
-94D7: 7E 94 38       JMP    $9438
+94D7: 7E 94 38       JMP    task_entry_14_9438
 94DA: 80 80          SUBA   #$80
 94DC: 80 80          SUBA   #$80
 94DE: 80 40          SUBA   #$40
 94E0: 20 10          BRA    $94F2
 94E2: 05 05          LSR    $05
+task_entry_13_94e4:
 94E4: BD 81 50       JSR    suspend_task_8150
 94E7: B6 10 E3       LDA    $10E3
-94EA: 27 F8          BEQ    $94E4
+94EA: 27 F8          BEQ    task_entry_13_94e4
 94EC: 8E 20 10       LDX    #$2010
 94EF: B6 40 44       LDA    $4044
 94F2: 26 64          BNE    $9558
@@ -2015,7 +2045,7 @@ table_8f80:
 954E: 30 88 20       LEAX   $20,X
 9551: 8C 21 B0       CMPX   #$21B0
 9554: 26 F1          BNE    $9547
-9556: 20 8C          BRA    $94E4
+9556: 20 8C          BRA    task_entry_13_94e4
 9558: 10 8E 99 33    LDY    #$9933
 955C: BD 8A A0       JSR    $8AA0
 955F: 84 7E          ANDA   #$7E
@@ -2106,7 +2136,7 @@ table_8f80:
 9612: 30 88 20       LEAX   $20,X
 9615: 8C 20 B0       CMPX   #$20B0
 9618: 26 F5          BNE    $960F
-961A: 7E 94 E4       JMP    $94E4
+961A: 7E 94 E4       JMP    task_entry_13_94e4
 961D: 96 39          LDA    $39
 961F: 96 7F          LDA    $7F
 9621: 96 8C          LDA    $8C
@@ -2433,9 +2463,10 @@ table_8f80:
 994E: CC D0 1E       LDD    #$D01E
 9951: D4 D8          ANDB   $D8
 9953: DC 16          LDD    $16
+task_entry_12_9955:
 9955: BD 81 50       JSR    suspend_task_8150
 9958: B6 10 E5       LDA    $10E5
-995B: 27 F8          BEQ    $9955
+995B: 27 F8          BEQ    task_entry_12_9955
 995D: BD 9A D7       JSR    $9AD7
 9960: CC 01 2E       LDD    #$012E
 9963: B7 40 4A       STA    $404A
@@ -2569,7 +2600,7 @@ table_8f80:
 9AB8: 7F 40 4A       CLR    $404A
 9ABB: 7F 10 E5       CLR    $10E5
 9ABE: 7F 10 ED       CLR    $10ED
-9AC1: 7E 99 55       JMP    $9955
+9AC1: 7E 99 55       JMP    task_entry_12_9955
 9AC4: 8E 11 B0       LDX    #$11B0
 9AC7: CE 9C 17       LDU    #$9C17
 9ACA: B6 80 00       LDA    watchdog_8000
@@ -2722,9 +2753,10 @@ table_8f80:
 9C13: B7 40 4A       STA    $404A
 9C16: 39             RTS
 
+task_entry_15_9cb6:
 9CB6: BD 81 50       JSR    suspend_task_8150
 9CB9: B6 10 E1       LDA    $10E1
-9CBC: 27 F8          BEQ    $9CB6
+9CBC: 27 F8          BEQ    task_entry_15_9cb6
 9CBE: BD 87 06       JSR    clear_screen_8706
 9CC1: BD 8B 3D       JSR    $8B3D
 9CC4: CC 01 01       LDD    #$0101
@@ -2766,10 +2798,12 @@ table_8f80:
 9D17: 19             DAA
 9D18: B7 17 05       STA    $1705
 9D1B: 7C 17 25       INC    $1725
-9D1E: 20 96          BRA    $9CB6
+9D1E: 20 96          BRA    task_entry_15_9cb6
+
+task_entry_16_9d20:
 9D20: BD 81 50       JSR    suspend_task_8150
 9D23: B6 10 E9       LDA    $10E9
-9D26: 27 F8          BEQ    $9D20
+9D26: 27 F8          BEQ    task_entry_16_9d20
 9D28: B6 10 F0       LDA    $10F0
 9D2B: 10 27 01 99    LBEQ   $9EC8
 9D2F: BD 87 06       JSR    clear_screen_8706
@@ -2935,16 +2969,16 @@ table_8f80:
 9ECB: B7 10 1B       STA    $101B
 9ECE: B7 10 E9       STA    $10E9
 9ED1: F7 17 25       STB    $1725
-9ED4: 7E 9D 20       JMP    $9D20
+9ED4: 7E 9D 20       JMP    task_entry_16_9d20
 
-
+task_entry_06_9f03:
 9F03: BD 81 50       JSR    suspend_task_8150
 9F06: B6 10 DA       LDA    $10DA
-9F09: 27 F8          BEQ    $9F03
+9F09: 27 F8          BEQ    task_entry_06_9f03
 9F0B: B7 40 48       STA    $4048
 9F0E: BD 81 50       JSR    suspend_task_8150
 9F11: B6 10 DA       LDA    $10DA
-9F14: 27 ED          BEQ    $9F03
+9F14: 27 ED          BEQ    task_entry_06_9f03
 9F16: 7A 25 14       DEC    $2514
 9F19: B6 25 14       LDA    $2514
 9F1C: 81 50          CMPA   #$50
@@ -2960,7 +2994,7 @@ table_8f80:
 9F32: 20 DA          BRA    $9F0E
 9F34: BD 81 50       JSR    suspend_task_8150
 9F37: B6 10 DA       LDA    $10DA
-9F3A: 27 C7          BEQ    $9F03
+9F3A: 27 C7          BEQ    task_entry_06_9f03
 9F3C: 8E 25 10       LDX    #$2510
 9F3F: 6A 04          DEC    $4,X
 9F41: 27 7D          BEQ    $9FC0
@@ -3002,7 +3036,7 @@ table_8f80:
 9F92: BD C4 80       JSR    $C480
 9F95: BD 81 50       JSR    suspend_task_8150
 9F98: B6 10 DA       LDA    $10DA
-9F9B: 10 27 FF 64    LBEQ   $9F03
+9F9B: 10 27 FF 64    LBEQ   task_entry_06_9f03
 9F9F: 8E 25 10       LDX    #$2510
 9FA2: A6 05          LDA    $5,X
 9FA4: 85 02          BITA   #$02
@@ -3101,11 +3135,12 @@ A070: EB 0D          ADDB   $D,X
 A072: E7 0D          STB    $D,X
 A074: 6F 08          CLR    $8,X
 A076: 7F 10 DA       CLR    $10DA
-A079: 7E 9F 03       JMP    $9F03
+A079: 7E 9F 03       JMP    task_entry_06_9f03
 
+task_entry_05_a08b:
 A08B: BD 81 50       JSR    suspend_task_8150
 A08E: B6 25 00       LDA    $2500
-A091: 27 F8          BEQ    $A08B
+A091: 27 F8          BEQ    task_entry_05_a08b
 A093: BD A0 FF       JSR    $A0FF
 A096: BD 8D BB       JSR    $8DBB
 A099: BD 81 50       JSR    suspend_task_8150
@@ -3142,7 +3177,7 @@ A0E6: B6 25 00       LDA    $2500
 A0E9: 26 F8          BNE    $A0E3
 A0EB: 8E 25 10       LDX    #$2510
 A0EE: BD 87 32       JSR    $8732
-A0F1: 20 98          BRA    $A08B
+A0F1: 20 98          BRA    task_entry_05_a08b
 
 A0FF: 8E 25 10       LDX    #$2510
 A102: CC 08 01       LDD    #$0801
@@ -3296,21 +3331,23 @@ A22C: 44             LSRA
 A22D: 8A 54          ORA    #$54
 A22F: A7 0A          STA    $A,X
 A231: 39             RTS
+
+task_entry_07_a232:
 A232: BD 81 50       JSR    suspend_task_8150
 A235: B6 40 40       LDA    $4040
-A238: 26 F8          BNE    $A232
+A238: 26 F8          BNE    task_entry_07_a232
 A23A: FC 10 D0       LDD    $10D0
-A23D: 26 F3          BNE    $A232
+A23D: 26 F3          BNE    task_entry_07_a232
 A23F: B6 25 00       LDA    $2500
-A242: 27 EE          BEQ    $A232
+A242: 27 EE          BEQ    task_entry_07_a232
 A244: B6 10 DA       LDA    $10DA
-A247: 26 E9          BNE    $A232
+A247: 26 E9          BNE    task_entry_07_a232
 A249: B6 25 0A       LDA    $250A
 A24C: 81 03          CMPA   #$03
-A24E: 27 E2          BEQ    $A232
+A24E: 27 E2          BEQ    task_entry_07_a232
 A250: B6 10 15       LDA    $1015
 A253: 81 01          CMPA   #$01
-A255: 26 DB          BNE    $A232
+A255: 26 DB          BNE    task_entry_07_a232
 A257: 8E 25 10       LDX    #$2510
 A25A: A7 12          STA    -$E,X
 A25C: F6 25 01       LDB    $2501
@@ -3334,9 +3371,9 @@ A283: A6 1A          LDA    -$6,X
 A285: 2B 0F          BMI    $A296
 A287: BD 81 50       JSR    suspend_task_8150
 A28A: B6 25 02       LDA    $2502
-A28D: 27 A3          BEQ    $A232
+A28D: 27 A3          BEQ    task_entry_07_a232
 A28F: FC 10 D0       LDD    $10D0
-A292: 26 9E          BNE    $A232
+A292: 26 9E          BNE    task_entry_07_a232
 A294: 20 E2          BRA    $A278
 A296: BD A5 4F       JSR    $A54F
 A299: B6 25 15       LDA    $2515
@@ -3344,9 +3381,9 @@ A29C: 48             ASLA
 A29D: B7 25 1A       STA    $251A
 A2A0: BD 81 50       JSR    suspend_task_8150
 A2A3: FC 10 D0       LDD    $10D0
-A2A6: 26 8A          BNE    $A232
+A2A6: 26 8A          BNE    task_entry_07_a232
 A2A8: B6 25 02       LDA    $2502
-A2AB: 27 85          BEQ    $A232
+A2AB: 27 85          BEQ    task_entry_07_a232
 A2AD: 8E 25 10       LDX    #$2510
 A2B0: B6 10 15       LDA    $1015
 A2B3: 81 01          CMPA   #$01
@@ -3370,7 +3407,7 @@ A2D6: 7F 25 02       CLR    $2502
 A2D9: A6 05          LDA    $5,X
 A2DB: 48             ASLA
 A2DC: A7 0A          STA    $A,X
-A2DE: 7E A2 32       JMP    $A232
+A2DE: 7E A2 32       JMP    task_entry_07_a232
 
 A2F5: A4 C1          ANDA   ,U++
 A2F7: A6 88 45       LDA    $45,X
@@ -3655,9 +3692,11 @@ A54F: 8E 24 D0       LDX    #$24D0
 A552: BD 87 32       JSR    $8732
 A555: 8E 24 F0       LDX    #$24F0
 A558: 7E 87 32       JMP    $8732
+
+task_entry_08_a55b:
 A55B: BD 81 50       JSR    suspend_task_8150
 A55E: B6 25 01       LDA    $2501
-A561: 27 F8          BEQ    $A55B
+A561: 27 F8          BEQ    task_entry_08_a55b
 A563: B7 40 47       STA    $4047
 A566: 8E 25 10       LDX    #$2510
 A569: BD A6 78       JSR    $A678
@@ -3684,7 +3723,7 @@ A593: BD C4 80       JSR    $C480
 A596: 20 24          BRA    $A5BC
 A598: BD 81 50       JSR    suspend_task_8150
 A59B: B6 25 01       LDA    $2501
-A59E: 27 BB          BEQ    $A55B
+A59E: 27 BB          BEQ    task_entry_08_a55b
 A5A0: B7 40 47       STA    $4047
 A5A3: B6 10 14       LDA    $1014
 A5A6: 10 27 00 B7    LBEQ   $A661
@@ -3728,7 +3767,7 @@ A5FE: 7C 10 D5       INC    $10D5
 A601: BD C0 78       JSR    $C078
 A604: BD 81 50       JSR    suspend_task_8150
 A607: B6 25 01       LDA    $2501
-A60A: 10 27 FF 4D    LBEQ   $A55B
+A60A: 10 27 FF 4D    LBEQ   task_entry_08_a55b
 A60E: B6 10 14       LDA    $1014
 A611: 27 4E          BEQ    $A661
 A613: B7 40 47       STA    $4047
@@ -3743,7 +3782,7 @@ A629: 20 D6          BRA    $A601
 A62B: BD C0 78       JSR    $C078
 A62E: BD 81 50       JSR    suspend_task_8150
 A631: B6 25 01       LDA    $2501
-A634: 10 27 FF 23    LBEQ   $A55B
+A634: 10 27 FF 23    LBEQ   task_entry_08_a55b
 A638: B6 10 14       LDA    $1014
 A63B: 27 24          BEQ    $A661
 A63D: B7 40 47       STA    $4047
@@ -3770,7 +3809,7 @@ A66C: A7 03          STA    $3,X
 A66E: 6F 08          CLR    $8,X
 A670: 6F 1D          CLR    -$3,X
 A672: 7F 25 01       CLR    $2501
-A675: 7E A5 5B       JMP    $A55B
+A675: 7E A5 5B       JMP    task_entry_08_a55b
 A678: CE A6 84       LDU    #$A684
 A67B: E6 05          LDB    $5,X
 A67D: EC C5          LDD    B,U
@@ -3786,9 +3825,11 @@ A68E: 04 0C          LSR    $0C
 A690: 04 09          LSR    $09
 A692: 04 0C          LSR    $0C
 A694: 7F 10 D5       CLR    $10D5
+
+task_entry_09_a697:
 A697: BD 81 50       JSR    suspend_task_8150
 A69A: B6 10 D5       LDA    $10D5
-A69D: 27 F8          BEQ    $A697
+A69D: 27 F8          BEQ    task_entry_09_a697
 A69F: B6 10 3F       LDA    $103F
 A6A2: 84 1C          ANDA   #$1C
 A6A4: 44             LSRA
@@ -3887,6 +3928,7 @@ A775: B6 10 43       LDA    $1043
 A778: 30 86          LEAX   A,X
 A77A: BF 10 41       STX    $1041
 A77D: 7E A6 F9       JMP    $A6F9
+
 A780: B6 10 C1       LDA    $10C1
 A783: 8E 15 00       LDX    #$1500
 A786: 30 86          LEAX   A,X
@@ -3963,16 +4005,17 @@ A823: E6 C8 3E       LDB    $3E,U
 A826: E7 89 08 00    STB    $0800,X
 A82A: 20 DE          BRA    $A80A
 
+task_entry_0d_a859:
 A859: BD 81 50       JSR    suspend_task_8150
 A85C: B6 40 40       LDA    $4040
-A85F: 26 F8          BNE    $A859
+A85F: 26 F8          BNE    task_entry_0d_a859
 A861: B6 10 D6       LDA    $10D6
-A864: 27 F3          BEQ    $A859
+A864: 27 F3          BEQ    task_entry_0d_a859
 A866: 86 3C          LDA    #$3C
 A868: B7 10 50       STA    $1050
 A86B: BD 81 50       JSR    suspend_task_8150
 A86E: B6 10 D6       LDA    $10D6
-A871: 27 E6          BEQ    $A859
+A871: 27 E6          BEQ    task_entry_0d_a859
 A873: B6 10 50       LDA    $1050
 A876: 10 26 00 AA    LBNE   $A924
 A87A: FC 10 D0       LDD    $10D0
@@ -4165,9 +4208,10 @@ AA3F: 6F 0C          CLR    $C,X
 AA41: BE 10 36       LDX    $1036
 AA44: 39             RTS
 
+task_entry_0a_aa6f:
 AA6F: BD 81 50       JSR    suspend_task_8150
 AA72: B6 10 D9       LDA    $10D9
-AA75: 27 F8          BEQ    $AA6F
+AA75: 27 F8          BEQ    task_entry_0a_aa6f
 AA77: 8E 20 10       LDX    #$2010
 AA7A: 7F 10 09       CLR    $1009
 AA7D: A6 10          LDA    -$10,X
@@ -4197,13 +4241,15 @@ AAB0: 8C 24 D0       CMPX   #$24D0
 AAB3: 26 C8          BNE    $AA7D
 AAB5: B6 10 09       LDA    $1009
 AAB8: B7 10 D9       STA    $10D9
-AABB: 20 B2          BRA    $AA6F
+AABB: 20 B2          BRA    task_entry_0a_aa6f
+
+task_entry_0b_aabd:
 AABD: BD 81 50       JSR    suspend_task_8150
 AAC0: B6 10 D2       LDA    $10D2
-AAC3: 27 F8          BEQ    $AABD
+AAC3: 27 F8          BEQ    task_entry_0b_aabd
 AAC5: BD 81 50       JSR    suspend_task_8150
 AAC8: B6 10 D2       LDA    $10D2
-AACB: 27 F0          BEQ    $AABD
+AACB: 27 F0          BEQ    task_entry_0b_aabd
 AACD: FC 10 D0       LDD    $10D0
 AAD0: 10 26 00 A6    LBNE   $AB7A
 AAD4: B6 10 50       LDA    $1050
@@ -4244,7 +4290,7 @@ AB17: FD 10 4D       STD    $104D
 AB1A: 20 12          BRA    $AB2E
 AB1C: BD 81 50       JSR    suspend_task_8150
 AB1F: B6 10 D2       LDA    $10D2
-AB22: 27 99          BEQ    $AABD
+AB22: 27 99          BEQ    task_entry_0b_aabd
 AB24: FC 10 D0       LDD    $10D0
 AB27: 26 51          BNE    $AB7A
 AB29: B6 10 DB       LDA    $10DB
@@ -4283,10 +4329,12 @@ AB76: 10 26 FF 4B    LBNE   $AAC5
 AB7A: BD 81 50       JSR    suspend_task_8150
 AB7D: B6 10 D2       LDA    $10D2
 AB80: 26 F8          BNE    $AB7A
-AB82: 7E AA BD       JMP    $AABD
+AB82: 7E AA BD       JMP    task_entry_0b_aabd
+
+task_entry_0c_ab85:
 AB85: BD 81 50       JSR    suspend_task_8150
 AB88: B6 10 D2       LDA    $10D2
-AB8B: 27 F8          BEQ    $AB85
+AB8B: 27 F8          BEQ    task_entry_0c_ab85
 AB8D: BD AC 90       JSR    $AC90
 AB90: BD 81 50       JSR    suspend_task_8150
 AB93: B6 40 40       LDA    $4040
@@ -4373,7 +4421,7 @@ AC5A: BD 87 32       JSR    $8732
 AC5D: 30 88 20       LEAX   $20,X
 AC60: 8C 27 90       CMPX   #$2790
 AC63: 26 ED          BNE    $AC52
-AC65: 7E AB 85       JMP    $AB85
+AC65: 7E AB 85       JMP    task_entry_0c_ab85
 
 AC90: 8E 15 88       LDX    #$1588
 AC93: CC 00 0A       LDD    #$000A
@@ -5466,16 +5514,16 @@ B68B: A7 0A          STA    $A,X
 B68D: BD C0 00       JSR    $C000
 B690: 7E C0 BB       JMP    $C0BB
 
-
+task_entry_10_b6e2:
 B6DF: 7F 1F 60       CLR    $1F60
 B6E2: BD 81 50       JSR    suspend_task_8150
 B6E5: B6 1F 60       LDA    $1F60
-B6E8: 27 F8          BEQ    $B6E2
+B6E8: 27 F8          BEQ    task_entry_10_b6e2
 B6EA: BD 81 50       JSR    suspend_task_8150
 B6ED: FC 10 D0       LDD    $10D0
 B6F0: 26 ED          BNE    $B6DF
 B6F2: B6 1F 60       LDA    $1F60
-B6F5: 27 EB          BEQ    $B6E2
+B6F5: 27 EB          BEQ    task_entry_10_b6e2
 B6F7: 7A 1F 74       DEC    $1F74
 B6FA: 26 EE          BNE    $B6EA
 B6FC: 8E 1F 70       LDX    #$1F70
@@ -5582,7 +5630,7 @@ B7DD: 8E 1F 70       LDX    #$1F70
 B7E0: 6A 04          DEC    $4,X
 B7E2: 26 E7          BNE    $B7CB
 B7E4: BD 87 32       JSR    $8732
-B7E7: 7E B6 E2       JMP    $B6E2
+B7E7: 7E B6 E2       JMP    task_entry_10_b6e2
 B7EA: BD 81 50       JSR    suspend_task_8150
 B7ED: 8E 1F 70       LDX    #$1F70
 B7F0: B6 1F 60       LDA    $1F60
@@ -5592,7 +5640,7 @@ B7F8: 6F 0C          CLR    $C,X
 B7FA: 20 EE          BRA    $B7EA
 B7FC: 8E 1F 70       LDX    #$1F70
 B7FF: BD 87 32       JSR    $8732
-B802: 7E B6 E2       JMP    $B6E2
+B802: 7E B6 E2       JMP    task_entry_10_b6e2
 
 C000: E6 03          LDB    $3,X                                        
 C002: 2A 06          BPL    $C00A                                       
@@ -7617,7 +7665,7 @@ table_a2e9:
 	dc.w	$a4c1	; $a2f5
 	dc.w	$a688	; $a2f7
 table_ac66:
-	dc.w	$ab85	; $ac66
+	dc.w	task_entry_0c_ab85	; $ac66
 	dc.w	$ad49	; $ac68
 	dc.w	$b5ed	; $ac6a
 	dc.w	$adec	; $ac6c
