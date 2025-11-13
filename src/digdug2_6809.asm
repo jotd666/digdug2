@@ -1956,10 +1956,10 @@ task_entry_14_9438:
 9457: 3A             ABX
 9458: C6 1F          LDB    #$1F
 945A: F7 10 09       STB    $1009
-945D: A6 89 08 00    LDA    $0800,X
+945D: A6 89 08 00    LDA    $0800,X		; [video_address
 9461: 2A 06          BPL    $9469
 9463: 84 3F          ANDA   #$3F
-9465: A7 89 08 00    STA    $0800,X
+9465: A7 89 08 00    STA    $0800,X		; [video_address]
 9469: 30 88 20       LEAX   $20,X
 946C: 5A             DECB
 946D: 26 EE          BNE    $945D
@@ -1978,12 +1978,12 @@ task_entry_14_9438:
 9488: 79 10 11       ROL    $1011
 948B: B6 10 11       LDA    $1011
 948E: 84 1F          ANDA   #$1F
-9490: E6 86          LDB    A,X
+9490: E6 86          LDB    A,X				; [video_address]
 9492: C1 FC          CMPB   #$FC
 9494: 25 05          BCS    $949B
 9496: 5C             INCB
 9497: CA FC          ORB    #$FC
-9499: E7 86          STB    A,X
+9499: E7 86          STB    A,X		; [video_address]
 949B: 7A 10 09       DEC    $1009
 949E: 27 08          BEQ    $94A8
 94A0: 30 88 20       LEAX   $20,X
@@ -5216,10 +5216,10 @@ B3D4: CC 04 70       LDD    #$0470
 B3D7: B7 10 09       STA    $1009
 B3DA: 7F 10 CE       CLR    $10CE
 B3DD: A6 81          LDA    ,X++
-B3DF: E1 C6          CMPB   A,U
+B3DF: E1 C6          CMPB   A,U		; [video_address]
 B3E1: 23 1F          BLS    $B402
 B3E3: 8B E0          ADDA   #$E0
-B3E5: E1 C6          CMPB   A,U
+B3E5: E1 C6          CMPB   A,U		; [video_address]
 B3E7: 23 19          BLS    $B402
 B3E9: B7 10 34       STA    $1034
 B3EC: B6 10 09       LDA    $1009
@@ -5227,10 +5227,10 @@ B3EF: 85 01          BITA   #$01
 B3F1: 26 17          BNE    $B40A
 B3F3: B6 10 34       LDA    $1034
 B3F6: 8B 21          ADDA   #$21
-B3F8: E1 C6          CMPB   A,U
+B3F8: E1 C6          CMPB   A,U		; [video_address]
 B3FA: 23 06          BLS    $B402
 B3FC: 8B E0          ADDA   #$E0
-B3FE: E1 C6          CMPB   A,U
+B3FE: E1 C6          CMPB   A,U		; [video_address]
 B400: 22 08          BHI    $B40A
 B402: A6 1F          LDA    -$1,X
 B404: BA 10 CE       ORA    $10CE
@@ -5244,7 +5244,7 @@ B415: A6 84          LDA    ,X
 B417: B7 10 09       STA    $1009
 B41A: A6 01          LDA    $1,X
 B41C: 33 C6          LEAU   A,U
-B41E: A6 C9 08 00    LDA    $0800,U
+B41E: A6 C9 08 00    LDA    $0800,U	; [video_address]
 B422: 81 10          CMPA   #$10
 B424: 27 37          BEQ    $B45D
 B426: 25 10          BCS    $B438
@@ -5252,11 +5252,11 @@ B428: 81 20          CMPA   #$20
 B42A: 25 19          BCS    $B445
 B42C: 81 30          CMPA   #$30
 B42E: 26 2D          BNE    $B45D
-B430: A6 C4          LDA    ,U
+B430: A6 C4          LDA    ,U	; [video_address]
 B432: A5 04          BITA   $4,X
 B434: 26 1F          BNE    $B455
 B436: 20 25          BRA    $B45D
-B438: A6 C4          LDA    ,U
+B438: A6 C4          LDA    ,U	; [video_address]
 B43A: 81 70          CMPA   #$70
 B43C: 25 17          BCS    $B455
 B43E: B6 10 CE       LDA    $10CE
@@ -5265,7 +5265,7 @@ B443: 20 15          BRA    $B45A
 B445: A6 84          LDA    ,X
 B447: 85 01          BITA   #$01
 B449: 27 0A          BEQ    $B455
-B44B: A6 C4          LDA    ,U
+B44B: A6 C4          LDA    ,U			; [video_address]
 B44D: 81 60          CMPA   #$60
 B44F: 25 04          BCS    $B455
 B451: A5 84          BITA   ,X
@@ -5275,7 +5275,7 @@ B458: AA 02          ORA    $2,X
 B45A: B7 10 CE       STA    $10CE
 B45D: 7A 10 09       DEC    $1009
 B460: 27 05          BEQ    $B467
-B462: 33 C8 E0       LEAU   -$20,U
+B462: 33 C8 E0       LEAU   -$20,U	; [video_address]
 B465: 20 B7          BRA    $B41E
 B467: FE 10 38       LDU    $1038
 B46A: 30 05          LEAX   $5,X
@@ -5294,10 +5294,10 @@ B486: 20 37          BRA    $B4BF
 B488: C6 02          LDB    #$02
 B48A: F7 10 09       STB    $1009
 B48D: FE 10 38       LDU    $1038
-B490: E6 C9 08 00    LDB    $0800,U
+B490: E6 C9 08 00    LDB    $0800,U	; [video_address]
 B494: C1 30          CMPB   #$30
 B496: 26 08          BNE    $B4A0
-B498: E6 C4          LDB    ,U
+B498: E6 C4          LDB    ,U		; [video_address]
 B49A: C4 03          ANDB   #$03
 B49C: 26 0A          BNE    $B4A8
 B49E: 20 0F          BRA    $B4AF
@@ -5310,7 +5310,7 @@ B4AA: B7 10 CE       STA    $10CE
 B4AD: 20 10          BRA    $B4BF
 B4AF: 7A 10 09       DEC    $1009
 B4B2: 27 0B          BEQ    $B4BF
-B4B4: 33 C8 20       LEAU   $20,U
+B4B4: 33 C8 20       LEAU   $20,U			; [video_address]
 B4B7: 20 D7          BRA    $B490
 B4B9: BE 10 36       LDX    $1036
 B4BC: B6 10 CE       LDA    $10CE
@@ -6139,8 +6139,8 @@ C557: 1F 03          TFR    D,U
 C559: F6 10 C0       LDB    $10C0
 C55C: A6 A5          LDA    B,Y
 C55E: 33 C6          LEAU   A,U
-C560: A6 C4          LDA    ,U
-C562: E6 C9 08 00    LDB    $0800,U
+C560: A6 C4          LDA    ,U		; [video_address]
+C562: E6 C9 08 00    LDB    $0800,U		; [video_address]
 C566: 39             RTS
 C567: CC FF FF       LDD    #$FFFF
 C56A: 39             RTS
@@ -6412,13 +6412,13 @@ C850: B7 10 09       STA    $1009
 C853: AE A4          LDX    ,Y
 C855: E6 C0          LDB    ,U+
 C857: 3A             ABX
-C858: A6 84          LDA    ,X
+C858: A6 84          LDA    ,X		; [video_address]
 C85A: 2B 3C          BMI    $C898
-C85C: E6 89 08 00    LDB    $0800,X
+C85C: E6 89 08 00    LDB    $0800,X		; [video_address]
 C860: C1 30          CMPB   #$30
 C862: 26 07          BNE    $C86B
 C864: BB 10 3C       ADDA   $103C
-C867: A7 84          STA    ,X
+C867: A7 84          STA    ,X		; [video_address]
 C869: 20 49          BRA    $C8B4
 C86B: C1 1F          CMPB   #$1F
 C86D: 23 1B          BLS    $C88A
@@ -6437,9 +6437,9 @@ C884: 8B 20          ADDA   #$20
 C886: C4 0F          ANDB   #$0F
 C888: 20 03          BRA    $C88D
 C88A: BB 10 3C       ADDA   $103C
-C88D: A7 84          STA    ,X
+C88D: A7 84          STA    ,X		; [video_address]
 C88F: FA 10 40       ORB    $1040
-C892: E7 89 08 00    STB    $0800,X
+C892: E7 89 08 00    STB    $0800,X		; [video_address]
 C896: 20 1C          BRA    $C8B4
 C898: FF 10 38       STU    $1038
 C89B: CE C4 21       LDU    #$C421
@@ -6449,7 +6449,7 @@ C8A2: 11 83 C4 40    CMPU   #$C440
 C8A6: 26 F6          BNE    $C89E
 C8A8: 33 41          LEAU   $1,U
 C8AA: E6 C8 3E       LDB    $3E,U
-C8AD: E7 89 08 00    STB    $0800,X
+C8AD: E7 89 08 00    STB    $0800,X		; [video_address]
 C8B1: FE 10 38       LDU    $1038
 C8B4: 7A 10 09       DEC    $1009
 C8B7: 26 9C          BNE    $C855
@@ -6518,13 +6518,13 @@ C954: BD C5 34       JSR    $C534
 C957: 81 70          CMPA   #$70
 C959: 24 19          BCC    $C974
 C95B: 86 70          LDA    #$70
-C95D: A1 C8 E0       CMPA   -$20,U
+C95D: A1 C8 E0       CMPA   -$20,U		; [video_address]
 C960: 23 12          BLS    $C974
 C962: F6 10 09       LDB    $1009
 C965: 26 09          BNE    $C970
-C967: A1 41          CMPA   $1,U
+C967: A1 41          CMPA   $1,U		; [video_address]
 C969: 23 09          BLS    $C974
-C96B: A1 C8 E1       CMPA   -$1F,U
+C96B: A1 C8 E1       CMPA   -$1F,U		; [video_address]
 C96E: 23 04          BLS    $C974
 C970: 7F 10 D8       CLR    $10D8
 C973: 39             RTS
@@ -6585,7 +6585,7 @@ C9E7: F7 10 35       STB    $1035
 C9EA: BF 10 36       STX    $1036
 C9ED: 58             ASLB
 C9EE: AE A5          LDX    B,Y
-C9F0: 30 89 08 00    LEAX   $0800,X
+C9F0: 30 89 08 00    LEAX   $0800,X		; [video_address]
 C9F4: CE CC 20       LDU    #$CC20
 C9F7: 5F             CLRB
 C9F8: F7 10 CE       STB    $10CE
@@ -6604,11 +6604,11 @@ CA15: 10 BF 10 3A    STY    $103A
 CA19: 10 8E CB FA    LDY    #$CBFA
 CA1D: 44             LSRA
 CA1E: 25 0E          BCS    $CA2E
-CA20: E6 89 F8 00    LDB    -$0800,X
+CA20: E6 89 F8 00    LDB    -$0800,X		; [video_address]
 CA24: CB 50          ADDB   #$50
-CA26: E7 89 F8 00    STB    -$0800,X
+CA26: E7 89 F8 00    STB    -$0800,X		; [video_address]
 CA2A: E6 A5          LDB    B,Y
-CA2C: E7 84          STB    ,X
+CA2C: E7 84          STB    ,X				; [video_address]
 CA2E: E6 C0          LDB    ,U+
 CA30: 27 06          BEQ    $CA38
 CA32: 3A             ABX
@@ -6666,9 +6666,9 @@ CAB4: A6 80          LDA    ,X+
 CAB6: 10 27 01 4C    LBEQ   $CC06
 CABA: 7A 10 3A       DEC    $103A
 CABD: 33 C6          LEAU   A,U
-CABF: E6 C9 08 00    LDB    $0800,U
+CABF: E6 C9 08 00    LDB    $0800,U		; [video_address]
 CAC3: C4 3F          ANDB   #$3F
-CAC5: A6 C4          LDA    ,U
+CAC5: A6 C4          LDA    ,U		; [video_address]
 CAC7: 2A 32          BPL    $CAFB
 CAC9: C1 0F          CMPB   #$0F
 CACB: 27 E7          BEQ    $CAB4
@@ -6683,10 +6683,10 @@ CADD: 27 04          BEQ    $CAE3
 CADF: 81 84          CMPA   #$84
 CAE1: 26 10          BNE    $CAF3
 CAE3: C6 25          LDB    #$25
-CAE5: E7 C9 08 00    STB    $0800,U
+CAE5: E7 C9 08 00    STB    $0800,U				; [video_address]
 CAE9: 20 C9          BRA    $CAB4
 CAEB: C6 36          LDB    #$36
-CAED: E7 C9 08 00    STB    $0800,U
+CAED: E7 C9 08 00    STB    $0800,U					; [video_address]
 CAF1: 20 C1          BRA    $CAB4
 CAF3: C6 09          LDB    #$09
 CAF5: E7 C9 08 00    STB    $0800,U
@@ -6705,30 +6705,30 @@ CB13: 85 02          BITA   #$02
 CB15: 27 43          BEQ    $CB5A
 CB17: 20 70          BRA    $CB89
 CB19: B7 10 34       STA    $1034
-CB1C: A6 C4          LDA    ,U
+CB1C: A6 C4          LDA    ,U				; [video_address]
 CB1E: 81 67          CMPA   #$67
 CB20: 27 13          BEQ    $CB35
 CB22: 81 6B          CMPA   #$6B
 CB24: 26 31          BNE    $CB57
-CB26: A6 C8 E0       LDA    -$20,U
+CB26: A6 C8 E0       LDA    -$20,U			; [video_address]
 CB29: 2A 2C          BPL    $CB57
 CB2B: 81 B8          CMPA   #$B8
 CB2D: 27 28          BEQ    $CB57
 CB2F: 81 85          CMPA   #$85
 CB31: 27 24          BEQ    $CB57
 CB33: 20 0D          BRA    $CB42
-CB35: A6 C8 20       LDA    $20,U
+CB35: A6 C8 20       LDA    $20,U			; [video_address]
 CB38: 2A 1D          BPL    $CB57
 CB3A: 81 B0          CMPA   #$B0
 CB3C: 27 19          BEQ    $CB57
 CB3E: 81 8A          CMPA   #$8A
 CB40: 27 15          BEQ    $CB57
 CB42: CA 20          ORB    #$20
-CB44: E7 C9 08 00    STB    $0800,U
-CB48: E6 C9 08 01    LDB    $0801,U
+CB44: E7 C9 08 00    STB    $0800,U		; [video_address]
+CB48: E6 C9 08 01    LDB    $0801,U		; [video_address]
 CB4C: C4 0F          ANDB   #$0F
 CB4E: CA 20          ORB    #$20
-CB50: E7 C9 08 01    STB    $0801,U
+CB50: E7 C9 08 01    STB    $0801,U		; [video_address]
 CB54: 7E CA B4       JMP    $CAB4
 CB57: B6 10 34       LDA    $1034
 CB5A: 84 01          ANDA   #$01
@@ -6868,20 +6868,20 @@ CCDB: 7D 10 EC       TST    $10EC
 CCDE: 27 23          BEQ    $CD03
 CCE0: 81 70          CMPA   #$70
 CCE2: 10 25 00 84    LBCS   $CD6A
-CCE6: A6 C8 20       LDA    $20,U
+CCE6: A6 C8 20       LDA    $20,U		; [video_address]
 CCE9: 81 70          CMPA   #$70
 CCEB: 10 25 00 7B    LBCS   $CD6A
-CCEF: A6 41          LDA    $1,U
+CCEF: A6 41          LDA    $1,U		; [video_address]
 CCF1: 81 70          CMPA   #$70
 CCF3: 10 25 00 73    LBCS   $CD6A
-CCF7: A6 C8 21       LDA    $21,U
+CCF7: A6 C8 21       LDA    $21,U		; [video_address]
 CCFA: 81 70          CMPA   #$70
 CCFC: 25 6C          BCS    $CD6A
 CCFE: CC 44 06       LDD    #$4406
 CD01: 20 33          BRA    $CD36
-CD03: EA C9 08 01    ORB    $0801,U
-CD07: EA C9 08 21    ORB    $0821,U
-CD0B: EA C9 08 20    ORB    $0820,U
+CD03: EA C9 08 01    ORB    $0801,U		; [video_address]
+CD07: EA C9 08 21    ORB    $0821,U		; [video_address]
+CD0B: EA C9 08 20    ORB    $0820,U		; [video_address]
 CD0F: C4 80          ANDB   #$80
 CD11: F7 10 EB       STB    $10EB
 CD14: 5F             CLRB
@@ -6946,23 +6946,23 @@ CDA0: BD C5 34       JSR    $C534
 CDA3: 86 70          LDA    #$70
 CDA5: F6 10 EC       LDB    $10EC
 CDA8: 27 0F          BEQ    $CDB9
-CDAA: A1 41          CMPA   $1,U
+CDAA: A1 41          CMPA   $1,U	; [video_address]
 CDAC: 10 22 00 96    LBHI   $CE46
-CDB0: A1 C8 21       CMPA   $21,U
+CDB0: A1 C8 21       CMPA   $21,U	; [video_address]
 CDB3: 10 22 00 8F    LBHI   $CE46
 CDB7: 20 06          BRA    $CDBF
 CDB9: E6 1A          LDB    -$6,X
 CDBB: C1 0C          CMPB   #$0C
 CDBD: 27 27          BEQ    $CDE6
-CDBF: A1 C4          CMPA   ,U
+CDBF: A1 C4          CMPA   ,U	; [video_address]
 CDC1: 10 22 00 81    LBHI   $CE46
-CDC5: A1 C8 20       CMPA   $20,U
+CDC5: A1 C8 20       CMPA   $20,U	; [video_address]
 CDC8: 22 7C          BHI    $CE46
 CDCA: 5F             CLRB
-CDCB: A1 C8 E0       CMPA   -$20,U
+CDCB: A1 C8 E0       CMPA   -$20,U	; [video_address]
 CDCE: 22 02          BHI    $CDD2
 CDD0: CA 01          ORB    #$01
-CDD2: A1 C8 40       CMPA   $40,U
+CDD2: A1 C8 40       CMPA   $40,U	; [video_address]
 CDD5: 22 02          BHI    $CDD9
 CDD7: CA 02          ORB    #$02
 CDD9: C1 03          CMPB   #$03
@@ -6973,14 +6973,14 @@ CDE1: 26 36          BNE    $CE19
 CDE3: 40             NEGA
 CDE4: 20 33          BRA    $CE19
 CDE6: 5F             CLRB
-CDE7: A6 C4          LDA    ,U
+CDE7: A6 C4          LDA    ,U	; [video_address]
 CDE9: 81 70          CMPA   #$70
 CDEB: 25 07          BCS    $CDF4
 CDED: 84 F0          ANDA   #$F0
 CDEF: 81 80          CMPA   #$80
 CDF1: 27 01          BEQ    $CDF4
 CDF3: 5C             INCB
-CDF4: A6 C8 20       LDA    $20,U
+CDF4: A6 C8 20       LDA    $20,U	; [video_address]
 CDF7: 81 70          CMPA   #$70
 CDF9: 25 08          BCS    $CE03
 CDFB: 84 F0          ANDA   #$F0
