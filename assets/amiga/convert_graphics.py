@@ -10,8 +10,8 @@ mirror_sprites = get_mirror_sprites()
 
 magenta = (254,0,254)
 
-NB_SPRITES = 0x200
-NB_TILES = 0x400
+NB_SPRITES = 0x100
+NB_TILES = 0x100
 
 dump_it = True
 
@@ -123,7 +123,7 @@ nb_planes = 4
 nb_colors = 32
 
 
-
+NB_TILE_CLUTS = 64
 
 
 def add_tile(table,index,cluts=[0]):
@@ -162,7 +162,7 @@ else:
     try:
         with open(used_graphics_dir / "used_tiles","rb") as f:
             for index in range(NB_TILES):
-                d = f.read(16)
+                d = f.read(NB_TILE_CLUTS)
                 cluts = [i for i,c in enumerate(d) if c]
                 if cluts:
                     add_tile(tile_cluts,index,cluts=cluts)
@@ -365,13 +365,6 @@ full_palette[16] = (0,0,0)
 with open(os.path.join(src_dir,"palette.68k"),"w") as f:
     bitplanelib.palette_dump(full_palette,f,bitplanelib.PALETTE_FORMAT_ASMGNU)
 
-gs_array = [0]*NB_SPRITES
-for i in group_sprite_pairs:
-    gs_array[i] = 1
-    gs_array[i+1] = 0xFF
-with open(os.path.join(src_dir,"sprite_groups.68k"),"w") as f:
-    f.write("* 1: do not display unless mirrored\n")
-    bitplanelib.dump_asm_bytes(gs_array,f,mit_format=True)
 
 
 with open(os.path.join(src_dir,"graphics.68k"),"w") as f:

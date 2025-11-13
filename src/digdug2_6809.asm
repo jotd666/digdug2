@@ -84,7 +84,13 @@ video_stuff_5004 = $5004
 video_stuff_500b = $500B
 video_stuff_500a = $500A
 namco_io_4800 = $4800
-unknown_4802 = $4802
+credits_tens_4802 = $4802
+credits_unit_4803 = $4803
+joystick_directions_4804 = $4804
+joystick_button_1_4805 = $4805
+joystick_button_2_4815 = $4815
+dsw_nb_lives_4814 = $4814
+
 io_register_4818 = $4818
 ; there are 3 pointer array zones for tasks
 stack_location_pointer_array_1800 = $1800
@@ -183,13 +189,13 @@ sync_loop_80c1:
 80C1: B6 10 00       LDA    sync_1000
 80C4: 27 FB          BEQ    sync_loop_80c1
 80C6: 7F 10 00       CLR    sync_1000
-; update I/O (sound?)
-80C9: B6 48 14       LDA    $4814
+; update I/O
+80C9: B6 48 14       LDA    dsw_nb_lives_4814
 80CC: 84 01          ANDA   #$01
-80CE: 10 26 64 E8    LBNE   $E5BA
+80CE: 10 26 64 E8    LBNE   reset_e5ba		; bit 1 is service mode
 80D2: B6 48 17       LDA    $4817
 80D5: 84 08          ANDA   #$08
-80D7: 10 26 64 DF    LBNE   $E5BA
+80D7: 10 26 64 DF    LBNE   reset_e5ba		; hardware fault / service mode?
 80DB: B6 48 00       LDA    namco_io_4800
 80DE: 84 0F          ANDA   #$0F
 80E0: BB 40 54       ADDA   $4054
@@ -203,7 +209,7 @@ end_of_io_stuff_80e6:
 80F4: 27 25          BEQ    $811B
 80F6: B6 10 1B       LDA    $101B
 80F9: 27 20          BEQ    $811B
-80FB: B6 48 05       LDA    $4805
+80FB: B6 48 05       LDA    joystick_button_1_4805
 80FE: F6 10 5B       LDB    $105B
 8101: 58             ASLB
 8102: 85 08          BITA   #$08
@@ -385,12 +391,12 @@ end_zero_io_81f6:
 8225: B7 48 0A       STA    $480A
 8228: B7 48 0C       STA    $480C
 822B: F7 48 08       STB    $4808
-822E: F6 48 15       LDB    $4815
+822E: F6 48 15       LDB    joystick_button_2_4815
 8231: C4 08          ANDB   #$08
 8233: 26 01          BNE    $8236
 8235: 4F             CLRA
 8236: B7 10 06       STA    $1006
-8239: B6 48 14       LDA    $4814
+8239: B6 48 14       LDA    dsw_nb_lives_4814
 823C: 84 02          ANDA   #$02
 823E: 8B 03          ADDA   #$03
 8240: B7 10 CC       STA    $10CC
@@ -418,7 +424,7 @@ end_zero_io_81f6:
 827B: BD 87 06       JSR    clear_screen_8706
 827E: BD 8B 3D       JSR    $8B3D
 8281: BD 8B DF       JSR    $8BDF
-8284: FC 48 02       LDD    unknown_4802
+8284: FC 48 02       LDD    credits_tens_4802
 8287: 84 0F          ANDA   #$0F
 8289: 26 6A          BNE    $82F5
 828B: C4 0F          ANDB   #$0F
@@ -430,7 +436,7 @@ end_zero_io_81f6:
 829B: B7 10 E2       STA    $10E2
 829E: F7 10 4F       STB    $104F
 82A1: BD 81 50       JSR    suspend_task_8150
-82A4: FC 48 02       LDD    unknown_4802
+82A4: FC 48 02       LDD    credits_tens_4802
 82A7: 84 0F          ANDA   #$0F
 82A9: 26 4A          BNE    $82F5
 82AB: C4 0F          ANDB   #$0F
@@ -444,7 +450,7 @@ end_zero_io_81f6:
 82BF: B7 10 E2       STA    $10E2
 82C2: F7 10 4F       STB    $104F
 82C5: BD 81 50       JSR    suspend_task_8150
-82C8: FC 48 02       LDD    unknown_4802
+82C8: FC 48 02       LDD    credits_tens_4802
 82CB: 84 0F          ANDA   #$0F
 82CD: 26 26          BNE    $82F5
 82CF: C4 0F          ANDB   #$0F
@@ -455,7 +461,7 @@ end_zero_io_81f6:
 82DB: 26 E8          BNE    $82C5
 82DD: 7C 10 10       INC    $1010
 82E0: BD 81 50       JSR    suspend_task_8150
-82E3: FC 48 02       LDD    unknown_4802
+82E3: FC 48 02       LDD    credits_tens_4802
 82E6: 84 0F          ANDA   #$0F
 82E8: 26 0B          BNE    $82F5
 82EA: C4 0F          ANDB   #$0F
@@ -780,7 +786,7 @@ clear_text_85a0:
 8643: 86 0E          LDA    #$0E
 8645: C6 06          LDB    #$06
 8647: BD 85 BD       JSR    $85BD
-864A: FC 48 02       LDD    unknown_4802
+864A: FC 48 02       LDD    credits_tens_4802
 864D: C4 0F          ANDB   #$0F
 864F: F7 07 A3       STB    $07A3
 8652: 84 0F          ANDA   #$0F
@@ -800,7 +806,7 @@ clear_text_85a0:
 8671: CE 86 BD       LDU    #$86BD
 8674: 86 0D          LDA    #$0D
 8676: BD 85 90       JSR    write_text_8590
-8679: FC 48 02       LDD    unknown_4802
+8679: FC 48 02       LDD    credits_tens_4802
 867C: 84 0F          ANDA   #$0F
 867E: 26 06          BNE    $8686
 8680: C4 0F          ANDB   #$0F
@@ -1221,14 +1227,16 @@ task_entry_11_8890:
 8B73: 10 8E 05 03    LDY    #$0503
 8B77: 8D 10          BSR    $8B89
 8B79: 86 30          LDA    #$30
-8B7B: A7 C4          STA    ,U
+8B7B: A7 C4          STA    ,U		; [video_address]
 8B7D: 39             RTS
+
 8B7E: CC 20 07       LDD    #$2007
-8B81: A7 C4          STA    ,U
+8B81: A7 C4          STA    ,U		; [video_address]
 8B83: 33 5F          LEAU   -$1,U
 8B85: 5A             DECB
 8B86: 26 F9          BNE    $8B81
 8B88: 39             RTS
+
 8B89: C6 FF          LDB    #$FF
 8B8B: 20 02          BRA    $8B8F
 8B8D: C6 E0          LDB    #$E0
@@ -1246,6 +1254,7 @@ task_entry_11_8890:
 8BA3: 7A 10 0F       DEC    $100F
 8BA6: 26 EB          BNE    $8B93
 8BA8: 39             RTS
+
 8BA9: 81 00          CMPA   #$00
 8BAB: 26 09          BNE    $8BB6
 8BAD: 7A 10 0E       DEC    $100E
@@ -1253,9 +1262,10 @@ task_entry_11_8890:
 8BB2: 86 20          LDA    #$20
 8BB4: 20 03          BRA    $8BB9
 8BB6: 7F 10 0E       CLR    $100E
-8BB9: A7 C4          STA    ,U
+8BB9: A7 C4          STA    ,U		; [video_address]
 8BBB: 33 C5          LEAU   B,U
 8BBD: 39             RTS
+
 8BBE: 8E 17 00       LDX    #$1700
 8BC1: CE 10 0B       LDU    #$100B
 8BC4: C6 03          LDB    #$03
@@ -1686,7 +1696,7 @@ task_entry_03_8fac:
 8FBA: B4 10 06       ANDA   $1006
 8FBD: C6 02          LDB    #$02
 8FBF: 3D             MUL
-8FC0: 8E 48 05       LDX    #$4805
+8FC0: 8E 48 05       LDX    #joystick_button_1_4805
 8FC3: 3A             ABX
 8FC4: F6 10 15       LDB    $1015
 8FC7: 58             ASLB
@@ -1720,7 +1730,7 @@ task_entry_02_8ff3:
 9001: B4 10 06       ANDA   $1006
 9004: C6 02          LDB    #$02
 9006: 3D             MUL
-9007: 8E 48 04       LDX    #$4804
+9007: 8E 48 04       LDX    #joystick_directions_4804
 900A: A6 85          LDA    B,X
 900C: 84 0F          ANDA   #$0F
 900E: B7 10 12       STA    $1012
@@ -1777,10 +1787,11 @@ task_entry_01_902b:
 9088: 3A             ABX
 9089: C6 03          LDB    #$03
 908B: A6 80          LDA    ,X+
-908D: A7 C2          STA    ,-U
+908D: A7 C2          STA    ,-U	; [video_address]
 908F: 5A             DECB
 9090: 26 F9          BNE    $908B
 9092: 39             RTS
+
 9093: 31 55          LEAY   -$B,U
 9095: 50             NEGB
 9096: 32 55          LEAS   -$B,U
@@ -2495,7 +2506,7 @@ task_entry_12_9955:
 99A4: C6 14          LDB    #$14
 99A6: BD 85 A0       JSR    clear_text_85a0
 99A9: BD 81 50       JSR    suspend_task_8150
-99AC: B6 48 05       LDA    $4805
+99AC: B6 48 05       LDA    joystick_button_1_4805
 99AF: 84 08          ANDA   #$08
 99B1: 10 26 01 03    LBNE   $9AB8
 99B5: B6 48 07       LDA    $4807
@@ -2567,7 +2578,7 @@ task_entry_12_9955:
 9A65: A7 89 08 00    STA    $0800,X
 9A69: B7 10 1B       STA    $101B
 9A6C: BD 81 50       JSR    suspend_task_8150
-9A6F: B6 48 05       LDA    $4805
+9A6F: B6 48 05       LDA    joystick_button_1_4805
 9A72: 84 08          ANDA   #$08
 9A74: 26 42          BNE    $9AB8
 9A76: B6 48 07       LDA    $4807
@@ -2628,10 +2639,11 @@ task_entry_12_9955:
 9B01: BD 85 A0       JSR    clear_text_85a0
 9B04: 86 05          LDA    #$05
 9B06: 8E 03 18       LDX    #$0318
-9B09: A7 83          STA    ,--X
-9B0B: 6F 89 FF 00    CLR    -$0100,X
+9B09: A7 83          STA    ,--X	; [video_address]
+9B0B: 6F 89 FF 00    CLR    -$0100,X	; [video_address]
 9B0F: 4A             DECA
 9B10: 26 F7          BNE    $9B09
+
 9B12: 8E 02 CE       LDX    #$02CE
 9B15: CE 11 B0       LDU    #$11B0
 9B18: 86 05          LDA    #$05
@@ -2641,9 +2653,9 @@ task_entry_12_9955:
 9B23: A6 C0          LDA    ,U+
 9B25: 26 07          BNE    $9B2E
 9B27: B6 10 CF       LDA    $10CF
-9B2A: A7 84          STA    ,X
+9B2A: A7 84          STA    ,X		; [video_address]
 9B2C: 20 05          BRA    $9B33
-9B2E: A7 84          STA    ,X
+9B2E: A7 84          STA    ,X		; [video_address]
 9B30: 7F 10 CF       CLR    $10CF
 9B33: 30 88 E0       LEAX   -$20,X
 9B36: 5A             DECB
@@ -2652,7 +2664,7 @@ task_entry_12_9955:
 9B3B: 30 88 C0       LEAX   -$40,X
 9B3E: 30 88 E0       LEAX   -$20,X
 9B41: A6 C0          LDA    ,U+
-9B43: A7 84          STA    ,X
+9B43: A7 84          STA    ,X		; [video_address]
 9B45: 5A             DECB
 9B46: 26 F6          BNE    $9B3E
 9B48: A6 43          LDA    $3,U
@@ -2664,9 +2676,9 @@ task_entry_12_9955:
 9B53: 44             LSRA
 9B54: 44             LSRA
 9B55: 44             LSRA
-9B56: A7 88 80       STA    -$80,X
+9B56: A7 88 80       STA    -$80,X	; [video_address]
 9B59: C4 0F          ANDB   #$0F
-9B5B: E7 89 FF 60    STB    -$00A0,X
+9B5B: E7 89 FF 60    STB    -$00A0,X	; [video_address]
 9B5F: 30 89 01 C2    LEAX   $01C2,X
 9B63: 7A 10 CE       DEC    $10CE
 9B66: 26 B5          BNE    $9B1D
@@ -5514,8 +5526,8 @@ B68B: A7 0A          STA    $A,X
 B68D: BD C0 00       JSR    $C000
 B690: 7E C0 BB       JMP    $C0BB
 
-task_entry_10_b6e2:
 B6DF: 7F 1F 60       CLR    $1F60
+task_entry_10_b6e2:
 B6E2: BD 81 50       JSR    suspend_task_8150
 B6E5: B6 1F 60       LDA    $1F60
 B6E8: 27 F8          BEQ    task_entry_10_b6e2
@@ -5815,8 +5827,8 @@ C17A: 30 86          LEAX   A,X
 C17C: 20 EC          BRA    $C16A
 C17E: CE C1 96       LDU    #$C196
 C181: EC A1          LDD    ,Y++
-C183: A7 84          STA    ,X
-C185: E7 89 08 00    STB    $0800,X
+C183: A7 84          STA    ,X		; [video_address]
+C185: E7 89 08 00    STB    $0800,X		; [video_address]
 C189: A6 C0          LDA    ,U+
 C18B: 27 04          BEQ    $C191
 C18D: 30 86          LEAX   A,X
@@ -5939,21 +5951,21 @@ C2C4: 30 85          LEAX   B,X
 C2C6: 46             RORA
 C2C7: 10 24 00 9C    LBCC   $C367
 C2CB: B7 10 34       STA    $1034
-C2CE: A6 84          LDA    ,X
+C2CE: A6 84          LDA    ,X		; [video_address]
 C2D0: 2B 20          BMI    $C2F2
-C2D2: E6 89 08 00    LDB    $0800,X
+C2D2: E6 89 08 00    LDB    $0800,X		; [video_address]
 C2D6: C4 0F          ANDB   #$0F
 C2D8: FA 10 3D       ORB    $103D
 C2DB: C5 04          BITB   #$04
 C2DD: 27 0C          BEQ    $C2EB
 C2DF: C5 0A          BITB   #$0A
 C2E1: 27 08          BEQ    $C2EB
-C2E3: 8B 1F          ADDA   #$1F
+C2E3: 8B 1F          ADDA   #$1F	; [video_address]
 C2E5: A7 84          STA    ,X
 C2E7: C4 0F          ANDB   #$0F
 C2E9: 20 75          BRA    $C360
 C2EB: BB 10 3C       ADDA   $103C
-C2EE: A7 84          STA    ,X
+C2EE: A7 84          STA    ,X	; [video_address]
 C2F0: 20 4E          BRA    $C340
 C2F2: FF 10 3A       STU    $103A
 C2F5: CE C4 0C       LDU    #$C40C
@@ -5977,7 +5989,7 @@ C31E: 81 A7          CMPA   #$A7
 C320: 26 0F          BNE    $C331
 C322: C6 25          LDB    #$25
 C324: 20 15          BRA    $C33B
-C326: E6 88 20       LDB    $20,X
+C326: E6 88 20       LDB    $20,X	; [video_address]
 C329: 81 A4          CMPA   #$A4
 C32B: 26 04          BNE    $C331
 C32D: C6 25          LDB    #$25
@@ -5997,12 +6009,12 @@ C34C: 85 02          BITA   #$02
 C34E: 27 05          BEQ    $C355
 C350: A6 88 E0       LDA    -$20,X
 C353: 20 03          BRA    $C358
-C355: A6 88 20       LDA    $20,X
+C355: A6 88 20       LDA    $20,X	; [video_address]
 C358: 81 FC          CMPA   #$FC
 C35A: 24 04          BCC    $C360
 C35C: C4 0F          ANDB   #$0F
 C35E: CA 10          ORB    #$10
-C360: E7 89 08 00    STB    $0800,X
+C360: E7 89 08 00    STB    $0800,X	; [video_address]
 C364: B6 10 34       LDA    $1034
 C367: 7A 10 CE       DEC    $10CE
 C36A: 10 26 FF 54    LBNE   $C2C2
@@ -7520,7 +7532,7 @@ EA7F: 39             RTS
 
 EA80: 8E 85 88       LDX    #$8588
 EA83: CE EB 42       LDU    #$EB42
-EA86: B6 48 14       LDA    $4814
+EA86: B6 48 14       LDA    dsw_nb_lives_4814
 EA89: 84 0C          ANDA   #$0C
 EA8B: 44             LSRA
 EA8C: B7 10 34       STA    $1034
@@ -7531,7 +7543,7 @@ EA97: B6 10 34       LDA    $1034
 EA9A: EC C6          LDD    A,U
 EA9C: B7 02 4D       STA    $024D
 EA9F: F7 01 0D       STB    $010D
-EAA2: B6 48 14       LDA    $4814
+EAA2: B6 48 14       LDA    dsw_nb_lives_4814
 EAA5: 84 02          ANDA   #$02
 EAA7: 8B 03          ADDA   #$03
 EAA9: B7 02 12       STA    $0212
@@ -7556,7 +7568,7 @@ EAD8: 20 03          BRA    $EADD
 EADA: CC 4E 20       LDD    #$4E20
 EADD: B7 01 F6       STA    $01F6
 EAE0: F7 01 D6       STB    $01D6
-EAE3: B6 48 15       LDA    $4815
+EAE3: B6 48 15       LDA    joystick_button_2_4815
 EAE6: 84 08          ANDA   #$08
 EAE8: 26 0C          BNE    $EAF6
 EAEA: 8E 03 0A       LDX    #$030A
@@ -7620,7 +7632,7 @@ EBF2: 39             RTS
 EBF3: B6 48 06       LDA    $4806
 EBF6: 84 0F          ANDA   #$0F
 EBF8: 26 E2          BNE    $EBDC
-EBFA: B6 48 05       LDA    $4805
+EBFA: B6 48 05       LDA    joystick_button_1_4805
 EBFD: 84 0F          ANDA   #$0F
 EBFF: F6 10 6B       LDB    $106B
 EC02: 8E EC 16       LDX    #$EC16

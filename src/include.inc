@@ -52,11 +52,11 @@ okay\@:
 	.endif
 	.endm
 	.macro	VIDEO_BYTE_DIRTY
-	| called when a byte write was done in a0
+	jbsr	osd_video_byte_dirty
 	.endm
 
 	.macro	VIDEO_WORD_DIRTY
-	| called when a word write was done in a0
+	jbsr	osd_video_word_dirty
 	.endm
 
 	.ifdef	RELEASE
@@ -469,11 +469,15 @@ get_address:
 	* 0X2000 <= range < 0x4400, ram, shared ram & special ram/scroll
 	cmp.w	#0x4400,a0
 	jcs		10f
+	cmp.w	#0x4800,a0
+	jcs		9f
+	cmp.w	#0x4820,a0
+	jcs		10f
 	
 	cmp.l	#0x8000,a0
 	jcc		10f				| ROM: OK
 	jbsr	osd_get_last_known_pc
-
+9:
 	BREAKPOINT	"illegal range 0x4400-0x8000, PC in D6"
 10:
 	GET_UNCHECKED_ADDRESS_FUNC

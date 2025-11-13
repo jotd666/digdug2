@@ -5,23 +5,15 @@ from shared import *
 
 
 input_dict = {"system_3300":"read_system_inputs",
-"in0_3301":"read_inputs_1",
-"in1_3302":"read_inputs_2",
-"speech_4000":"set_speech_status",
-"speech_6000":"get_speech_status",
-"scroll_dir_2042":"set_scroll_direction",
 "audio_register_w_1500":"sound_start",
 "watchdog_8000":"",
-"namco_io_4800":"",  # sound?
-"unknown_4802":"read_4802",
 "video_stuff_5009" : "",
 "video_stuff_5008" : "",
 "video_stuff_5002" : "",
 "video_stuff_5003" : "",
 "video_stuff_5004" : "",
 "video_stuff_500b" : "",
-"video_stuff_500a" : "",
-"io_register_4818" : ""
+"video_stuff_500a" : ""
 
 
 }

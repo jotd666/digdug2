@@ -50,6 +50,8 @@ Y_MAX = 256
 
 _custom = 0xDFF000
 
+NB_TILE_CLUTS = 0X40
+NB_SPRITE_CLUTS = 0x10
 
 RAM_START = 0x0000
 ROM_START = 0x8000
@@ -796,6 +798,7 @@ demo_game:
 	add.l	#0x10000+RAM_START,d1
 	move.l	d1,ram_start_0000		| memory (0x1000-0xFFFF)
 	
+	
 	* relocate rom tables just after shared RAM
 	* memory is contiguous (only 1 segment of memory RAM+ROM)
 	* and 6809 memory access is way faster (no bank switching)
@@ -822,9 +825,26 @@ demo_game:
 
 	
 	GET_MEMORY_START_AND_DP
+	* initialize namco IO
+	lea	namco_io_start_memory_4800(pc),a0
+	lea	(namco_io_4800,a6),a1
+	moveq	#0x7,d0
+0:
+	move.l	(a0)+,(a1)+
+	dbf	d0,0b
+	
 	moveq	#0,d5		| set D5.L to 0
 	jbsr	cpu_init
 	jmp			reset_e5ba					| pass control to the cpu core
+
+
+* dip switches & I/O memory at start
+* the settings are encoded with 3 lives, level select enabled, bonus life 30k/80k
+* nb lives are at 4814. F2 means 5 lives
+namco_io_start_memory_4800:
+	.byte	0xF0,0xF0,0xF0,0xF0,0xF0,0xF0,0xF0,0xF0,0xF3,0xF0,0xF1,0xF1,0xF1,0xF1,0xF0,0xF0
+	.byte	0xF0,0xF0,0xF0,0xF0,0xF0,0xF0,0xF4,0xF0,0xF4,0xF0,0xF0,0xF0,0xF0,0xF0,0xF0,0xF0
+
 
 
 do_irq:
@@ -1201,8 +1221,8 @@ really_update_tiles:
 	subq.b	#1,(-1,a0)	| decrease dirty counter
 	* read tile & color codes from RAM
 
-	move.b	(a5,d7.w),d0		| code
-	move.b	(a6,d7.w),d1		| color/attribute
+	move.b	(a6,d7.w),d0		| code
+	move.b	(a5,d7.w),d1		| color/attribute
 
 	movem.l	d2/d3/d7/a0/a1/a5,-(a7)
 	jbsr	update_bg_tile
@@ -1638,20 +1658,20 @@ osd_dump_logs:
 	move.l	_resload(pc),a2
 	lea		sprite_log_table,a1
 	lea		sprite_log_name(pc),a0
-	move.l	#16*NB_POSSIBLE_SPRITES,d0
-	jbsr	resload_SaveFile(a2)
+	move.l	#NB_SPRITE_CLUTS*NB_POSSIBLE_SPRITES,d0
+*	jbsr	resload_SaveFile(a2)
 	
 	move.l	_resload(pc),a2
 	lea		character_log_table,a1
 	lea		character_log_name(pc),a0
-	move.l	#16*NB_POSSIBLE_TILES,d0
+	move.l	#NB_TILE_CLUTS*NB_POSSIBLE_TILES,d0
 	jbsr	resload_SaveFile(a2)
 		
 	GET_MEMORY_START_AND_DP
 	lea		sprites_ram_name_1000(pc),a0
 	lea	(RAM_START,a6),a1		| sprites
 	move.l	#0x440,d0
-	jbsr	resload_SaveFile(a2)
+*	jbsr	resload_SaveFile(a2)
 
 	
 	jbsr	save_cpu_log
@@ -2383,27 +2403,17 @@ compute_tile_xy_portrait:
 * < D0: tile code
 * < D1: color code
 
-update_bg_tile:
-	move.b	D0,0x110
-	move.b	D1,0x111
-	
+update_bg_tile:	
 	moveq	#0,d2			| mask up to 255
 	move.b	d0,d2			| tile code
 	moveq	#0,d3
 	move.b	d1,d3			| CLUT & tile code & flags
-	bclr	#6,d3
-	jeq		0f
-	bset	#8,d2			| add 0x100
-0:
-	bclr	#7,d3
-	jeq		0f
-	add.w	#0x200,d2		| add 0x200
-0:
+
 	.ifne	OPT_ENABLE_LOGGING
 	lea		character_log_table,a0
 	movem.l	d2-d3,-(a7)
-	and.w	#0xF,d3
-	lsl.w	#4,d2		| 16 cluts
+	and.w	#0x3F,d3
+	lsl.w	#6,d2		| 64 cluts
 	add.w	d2,d3		| clut offset
 
 	st.b	(a0,d3.l)
@@ -2412,11 +2422,12 @@ update_bg_tile:
 
 
 	bsr		compute_tile_xy_portrait
-	cmp.w	#FG_NB_BYTES_PER_ROW,d0
-	* 0 <= X < FG_NB_BYTES_PER_ROW: we must double the tiles
-	* to simulate tile wrap
-	scs		d6
-
+*	cmp.w	#FG_NB_BYTES_PER_ROW,d0
+*		* 0 <= X < FG_NB_BYTES_PER_ROW: we must double the tiles
+*		* to simulate tile wrap
+*		scs		d6
+	moveq	#0,d6
+	
 	lea		character_table,a0
 	
 	* updating bitplanes
@@ -3278,13 +3289,13 @@ scroll_table:
 	.section	.bsspublic
 
 sprite_log_table:
-	* 16 cluts, 512 tiles
+	* 16 cluts, 256 tiles
 	* a lot of combinations aren't used (fortunately!)
-	.skip	16*NB_POSSIBLE_SPRITES
+	.skip	NB_SPRITE_CLUTS*NB_POSSIBLE_SPRITES
 character_log_table:
-	* 16 cluts, 1024 tiles
+	* 64 cluts, 256 tiles
 	* a lot of combinations aren't used (fortunately!)
-	.skip	16*NB_POSSIBLE_TILES
+	.skip	NB_TILE_CLUTS*NB_POSSIBLE_TILES
 	.endif
 	
 
