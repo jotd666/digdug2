@@ -50,8 +50,11 @@ Y_MAX = 256
 
 _custom = 0xDFF000
 
-NB_TILE_CLUTS = 0X40
 NB_SPRITE_CLUTS = 0x10
+
+TILE_CLUT_POW2 = 6
+NB_TILE_CLUTS = (1<<TILE_CLUT_POW2)
+TILE_CLUT_MASK = NB_TILE_CLUTS-1
 
 RAM_START = 0x0000
 ROM_START = 0x8000
@@ -2376,21 +2379,53 @@ compute_tile_xy:
 	rts
 	.endif
 
-
+* < D7: 0-0x800 address
+* > D0/D1: X/Y
 compute_tile_xy_portrait:
-	moveq	#0,d0
-	moveq	#0,d1
+	cmp.w	#0x7C0,d7
+	bcc.b	2f
+	cmp.w	#0x780,d7
+	bcc.b	0f
+	cmp.w	#0x380,d7
+	jcc		3f			| left part of screen, atm let it be
+	
 	move.w	d7,d1
-	lsr.w	#5,d7		| this is X
+	and.w	#0x1F,d1	| this is Y (tile)
+	addq	#1,d1
+	
+	lsr.w	#5,d7		| this is X (tile)
+	not.w	d7
+	add.w	#0x21,d7
+	bra.b	1f
+	* two first rows
+0:
+	sub.w	#0x3C0,d7
+	move.w	d7,d1
+	lsr.w	#5,d1		| this is Y
+	
+	sub.w	#30,d1		| minus 2
+	and.w	#0x1F,d7	| this is X
 	neg.w	d7
 	add.w	#32,d7
-	and.w	#0x1F,d1	| this is Y
-	*addq.w	#2,d1
-
-	move.b	d7,d0		| this is X
-	lsl.b	#3,d1		| Y times 8
+	bra.b	1f
+	* two last rows 7C0-800
+2:
+	sub.w	#0x3C0,d7
+	move.w	d7,d1
+	lsr.w	#5,d1		| this is Y
+	add.w	#33,d1
+	and.w	#0x1F,d7	| this is X
+	neg.w	d7
+	add.w	#32,d7
+1:
+	move.w	d7,d0
+	lsl.w	#3,d1		| times 8
 	rts
-
+3:
+	* TEMP TEMP left screen
+	moveq	#0,d0
+	moveq	#0,d1
+	rts
 
 
 
@@ -2403,6 +2438,7 @@ compute_tile_xy_portrait:
 * < D0: tile code
 * < D1: color code
 
+
 update_bg_tile:	
 	moveq	#0,d2			| mask up to 255
 	move.b	d0,d2			| tile code
@@ -2412,8 +2448,8 @@ update_bg_tile:
 	.ifne	OPT_ENABLE_LOGGING
 	lea		character_log_table,a0
 	movem.l	d2-d3,-(a7)
-	and.w	#0x3F,d3
-	lsl.w	#6,d2		| 64 cluts
+	and.w	#TILE_CLUT_MASK,d3
+	lsl.w	#TILE_CLUT_POW2,d2		| 64 cluts
 	add.w	d2,d3		| clut offset
 
 	st.b	(a0,d3.l)
@@ -2465,7 +2501,7 @@ update_bg_tile:
 	.endif
 	move.l	d0,a2
 	move.b	d3,d1
-	and.w	#0xF,d3
+	and.w	#TILE_CLUT_MASK,d3
 	.ifdef	N068020
 	add.w	d3,d3
 	add.w	d3,d3

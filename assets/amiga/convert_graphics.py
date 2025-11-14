@@ -122,7 +122,7 @@ nb_planes = 4
 
 nb_colors = 32
 
-
+NB_SPRITE_CLUTS = 16
 NB_TILE_CLUTS = 64
 
 
@@ -140,7 +140,7 @@ tile_cluts = {}
 try:
     with open(used_graphics_dir / "used_sprites","rb") as f:
         for index in range(NB_SPRITES):
-            d = f.read(16)
+            d = f.read(NB_SPRITE_CLUTS)
             cluts = [i for i,c in enumerate(d) if c]
             if cluts:
                 add_tile(sprite_cluts,index,cluts=cluts)
@@ -203,8 +203,8 @@ def add_hw_sprite(index,name,cluts=[0]):
         hw_sprite_cluts[idx] = cluts
 
 
-sprite_sheet_dict = {i:Image.open(sheets_path / "sprites" / f"pal_{i:02x}.png") for i in range(16)}
-tile_sheet_dict = {i:Image.open(sheets_path / "tiles" / f"pal_{i:02x}.png") for i in range(16)}
+sprite_sheet_dict = {i:Image.open(sheets_path / "sprites" / f"pal_{i:02x}.png") for i in range(NB_SPRITE_CLUTS)}
+tile_sheet_dict = {i:Image.open(sheets_path / "tiles" / f"pal_{i:02x}.png") for i in range(NB_TILE_CLUTS)}
 
 tile_palette = set()
 tile_set_list = []
@@ -223,7 +223,7 @@ print(f"Used tile colors: {len(tile_palette)}")
 tile_palette += (16-len(tile_palette)) * [(0x10,0x20,0x30)]
 
 sprite_palette = set()
-sprite_set_list = [[] for _ in range(16)]
+sprite_set_list = [[] for _ in range(NB_SPRITE_CLUTS)]
 hw_sprite_set_list = []
 
 sprite_dump_dir = dump_dir / "sprites"
@@ -341,7 +341,7 @@ def read_tileset(img_set_list,palette,plane_orientation_flags,cache,is_bob):
 
         tile_table.append(tile_entry)
 
-    new_tile_table = [[[] for _ in range(16)] for _ in range(len(tile_table[0]))]
+    new_tile_table = [[[] for _ in range(NB_TILE_CLUTS)] for _ in range(len(tile_table[0]))]
 
     # reorder/transpose. We have 16 * 256 we need 256 * 16
     for i,u in enumerate(tile_table):

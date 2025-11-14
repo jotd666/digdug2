@@ -19,7 +19,7 @@ input_dict = {"system_3300":"read_system_inputs",
 }
 
 nb_cases_dict = {0x9538:14,
-0xa0cc:4,
+0xa0cc:7,
 0xa281:8,
 0xabe2:22
 
@@ -77,6 +77,7 @@ with open(source_dir / "conv.s") as f:
         line = re.sub(tablere,subt,line)
 
         line = line.replace(".long\tl_2098",".long\t-1")  # remove bogus address
+        line = line.replace(".long\tl_0000",".long\t-1")  # remove bogus address
 
         address = get_line_address(line)
 

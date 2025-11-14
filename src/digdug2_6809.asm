@@ -3129,16 +3129,16 @@ A045: 86 01          LDA    #$01
 A047: B7 10 C0       STA    $10C0
 A04A: BD C5 34       JSR    $C534
 A04D: CC 00 70       LDD    #$0070
-A050: E1 C8 40       CMPB   $40,U
+A050: E1 C8 40       CMPB   $40,U	; [video_address]
 A053: 22 02          BHI    $A057
 A055: 8A 01          ORA    #$01
-A057: E1 C8 20       CMPB   $20,U
+A057: E1 C8 20       CMPB   $20,U	; [video_address]
 A05A: 22 02          BHI    $A05E
 A05C: 8A 02          ORA    #$02
-A05E: E1 C4          CMPB   ,U
+A05E: E1 C4          CMPB   ,U	; [video_address]
 A060: 22 02          BHI    $A064
 A062: 8A 04          ORA    #$04
-A064: A1 C8 E0       CMPA   -$20,U
+A064: A1 C8 E0       CMPA   -$20,U	; [video_address]
 A067: 22 02          BHI    $A06B
 A069: 8A 08          ORA    #$08
 A06B: CE A0 7B       LDU    #$A07B
@@ -4783,7 +4783,7 @@ AFEE: 5F             CLRB
 AFEF: 81 FC          CMPA   #$FC
 AFF1: 25 02          BCS    $AFF5
 AFF3: CA 01          ORB    #$01
-AFF5: A6 C8 A0       LDA    -$60,U
+AFF5: A6 C8 A0       LDA    -$60,U	; [video_address]
 AFF8: 81 FC          CMPA   #$FC
 AFFA: 25 02          BCS    $AFFE
 AFFC: CA 02          ORB    #$02
@@ -5474,9 +5474,9 @@ B616: E6 C6          LDB    A,U
 B618: FE 10 34       LDU    $1034
 B61B: 33 C5          LEAU   B,U
 B61D: CC 10 70       LDD    #$1070
-B620: E1 C4          CMPB   ,U
+B620: E1 C4          CMPB   ,U		; [video_address]
 B622: 23 05          BLS    $B629
-B624: E1 C8 E0       CMPB   -$20,U
+B624: E1 C8 E0       CMPB   -$20,U		; [video_address]
 B627: 22 52          BHI    $B67B
 B629: E6 05          LDB    $5,X
 B62B: CB 04          ADDB   #$04
@@ -7663,10 +7663,13 @@ table_961d:
 	dc.w	$98e9	; $9637
 
 table_a0f1:
-	dc.w	$2098	; $a0f1 bogus
-	dc.w	$a117	; $a0f3
-	dc.w	$a1cb	; $a0f5
-	dc.w	$a1d2	; $a0f7
+	dc.w	$2098	; $a0f1 0: bogus never reached state
+	dc.w	$a117	; $a0f3 1
+	dc.w	$a1cb	; $a0f5 2
+	dc.w	$a1d2	; $a0f7 3
+	dc.w	$0      ; $a0f9 4: bogus never reached state
+	dc.w	$a1f2	; $a0fb 5
+	dc.w	$a20a	; $a0fd 6
 table_a2e9:
 	dc.w	$a2f7	; $a2e9
 	dc.w	$a38a	; $a2eb
