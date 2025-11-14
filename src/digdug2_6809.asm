@@ -6570,7 +6570,7 @@ C9C5: 27 0F          BEQ    $C9D6
 C9C7: 81 70          CMPA   #$70
 C9C9: 24 0B          BCC    $C9D6
 C9CB: 86 70          LDA    #$70
-C9CD: A1 C8 E0       CMPA   -$20,U
+C9CD: A1 C8 E0       CMPA   -$20,U		; [video_address]
 C9D0: 23 04          BLS    $C9D6
 C9D2: 7F 10 D8       CLR    $10D8
 C9D5: 39             RTS
