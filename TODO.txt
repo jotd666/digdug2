@@ -1,4 +1,5 @@
-
+- remove refresh, write tile immediately (but maybe temporarily as double buffer
+  issue will arise in ECS)
 - implement sprites
 - implement insert coin / start game / controls
 - status strips (upper/bottom) not showing at all

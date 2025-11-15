@@ -99,6 +99,8 @@ stack_location_pointer_array_2010 = $2010
 start_of_tasks_stack_190e = $190E
 stack_pointer_191e = $191E
 sprite_shadow_ram_1f16 = $1f16
+scroll_register_3800 = $3800
+scroll_value_1008 = $1008
 
 irq_8000:
 8000: B7 50 02       STA    video_stuff_5002
@@ -108,10 +110,13 @@ irq_8000:
 800C: B7 10 07       STA    $1007
 800F: 8E 50 04       LDX    #video_stuff_5004
 8012: A7 86          STA    A,X
-8014: B6 10 08       LDA    $1008
+; set logical scroll value to hardware registers
+; 0: title screen, 0xFF: maximum scroll to the left (revealing other
+; tiles screen). No wraparound. Status bars are not affected by scrolling
+8014: B6 10 08       LDA    scroll_value_1008
 8017: C6 08          LDB    #$08
 8019: 3D             MUL
-801A: 8E 38 00       LDX    #$3800
+801A: 8E 38 00       LDX    #scroll_register_3800
 801D: A7 8B          STA    D,X
 ; update sprites from sprite shadow ram to sprite ram
 801F: 8E 1F 16       LDX    #sprite_shadow_ram_1f16
@@ -423,7 +428,7 @@ end_zero_io_81f6:
 8278: B7 48 09       STA    $4809
 827B: BD 87 06       JSR    clear_screen_8706
 827E: BD 8B 3D       JSR    $8B3D
-8281: BD 8B DF       JSR    $8BDF
+8281: BD 8B DF       JSR    write_highscore_text_8bdf
 8284: FC 48 02       LDD    credits_tens_4802
 8287: 84 0F          ANDA   #$0F
 8289: 26 6A          BNE    $82F5
@@ -431,7 +436,7 @@ end_zero_io_81f6:
 828D: 26 66          BNE    $82F5
 828F: BD 87 06       JSR    clear_screen_8706
 8292: BD 86 9E       JSR    $869E
-8295: BD 85 CA       JSR    $85CA
+8295: BD 85 CA       JSR    write_copyright_texts_85ca
 8298: CC 01 08       LDD    #$0108
 829B: B7 10 E2       STA    $10E2
 829E: F7 10 4F       STB    $104F
@@ -474,9 +479,9 @@ end_zero_io_81f6:
 82FB: 7C 10 E3       INC    $10E3
 82FE: BD 87 06       JSR    clear_screen_8706
 8301: BD 8B 3D       JSR    $8B3D
-8304: BD 8B DF       JSR    $8BDF
+8304: BD 8B DF       JSR    write_highscore_text_8bdf
 8307: BD 8C B6       JSR    $8CB6
-830A: BD 85 CA       JSR    $85CA
+830A: BD 85 CA       JSR    write_copyright_texts_85ca
 830D: BD 86 5B       JSR    $865B
 8310: BD 8A A0       JSR    $8AA0
 8313: BD 81 50       JSR    suspend_task_8150
@@ -639,7 +644,7 @@ end_zero_io_81f6:
 84C8: BD 8C 81       JSR    $8C81
 84CB: BD 88 15       JSR    $8815
 84CE: BD 8B 3D       JSR    $8B3D
-84D1: BD 8B DF       JSR    $8BDF
+84D1: BD 8B DF       JSR    write_highscore_text_8bdf
 84D4: 39             RTS
 84D5: CC 00 00       LDD    #$0000
 84D8: 8E 17 00       LDX    #$1700
@@ -717,7 +722,6 @@ end_zero_io_81f6:
 ; < X: destination video address
 ; < U: points on ASCII string
 ; < A: length
-
 write_text_8590:
 8590: B7 10 09       STA    $1009
 8593: A6 C0          LDA    ,U+
@@ -727,6 +731,9 @@ write_text_8590:
 859D: 26 F4          BNE    $8593
 859F: 39             RTS
 
+; < X: destination video address
+; < A: value to write
+; < B: size
 clear_text_85a0:
 85A0: F7 10 09       STB    $1009
 85A3: A7 84          STA    ,X			; [video_address]
@@ -735,6 +742,10 @@ clear_text_85a0:
 85AB: 26 F6          BNE    $85A3
 85AD: 39             RTS
 
+; < X: destination video address
+; < U: source pointer
+; < A: size
+write_status_text_85ae:
 85AE: B7 10 09       STA    $1009
 85B1: 30 01          LEAX   $1,X
 85B3: A6 C0          LDA    ,U+
@@ -743,6 +754,10 @@ clear_text_85a0:
 85BA: 26 F7          BNE    $85B3
 85BC: 39             RTS
 
+; < X: destination video address
+; < A: value to write
+; < B: size
+clear_status_text_85bd:
 85BD: F7 10 09       STB    $1009
 85C0: 30 01          LEAX   $1,X
 85C2: A7 82          STA    ,-X			; [video_address]
@@ -750,6 +765,7 @@ clear_text_85a0:
 85C7: 26 F9          BNE    $85C2
 85C9: 39             RTS
 
+write_copyright_texts_85ca:
 85CA: 8E 0B 17       LDX    #$0B17
 85CD: 86 00          LDA    #$00
 85CF: C6 16          LDB    #$16
@@ -763,15 +779,15 @@ clear_text_85a0:
 85E3: C6 07          LDB    #$07
 85E5: BD 85 A0       JSR    clear_text_85a0
 85E8: 8E 02 D7       LDX    #$02D7
-85EB: CE 86 0A       LDU    #$860A
+85EB: CE 86 0A       LDU    #$860A	; (c) 1982 1985 NAMCO
 85EE: 86 11          LDA    #$11
 85F0: BD 85 90       JSR    write_text_8590
 85F3: 8E 02 F9       LDX    #$02F9
-85F6: CE 86 1B       LDU    #$861B
+85F6: CE 86 1B       LDU    #$861B		; ALL RIGHTS RESERVED
 85F9: 86 13          LDA    #$13
 85FB: BD 85 90       JSR    write_text_8590
 85FE: 8E 02 3C       LDX    #$023C
-8601: CE 86 2E       LDU    #$862E
+8601: CE 86 2E       LDU    #$862E		; namco logo
 8604: 86 07          LDA    #$07
 8606: BD 85 90       JSR    write_text_8590
 8609: 39             RTS
@@ -781,11 +797,11 @@ clear_text_85a0:
 8635: 8E 07 AB       LDX    #$07AB                                       
 8638: CE 86 B4       LDU    #$86B4                                       
 863B: 86 08          LDA    #$08
-863D: BD 85 AE       JSR    $85AE
+863D: BD 85 AE       JSR    write_status_text_85ae
 8640: 8E 0F AB       LDX    #$0FAB
 8643: 86 0E          LDA    #$0E
 8645: C6 06          LDB    #$06
-8647: BD 85 BD       JSR    $85BD
+8647: BD 85 BD       JSR    clear_status_text_85bd
 864A: FC 48 02       LDD    credits_tens_4802
 864D: C4 0F          ANDB   #$0F
 864F: F7 07 A3       STB    $07A3
@@ -917,7 +933,7 @@ fill_screen_871c:
 87D5: 8E 07 AB       LDX    #$07AB
 87D8: CE 88 0D       LDU    #$880D
 87DB: 86 08          LDA    #$08
-87DD: BD 85 AE       JSR    $85AE
+87DD: BD 85 AE       JSR    write_status_text_85ae
 87E0: B6 17 05       LDA    $1705
 87E3: 84 0F          ANDA   #$0F
 87E5: B7 01 70       STA    $0170
@@ -950,19 +966,19 @@ fill_screen_871c:
 8824: 8E 07 BC       LDX    #$07BC
 8827: 86 20          LDA    #$20
 8829: C6 0A          LDB    #$0A
-882B: BD 85 BD       JSR    $85BD
+882B: BD 85 BD       JSR    clear_status_text_85bd
 882E: 8E 07 9C       LDX    #$079C
 8831: 86 20          LDA    #$20
 8833: C6 0A          LDB    #$0A
-8835: BD 85 BD       JSR    $85BD
+8835: BD 85 BD       JSR    clear_status_text_85bd
 8838: 8E 0F BC       LDX    #$0FBC
 883B: 86 00          LDA    #$00
 883D: C6 0A          LDB    #$0A
-883F: BD 85 BD       JSR    $85BD
+883F: BD 85 BD       JSR    clear_status_text_85bd
 8842: 8E 0F 9C       LDX    #$0F9C
 8845: 86 00          LDA    #$00
 8847: C6 0A          LDB    #$0A
-8849: BD 85 BD       JSR    $85BD
+8849: BD 85 BD       JSR    clear_status_text_85bd
 884C: B6 17 03       LDA    nb_lives_1703
 884F: B0 10 E8       SUBA   $10E8
 8852: 26 01          BNE    $8855
@@ -1147,19 +1163,19 @@ task_entry_11_8890:
 8AB2: 8E 0F FD       LDX    #$0FFD
 8AB5: 86 00          LDA    #$00
 8AB7: C6 07          LDB    #$07
-8AB9: BD 85 BD       JSR    $85BD
+8AB9: BD 85 BD       JSR    clear_status_text_85bd
 8ABC: 8E 0F F4       LDX    #$0FF4
 8ABF: 86 00          LDA    #$00
 8AC1: C6 0A          LDB    #$0A
-8AC3: BD 85 BD       JSR    $85BD
+8AC3: BD 85 BD       JSR    clear_status_text_85bd
 8AC6: 8E 0F E1       LDX    #$0FE1
 8AC9: 86 00          LDA    #$00
 8ACB: C6 02          LDB    #$02
-8ACD: BD 85 BD       JSR    $85BD
+8ACD: BD 85 BD       JSR    clear_status_text_85bd
 8AD0: 8E 0F EA       LDX    #$0FEA
 8AD3: 86 00          LDA    #$00
 8AD5: C6 07          LDB    #$07
-8AD7: BD 85 BD       JSR    $85BD
+8AD7: BD 85 BD       JSR    clear_status_text_85bd
 8ADA: 39             RTS
 8ADB: 7D 10 10       TST    $1010
 8ADE: 27 01          BEQ    $8AE1
@@ -1187,11 +1203,11 @@ task_entry_11_8890:
 8B0F: 8E 0F F4       LDX    #$0FF4
 8B12: 86 0B          LDA    #$0B
 8B14: C6 0A          LDB    #$0A
-8B16: BD 85 BD       JSR    $85BD
+8B16: BD 85 BD       JSR    clear_status_text_85bd
 8B19: 8E 0F E1       LDX    #$0FE1
 8B1C: 86 0B          LDA    #$0B
 8B1E: C6 02          LDB    #$02
-8B20: BD 85 BD       JSR    $85BD
+8B20: BD 85 BD       JSR    clear_status_text_85bd
 8B23: 7C 40 55       INC    $4055
 8B26: 20 15          BRA    $8B3D
 8B28: BD 8C 17       JSR    $8C17
@@ -1284,21 +1300,25 @@ task_entry_11_8890:
 8BDB: 5A             DECB
 8BDC: 26 F9          BNE    $8BD7
 8BDE: 39             RTS
+
+write_highscore_text_8bdf:
 8BDF: 8E 0F D4       LDX    #$0FD4
 8BE2: 86 0D          LDA    #$0D
 8BE4: C6 0A          LDB    #$0A
-8BE6: BD 85 BD       JSR    $85BD
+8BE6: BD 85 BD       JSR    clear_status_text_85bd
 8BE9: 8E 0F C1       LDX    #$0FC1
 8BEC: 86 0D          LDA    #$0D
 8BEE: C6 02          LDB    #$02
-8BF0: BD 85 BD       JSR    $85BD
+8BF0: BD 85 BD       JSR    clear_status_text_85bd
 8BF3: 8E 07 D4       LDX    #$07D4
-8BF6: CE 8C 0C       LDU    #$8C0C
+8BF6: CE 8C 0C       LDU    #$8C0C		; HIGH SCORE
 8BF9: 86 0A          LDA    #$0A
-8BFB: BD 85 AE       JSR    $85AE
-8BFE: FC 07 D0       LDD    $07D0
-8C01: FD 07 C0       STD    $07C0
+8BFB: BD 85 AE       JSR    write_status_text_85ae
+; copy " H" for what?
+8BFE: FC 07 D0       LDD    $07D0		; [video_address_word]
+8C01: FD 07 C0       STD    $07C0		; [video_address_word
 8C04: 39             RTS
+
 8C05: B6 8C 16       LDA    $8C16
 8C08: B7 10 0C       STA    $100C
 8C0B: 39             RTS
@@ -1744,11 +1764,11 @@ task_entry_01_902b:
 902E: 8E 0F C7       LDX    #$0FC7
 9031: 86 0D          LDA    #$0D
 9033: C6 03          LDB    #$03
-9035: BD 85 BD       JSR    $85BD
+9035: BD 85 BD       JSR    clear_status_text_85bd
 9038: 8E 0F DA       LDX    #$0FDA
 903B: 86 0D          LDA    #$0D
 903D: C6 03          LDB    #$03
-903F: BD 85 BD       JSR    $85BD
+903F: BD 85 BD       JSR    clear_status_text_85bd
 9042: 8D 02          BSR    $9046
 9044: 20 E5          BRA    task_entry_01_902b
 
@@ -1907,7 +1927,7 @@ task_entry_04_909c:
 91B7: B7 25 00       STA    $2500
 91BA: B7 10 D2       STA    $10D2
 91BD: FD 10 D0       STD    $10D0
-91C0: B7 10 08       STA    $1008
+91C0: B7 10 08       STA    scroll_value_1008
 91C3: FD 10 DC       STD    $10DC
 91C6: B7 10 D6       STA    $10D6
 91C9: B7 10 D9       STA    $10D9
@@ -1942,7 +1962,7 @@ task_entry_14_9438:
 943B: B6 10 D4       LDA    $10D4
 943E: 27 F8          BEQ    task_entry_14_9438
 9440: 8E 00 00       LDX    #$0000
-9443: F6 10 08       LDB    $1008
+9443: F6 10 08       LDB    scroll_value_1008
 9446: C4 F8          ANDB   #$F8
 9448: 4F             CLRA
 9449: 58             ASLB
@@ -2824,19 +2844,19 @@ task_entry_16_9d20:
 9D37: 8E 07 BC       LDX    #$07BC
 9D3A: 86 20          LDA    #$20
 9D3C: C6 0A          LDB    #$0A
-9D3E: BD 85 BD       JSR    $85BD
+9D3E: BD 85 BD       JSR    clear_status_text_85bd
 9D41: 8E 07 9C       LDX    #$079C
 9D44: 86 20          LDA    #$20
 9D46: C6 0A          LDB    #$0A
-9D48: BD 85 BD       JSR    $85BD
+9D48: BD 85 BD       JSR    clear_status_text_85bd
 9D4B: 8E 0F BC       LDX    #$0FBC
 9D4E: 86 00          LDA    #$00
 9D50: C6 0A          LDB    #$0A
-9D52: BD 85 BD       JSR    $85BD
+9D52: BD 85 BD       JSR    clear_status_text_85bd
 9D55: 8E 0F 9C       LDX    #$0F9C
 9D58: 86 00          LDA    #$00
 9D5A: C6 0A          LDB    #$0A
-9D5C: BD 85 BD       JSR    $85BD
+9D5C: BD 85 BD       JSR    clear_status_text_85bd
 9D5F: 8E 03 2A       LDX    #$032A
 9D62: CE 9E D7       LDU    #$9ED7
 9D65: 86 18          LDA    #$18
@@ -2848,7 +2868,7 @@ task_entry_16_9d20:
 9D75: 8E 07 AB       LDX    #$07AB
 9D78: CE 88 0D       LDU    #$880D
 9D7B: 86 08          LDA    #$08
-9D7D: BD 85 AE       JSR    $85AE
+9D7D: BD 85 AE       JSR    write_status_text_85ae
 9D80: 8E 0B 2A       LDX    #$0B2A
 9D83: 86 0D          LDA    #$0D
 9D85: C6 18          LDB    #$18
@@ -5544,7 +5564,7 @@ B702: A7 04          STA    $4,X
 B704: E7 14          STB    -$C,X
 B706: CE 15 80       LDU    #$1580
 B709: 10 8E 15 00    LDY    #$1500
-B70D: B6 10 08       LDA    $1008
+B70D: B6 10 08       LDA    scroll_value_1008
 B710: 84 E0          ANDA   #$E0
 B712: 44             LSRA
 B713: 44             LSRA
@@ -5743,7 +5763,7 @@ C0B5: BA 10 34       ORA    $1034
 C0B8: A7 0A          STA    $A,X
 C0BA: 39             RTS
 C0BB: 7F 10 CE       CLR    $10CE
-C0BE: F6 10 08       LDB    $1008
+C0BE: F6 10 08       LDB    scroll_value_1008
 C0C1: F7 10 CF       STB    $10CF
 C0C4: EC 1E          LDD    -$2,X
 C0C6: B3 10 CE       SUBD   $10CE
@@ -6036,17 +6056,17 @@ C486: 2F 11          BLE    $C499
 C488: 10 83 01 7F    CMPD   #$017F
 C48C: 2C 11          BGE    $C49F
 C48E: 83 00 80       SUBD   #$0080
-C491: F7 10 08       STB    $1008
+C491: F7 10 08       STB    scroll_value_1008
 C494: 86 80          LDA    #$80
 C496: A7 0D          STA    $D,X
 C498: 39             RTS
 C499: E7 0D          STB    $D,X
-C49B: 7F 10 08       CLR    $1008
+C49B: 7F 10 08       CLR    scroll_value_1008
 C49E: 39             RTS
 C49F: 5C             INCB
 C4A0: E7 0D          STB    $D,X
 C4A2: 86 FF          LDA    #$FF
-C4A4: B7 10 08       STA    $1008
+C4A4: B7 10 08       STA    scroll_value_1008
 C4A7: 39             RTS
 C4A8: 8E 17 00       LDX    #$1700
 C4AB: 6F 88 21       CLR    $21,X
@@ -7026,7 +7046,7 @@ CE47: 39             RTS
 
 
 reset_e5ba:
-E5BA: 7F 38 00       CLR    $3800
+E5BA: 7F 38 00       CLR    scroll_register_3800
 E5BD: B6 80 00       LDA    watchdog_8000
 E5C0: 1C FF          ANDCC  #$FF
 E5C2: B6 80 00       LDA    watchdog_8000
@@ -7078,7 +7098,7 @@ E627: 27 04          BEQ    $E62D
 E629: 86 06          LDA    #$06
 E62B: 20 02          BRA    $E62F
 E62D: 86 07          LDA    #$07
-E62F: 7F 10 08       CLR    $1008
+E62F: 7F 10 08       CLR    scroll_value_1008
 E632: CE 00 00       LDU    #$0000
 E635: C6 20          LDB    #$20
 E637: E7 C0          STB    ,U+
@@ -7105,7 +7125,7 @@ end_of_memory_clear_e666:
 E666: 10 CE 19 00    LDS    #stack_top_1900
 E66A: C6 00          LDB    #$00
 E66C: 1F 9B          TFR    B,DP
-E66E: 7F 10 08       CLR    $1008
+E66E: 7F 10 08       CLR    scroll_value_1008
 E671: 4D             TSTA
 E672: 26 06          BNE    $E67A
 E674: BD 87 01       JSR    $8701
@@ -7367,15 +7387,15 @@ E8E8: B6 10 1A       LDA    $101A
 E8EB: 81 01          CMPA   #$01
 E8ED: 27 44          BEQ    $E933
 E8EF: BD EA 80       JSR    $EA80
-E8F2: B6 10 08       LDA    $1008
+E8F2: B6 10 08       LDA    scroll_value_1008
 E8F5: 81 F8          CMPA   #$F8
 E8F7: 24 12          BCC    $E90B
-E8F9: 7C 10 08       INC    $1008
-E8FC: 7C 10 08       INC    $1008
+E8F9: 7C 10 08       INC    scroll_value_1008
+E8FC: 7C 10 08       INC    scroll_value_1008
 E8FF: 8E 07 FF       LDX    #$07FF
 E902: 86 20          LDA    #$20
 E904: C6 80          LDB    #$80
-E906: BD 85 BD       JSR    $85BD
+E906: BD 85 BD       JSR    clear_status_text_85bd
 E909: 20 C4          BRA    $E8CF
 E90B: BD EB 20       JSR    $EB20
 E90E: 20 BF          BRA    $E8CF
@@ -7394,14 +7414,14 @@ E92E: 27 C2          BEQ    $E8F2
 E930: BD EA 80       JSR    $EA80
 E933: B6 10 6B       LDA    $106B
 E936: 2B 27          BMI    $E95F
-E938: B6 10 08       LDA    $1008
+E938: B6 10 08       LDA    scroll_value_1008
 E93B: 10 27 FF 20    LBEQ   $E85F
-E93F: 7A 10 08       DEC    $1008
-E942: 7A 10 08       DEC    $1008
+E93F: 7A 10 08       DEC    scroll_value_1008
+E942: 7A 10 08       DEC    scroll_value_1008
 E945: 8E 07 FF       LDX    #$07FF
 E948: 86 20          LDA    #$20
 E94A: C6 80          LDB    #$80
-E94C: BD 85 BD       JSR    $85BD
+E94C: BD 85 BD       JSR    clear_status_text_85bd
 E94F: 20 BF          BRA    $E910
 E951: 1C FF          ANDCC  #$FF
 E953: 7F 50 02       CLR    video_stuff_5002
@@ -7413,7 +7433,7 @@ E95F: 7C 40 55       INC    $4055
 E962: 8E 07 FF       LDX    #$07FF
 E965: 86 20          LDA    #$20
 E967: C6 80          LDB    #$80
-E969: BD 85 BD       JSR    $85BD
+E969: BD 85 BD       JSR    clear_status_text_85bd
 E96C: 8E 00 00       LDX    #$0000
 E96F: CC 4F 4F       LDD    #$4F4F
 E972: ED 81          STD    ,X++
@@ -7426,9 +7446,9 @@ E981: 7F 50 03       CLR    video_stuff_5003
 E984: 7F 10 00       CLR    sync_1000
 E987: BD EA 17       JSR    io_stuff_ea17
 E98A: BD EB B9       JSR    $EBB9
-E98D: B6 10 08       LDA    $1008
+E98D: B6 10 08       LDA    scroll_value_1008
 E990: 27 05          BEQ    $E997
-E992: 7A 10 08       DEC    $1008
+E992: 7A 10 08       DEC    scroll_value_1008
 E995: 20 E2          BRA    $E979
 E997: CC 01 08       LDD    #$0108
 E99A: B7 40 4A       STA    $404A
@@ -7604,7 +7624,7 @@ EB34: 8C 07 A0       CMPX   #$07A0
 EB37: 26 F0          BNE    $EB29
 EB39: 39             RTS
 
-EBB9: B6 10 08       LDA    $1008
+EBB9: B6 10 08       LDA    scroll_value_1008
 EBBC: 81 F8          CMPA   #$F8
 EBBE: 26 1C          BNE    $EBDC
 EBC0: B6 10 16       LDA    $1016

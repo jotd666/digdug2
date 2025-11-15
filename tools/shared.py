@@ -47,6 +47,7 @@ equates = []
 this_dir = pathlib.Path(__file__).absolute().parent
 
 source_dir = this_dir / "../src"
+amiga_source_dir = source_dir / "amiga"
 
 gfx_dir = this_dir / "../assets/sheets"
 

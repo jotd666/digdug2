@@ -42,7 +42,7 @@ SPRITE_Y_CORRECTION = 0
 SPRITE_HEIGHT = 16
 SPRITE_WIDTH = 16
 
-Y_MAX = 256
+Y_MAX = 280
 
 _custom = 0xDFF000
 
@@ -84,7 +84,7 @@ NB_TILE_PLANES = 4
 NB_BOB_PLANES = 4
 TOTAL_NB_COLORS = 1<<NB_TILE_PLANES
 FG_NB_BYTES_PER_ROW = 40
-BG_NB_BYTES_PER_ROW = FG_NB_BYTES_PER_ROW*3
+BG_NB_BYTES_PER_ROW = FG_NB_BYTES_PER_ROW*2
 
 * add 16 so sprites can be drawn at the bottom
 * without corrupting the screen
@@ -887,17 +887,6 @@ _vblank:
 	bne.b	0f
 	bsr		toggle_pause
 0:
-	* here music doesn't loop. We have to stop it when it ends
-	move.w	music_tick,d1
-	beq.b	13f
-	bmi.b	13f		| negative: infinite, not interruptible
-	
-	subq	#1,d1
-
-	move.w	d1,music_tick
-	bne.b	13f
-	jbsr		osd_music_stop
-13:
 	
 	* ack vbl twice (040/pistorm bug)
 	move.w	#0x20,(intreq,a5)
@@ -946,7 +935,7 @@ _vblank:
 	* may use it (D5 = S) to create local variables
 	jbsr		do_irq
 	* now D5 can be destroyed
-	*jbsr	really_update_scroll
+	jbsr	really_update_scroll
 	*jbsr	really_update_hw_sprites
 	
 	tst.b	frameskip
@@ -1173,8 +1162,9 @@ really_update_scroll:
 	GET_MEMORY_START_AND_DP
 	lea		scroll_table,a2
 	move.l		background_ptr,a4
-0:
-	moveq	#0,d5		| temp scroll at 0
+
+	moveq	#0,d5
+	move.b	(scroll_value_1008,a6),d5	| scroll value 0=>0xFF
 	lea		scrolling_bitplanes,a0
 	move.l	a4,d0				| base address
 	add.l	#BG_NB_BYTES_PER_ROW*16,d0		| skip 2 first tile rows
@@ -1210,6 +1200,10 @@ really_update_tiles:
 	lsl.w	#6,d7		| times 64, get offset for big dirty table
 	add.w	d7,a0
 0:
+	cmp.l	#0x7D1,d7
+	jne		444f
+	move.b	#0,0x110
+444:
 	tst.b	(a0)+
 	jeq		1f
 	subq.b	#1,(-1,a0)	| decrease dirty counter
@@ -1226,7 +1220,7 @@ really_update_tiles:
 	dbf	d2,0b
 2:
 	addq	#1,d3
-	cmp.w	#0x20,d3		| 32 rows
+	cmp.w	#0x20,d3
 	jne		3b
 	rts
 	
@@ -1433,7 +1427,7 @@ update_one_bob:
 	moveq	#0,d0
 	moveq	#0,d1
 	move.b	(TARGET_SPRITE_Y,a0),d1  | sprite Y
-	move.b	(TARGET_SPRITE_X,a0),d0
+	move.b	(TARGET_SPRITE_X_1,a0),d0
 
 	* filter out if Y=0
 	tst.b	d1
@@ -2398,53 +2392,6 @@ compute_tile_xy:
 	rts
 	.endif
 
-* < D7: 0-0x800 address
-* > D0/D1: X/Y
-compute_tile_xy_portrait:	
-	cmp.w	#0x7C0,d7
-	bcc.b	2f
-	cmp.w	#0x780,d7
-	bcc.b	0f
-	cmp.w	#0x380,d7
-	jcc		3f			| left part of screen, atm let it be
-	
-	move.w	d7,d1
-	and.w	#0x1F,d1	| this is Y (tile)
-	addq	#1,d1
-	
-	lsr.w	#5,d7		| this is X (tile)
-	not.w	d7
-	add.w	#0x21,d7
-	bra.b	1f
-	* two first rows
-0:
-	sub.w	#0x3C0,d7
-	move.w	d7,d1
-	lsr.w	#5,d1		| this is Y
-	
-	sub.w	#30,d1		| minus 2
-	and.w	#0x1F,d7	| this is X
-	neg.w	d7
-	add.w	#32,d7
-	bra.b	1f
-	* two last rows 7C0-800
-2:
-	sub.w	#0x3C0,d7
-	move.w	d7,d1
-	lsr.w	#5,d1		| this is Y
-	add.w	#33,d1
-	and.w	#0x1F,d7	| this is X
-	neg.w	d7
-	add.w	#32,d7
-1:
-	move.w	d7,d0
-	lsl.w	#3,d1		| times 8
-	rts
-3:
-	* TEMP TEMP left screen
-	moveq	#0,d0
-	moveq	#0,d1
-	rts
 
 
 
@@ -2475,13 +2422,14 @@ update_bg_tile:
 	movem.l	(a7)+,d2-d3
 	.endif
 
-
-	bsr		compute_tile_xy_portrait
-*	cmp.w	#FG_NB_BYTES_PER_ROW,d0
-*		* 0 <= X < FG_NB_BYTES_PER_ROW: we must double the tiles
-*		* to simulate tile wrap
-*		scs		d6
-	moveq	#0,d6
+	lea		tiles_layout,a0
+	* layout is a bloody nightmare, directly fetch
+	* the decoded X,Y values from a pre-generated table
+	add.w	d7,d7
+	add.w	d7,d7
+	add.w	d7,a0
+	move.w	(a0)+,d0
+	move.w	(a0),d1
 	
 	lea		character_table,a0
 	
@@ -2542,17 +2490,17 @@ update_bg_tile:
 	move.l	d0,a2					| pointer on bitplanes
 
 
-	* should we print the tile once or twice?
-	tst.b	d6
-	jeq		20f		| just once
-	* do it twice. Preserve useful registers
-	movem.l	a1/a2,-(a7)
-	jbsr		standard_tile
-	movem.l	(a7)+,a1/a2
-	* draw the same thing more to the right
-	add.w	#64,a1
-	move.w	#NB_TILE_PLANES-1,d4
-20:
+*	* should we print the tile once or twice?
+*	tst.b	d6
+*	jeq		20f		| just once
+*	* do it twice. Preserve useful registers
+*	movem.l	a1/a2,-(a7)
+*	jbsr		standard_tile
+*	movem.l	(a7)+,a1/a2
+*	* draw the same thing more to the right
+*	add.w	#64,a1
+*	move.w	#NB_TILE_PLANES-1,d4
+*20:
 	
 	.macro	COPY_TILE_PLANE_ROW
 	move.b	d0,(offset,a1)  | buffer
@@ -2705,6 +2653,9 @@ mirror_jump_table:
 	
 mirror_bits:
 	.include "mirror_bits.68k"
+
+tiles_layout:
+	.include "tiles_layout.68k"
 
 	
 * < d0.w: x
