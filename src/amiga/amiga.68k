@@ -33,7 +33,7 @@ SPRITE_FMODE = 3			| required!!
 
 BORDERBLANK = 1
 
-COPPER_Y_START = 0x18
+COPPER_Y_START = 0x24
 BASE_BPLCON3_VALUE = (1<<12)+(BORDERBLANK<<5)  | dpf second playfield palette starts at color 16!
 BASE_BPLCON2_VALUE = 0x0024		| sprites above all playfields
 
@@ -231,17 +231,9 @@ start:
 		.global osd_blitz		| for debug
 		.global osd_video_byte_dirty
 		.global osd_video_word_dirty
-		.global osd_read_4802
-		.global osd_read_dsw_1
-		.global osd_read_dsw_2
-		.global osd_read_dsw_3
-		.global osd_read_inputs_1
-		.global osd_read_inputs_2
-		.global osd_read_system_inputs
-		.global osd_wait
-		.global	osd_set_scroll_direction
-		.global osd_set_speech_status
-		.global osd_get_speech_status
+
+
+
 		
 		* read/write on memory
 		.ifndef	RELEASE
@@ -963,9 +955,6 @@ osd_read_4802:
 	move.b	#0xF0,d0	| this value seems not to change
 	rts
 
-osd_set_scroll_direction:
-	rts
-	
 	.ifndef	RELEASE
 
 	.macro	CHECK_ZERO_MSW	reg
@@ -1163,13 +1152,13 @@ really_update_scroll:
 	lea		scroll_table,a2
 	move.l		background_ptr,a4
 
-	moveq	#0,d5
 	move.b	(scroll_value_1008,a6),d5	| scroll value 0=>0xFF
 	lea		scrolling_bitplanes,a0
 	move.l	a4,d0				| base address
 	add.l	#BG_NB_BYTES_PER_ROW*16,d0		| skip 2 first tile rows
 	move.w	(a2,d5.w),(a0)	| set bplcon value
 	add.w	(2,a2,d5.w),d0	| bytes offset
+	
 	addq	#4,a0				| pointer on first bitplane
 	jbsr	set_static_bitplanes
 	
@@ -2186,7 +2175,7 @@ platform_init:
 	move.w	#BASE_BPLCON3_VALUE,bplcon3(a5)
  	*         VVHH
     move.w #0x99-0X18+0x40+(COPPER_Y_START<<8),diwstrt(a5)
-    move.w #0x79+0x3F+(COPPER_Y_START<<8)-0x1000,diwstop(a5)
+    move.w #0x79+0x3F+(COPPER_Y_START<<8)+0x1000,diwstop(a5)
     move.w #0x0038,ddfstrt(a5)
     move.w #0x00D0,ddfstop(a5)
 
@@ -2406,6 +2395,10 @@ compute_tile_xy:
 
 
 update_bg_tile:	
+	cmp.b	#0x20,d0
+	jne		33f
+	rts
+33:
 	moveq	#0,d2			| mask up to 255
 	move.b	d0,d2			| tile code
 	moveq	#0,d3
@@ -3381,13 +3374,11 @@ tiles_colors:
 bobs_colors:
 	DECL_COLORS	0,TOTAL_NB_COLORS
 
-	.word	0x01+((COPPER_Y_START-4)*256),0xFFFE
 
 game_sprites:
 	DECL_SPRITES
 game_sprites_end:
-
-	.set	y_start,COPPER_Y_START
+	.word	0x01+((COPPER_Y_START+16)*256),0xFFFE
 	
 	.word	bplcon1
 scrolling_bitplanes:

@@ -1,7 +1,6 @@
-- remove refresh, write tile immediately (but maybe temporarily as double buffer
-  issue will arise in ECS)
+- if space is written, one part overwrites the other. Log writes in left part
+- optimize 0x20 write = clear
 - implement sprites
 - implement insert coin / start game / controls
-- status strips (upper/bottom) not showing at all
 - possible protection issue (check MAME source)
 - report 2 last optimization phases in 6809 converter
