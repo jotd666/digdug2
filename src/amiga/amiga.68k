@@ -1443,13 +1443,13 @@ update_one_bob:
 *	jeq		10f
 *	jpl		50f
 *	* right part: display only if mirrored
-*	btst	#MIRROR_X_BIT,(TARGET_SPRITE_ATTR,a0)
+*	btst	#FLIP_Y_BIT,(TARGET_SPRITE_ATTR,a0)
 *	jeq		2f			| not mirrored
 *	* mirrored, right part: display but correct code
 *	subq.w	#1,d3
 *	jra		100f
 *50:
-*	btst	#MIRROR_X_BIT,(TARGET_SPRITE_ATTR,a0)
+*	btst	#FLIP_Y_BIT,(TARGET_SPRITE_ATTR,a0)
 *	jne		2f			| mirrored: don't display
 *	
 *100:
@@ -1664,9 +1664,9 @@ osd_dump_logs:
 		
 	GET_MEMORY_START_AND_DP
 	lea		sprites_ram_name_1000(pc),a0
-	lea	(RAM_START,a6),a1		| sprites
-	move.l	#0x440,d0
-*	jbsr	resload_SaveFile(a2)
+	lea	(SPRITE_START,a6),a1		| sprites
+	move.l	#0X1080,d0
+	jbsr	resload_SaveFile(a2)
 
 	
 	jbsr	save_cpu_log
@@ -1693,7 +1693,7 @@ save_cpu_log:
 	
 
 sprites_ram_name_1000:
-	.asciz	"sprite_ram_1000"
+	.asciz	"sprite_ram_1780"
 
 
 sprite_log_name:
