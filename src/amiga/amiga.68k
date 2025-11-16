@@ -61,11 +61,9 @@ FIRST_SPRITE = SPRITE_START
 
 
 	.ifdef	RELEASE
-OPT_ENABLE_PROFILING = 0         | DO NOT CHANGE THIS
 OPT_ENABLE_LOGGING = 0           | DO NOT CHANGE THIS
 	.else
 OPT_ENABLE_LOGGING = 1
-OPT_ENABLE_PROFILING = 0
 
 	.endif
 
@@ -111,8 +109,10 @@ TARGET_SPRITE_COLOR = 1
 TARGET_SPRITE_ATTR = 0x1000
 TARGET_SPRITE_SIZEOF = 2
 
-FLIP_Y_BIT = 5
-MIRROR_X_BIT = 4
+FLIP_Y_BIT = 2
+MIRROR_X_BIT = 1
+SIZE_X_BIT = 2
+SIZE_Y_BIT = 3
 
 	STRUCTURE	PREVIOUS_SPRITE,0
 	UWORD	PREV_X
@@ -252,11 +252,6 @@ start:
 	.include	"whdload_funcs.i"
 		.text
 
-
-	.ifne	OPT_ENABLE_PROFILING
-	* init profiling if enabled
-	.include	"profiler.68k"
-	.endif
 
 	    
 _user:
@@ -935,7 +930,7 @@ _vblank:
 	eor.b	#1,flip_flop
 	jeq		23f
 0:
-	*jbsr		really_update_sprites
+	jbsr		really_update_sprites
 	
 	
 	.ifne	OPT_ENABLE_DOUBLE_BUFFERING
@@ -1189,10 +1184,7 @@ really_update_tiles:
 	lsl.w	#6,d7		| times 64, get offset for big dirty table
 	add.w	d7,a0
 0:
-	cmp.l	#0x7D1,d7
-	jne		444f
-	move.b	#0,0x110
-444:
+
 	tst.b	(a0)+
 	jeq		1f
 	subq.b	#1,(-1,a0)	| decrease dirty counter
@@ -1410,19 +1402,23 @@ update_bobs_and_hw_sprites:
 * must preserve all of those, plus D7
 
 update_one_bob:
-
-	* X = 0 and Y = 0: disabled
-	
 	moveq	#0,d0
+	move.b	(TARGET_SPRITE_X_2,a0),d0
+	bclr	#2,d0
+	jne		2f	| if ((spriteram_3[offs+1] & 2) == 0)
+	
+	* compute sx
 	moveq	#0,d1
+	and.w	#0x1,d0
+	lsl.w	#8,d0		| times 0x100
+	sub.w	#40,d0
+	move.b	(TARGET_SPRITE_X_1,a0),d1
+	add.w	d1,d0		| sx = spriteram_2[offs+1] + 0x100 * (spriteram_3[offs+1] & 1) - 40
+	* compute sy
 	move.b	(TARGET_SPRITE_Y,a0),d1  | sprite Y
-	move.b	(TARGET_SPRITE_X_1,a0),d0
-
-	* filter out if Y=0
-	tst.b	d1
-	jeq		2f
-
-
+	neg.w	d1
+	add.w	#255,d1	| sy = 256 - spriteram_2[offs] + 1
+	
 	.ifne	SPRITE_Y_CORRECTION
 	add.w	#SPRITE_Y_CORRECTION,d1
 	.endif
@@ -1430,39 +1426,33 @@ update_one_bob:
 	add.w	#SPRITE_X_CORRECTION,d0
 	.endif
 	
+	exg	d0,d1		| portrait
+	
 	* get code immediately. A lot of sprites won't be displayed
 	* as they are grouped with others
 	moveq	#0,d3
 	move.b	(TARGET_SPRITE_CODE,a0),d3
 	moveq	#0,d2
-	move.b	(TARGET_SPRITE_ATTR,a0),d2
-	btst.b	#6,d2
-	jeq		111f
-	bset	#8,d3		| add 256
-111:
+	move.b	(TARGET_SPRITE_COLOR,a0),d2
 
-	btst.b	#7,d2
-	jeq		112f
-	bset	#8,d0		| adds 0x100 to X
-112:
 	and.b	#0xF,d2		| CLUT
 	
 	* check if it is a grouped sprite in the table with 0x100 pre-computed entries
 	
-	tst.b	(a2,d3.w)
-	jeq		10f
-	jpl		50f
-	* right part: display only if mirrored
-	btst	#MIRROR_X_BIT,(TARGET_SPRITE_ATTR,a0)
-	jeq		2f			| not mirrored
-	* mirrored, right part: display but correct code
-	subq.w	#1,d3
-	jra		100f
-50:
-	btst	#MIRROR_X_BIT,(TARGET_SPRITE_ATTR,a0)
-	jne		2f			| mirrored: don't display
-	
-100:
+*	tst.b	(a2,d3.w)
+*	jeq		10f
+*	jpl		50f
+*	* right part: display only if mirrored
+*	btst	#MIRROR_X_BIT,(TARGET_SPRITE_ATTR,a0)
+*	jeq		2f			| not mirrored
+*	* mirrored, right part: display but correct code
+*	subq.w	#1,d3
+*	jra		100f
+*50:
+*	btst	#MIRROR_X_BIT,(TARGET_SPRITE_ATTR,a0)
+*	jne		2f			| mirrored: don't display
+*	
+*100:
 10:
 	* here D3 is code and D2 is clut
 	* log the usage
@@ -1500,9 +1490,9 @@ update_one_bob:
 	move.b	(TARGET_SPRITE_ATTR,a0),d3
 	move.l	a0,-(a7)
 	move.l	d4,a0
-    * flip_x = D3 & 0x10
-    * flip_y = D3 & 0x20
-	btst	#MIRROR_X_BIT,d3
+    * flip_x = D3 & 0x1
+    * flip_y = D3 & 0x2
+	btst	#FLIP_Y_BIT,d3  | Y but portrait!
 	jeq		101f
 	* mirror (most sprites don't have that, it will just display
 	* the next frame if not generated, which can be off-putting!
@@ -1524,7 +1514,7 @@ update_one_bob:
 	move.w	(a0)+,d4		| height
 	move.w	(a0)+,d5		| width
 	move.w	(a0)+,d2		| Y-offset
-	btst	#FLIP_Y_BIT,d3
+	btst	#MIRROR_X_BIT,d3  | X but portrait!
 	jeq		101f
 	* flipped: correct Y start
 	neg.w	d2
@@ -1554,7 +1544,7 @@ update_one_bob:
 	move.w	d5,d2			    | width in bytes
 	moveq	#0,d5			    | Y-offset
 
-	btst	#FLIP_Y_BIT,d3
+	btst	#MIRROR_X_BIT,d3  | X but portrait!
 	jeq		101f
 	* flip
 	neg.w	d4
@@ -1664,7 +1654,7 @@ osd_dump_logs:
 	lea		sprite_log_table,a1
 	lea		sprite_log_name(pc),a0
 	move.l	#NB_SPRITE_CLUTS*NB_POSSIBLE_SPRITES,d0
-*	jbsr	resload_SaveFile(a2)
+	jbsr	resload_SaveFile(a2)
 	
 	move.l	_resload(pc),a2
 	lea		character_log_table,a1
@@ -2196,11 +2186,7 @@ platform_init:
 
 	
 	* set sprite registers to blank sprite in copperlist
-	* we don't use sprites at all in that game
-	* it's too complicated to use them because most
-	* sprites have more than 3 colors. Blitter manages
-	* very well.
-	* we could have used attached sprites for main character
+
 	
 	lea	game_sprites+2,a2			| copperlist
 
@@ -2252,14 +2238,6 @@ platform_init:
 	jsr		_mt_install_cia
 
 
-	.ifne	OPT_ENABLE_PROFILING
-	* init profiling if enabled
-	lea		0x180000,a0
-	move.l	#0x20000,d0
-	lea		0x100,a1
-	bsr		init_fixed_address
-	bsr		install_profiler_vbl_hook
-	.endif
 
 	
     rts

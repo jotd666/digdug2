@@ -4,7 +4,7 @@ import os,sys,bitplanelib
 from shared import *
 
 
-sprite_names = get_sprite_names()
+sprite_names = dict() #get_sprite_names()
 
 mirror_sprites = get_mirror_sprites()
 
@@ -298,8 +298,8 @@ def read_tileset(img_set_list,palette,plane_orientation_flags,cache,is_bob):
                         actual_nb_planes = nb_planes
 
                         # most sprites aren't mirrored. Save a lot of memory!
-                        if plane_func == ImageOps.mirror and i not in mirror_sprites:
-                            continue
+##                        if plane_func == ImageOps.mirror and i not in mirror_sprites:
+##                            continue
 
                         wtile = plane_func(tile)
 
