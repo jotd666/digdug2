@@ -69,20 +69,20 @@ def process(the_dump,name_filter=None,hide_named_sprite=None):
 
     for offs in range(0,0x80,2):
         if ((spriteram_3[offs+1] & 2) == 0):
-            sprite = spriteram[offs];
-            color = spriteram[offs+1];
-            sx = spriteram_2[offs+1] + 0x100 * (spriteram_3[offs+1] & 1) - 40;
-            sy = 256 - spriteram_2[offs] + 1;
-            flipx = (spriteram_3[offs] & 0x01);
-            flipy = (spriteram_3[offs] & 0x02) >> 1;
-            sizex = (spriteram_3[offs] & 0x04) >> 2;
-            sizey = (spriteram_3[offs] & 0x08) >> 3;
+            sprite = spriteram[offs]
+            color = spriteram[offs+1]
+            sx = spriteram_2[offs+1] + 0x100 * (spriteram_3[offs+1] & 1) - 40
+            sy = spriteram_2[offs] - 1
+            flipx = (spriteram_3[offs] & 0x01)
+            flipy = (spriteram_3[offs] & 0x02) >> 1
+            sizex = (spriteram_3[offs] & 0x04) >> 2
+            sizey = (spriteram_3[offs] & 0x08) >> 3
 
             sprite &= ~sizex;
             sprite &= ~(sizey << 1);
 
             sy -= 16 * sizey;
-            sy = (sy & 0xff) - 32;
+            sy = (sy & 0xff) - 32
 
 
             im = tile_set[color][sprite]
@@ -90,15 +90,16 @@ def process(the_dump,name_filter=None,hide_named_sprite=None):
             flipx,flipy = flipy,flipx
             sx,sy = sy,sx
 
-            if flipy:
-                im = ImageOps.flip(im)
-            if flipx:
-                im = ImageOps.mirror(im)
+            if sx != -24:
+                if flipy:
+                    im = ImageOps.flip(im)
+                if flipx:
+                    im = ImageOps.mirror(im)
 
-            name = sprite_names.get(sprite,"unknown")
-            print(f"offs:{offs:02x}, name: {name}, code:{sprite:02x}, flipx: {flipx}, flipy: {flipy}, color:{color:02x}, X:{sx}, Y:{sy}")
-            result.paste(im,(sx,sy))
-            nb_active += 1
+                name = sprite_names.get(sprite,"unknown")
+                print(f"offs:{offs:02x}, name: {name}, code:{sprite:02x}, sizex: {sizex}, sizey: {sizey}, flipx: {flipx}, flipy: {flipy}, color:{color:02x}, X:{sx}, Y:{sy}")
+                result.paste(im,(sx,sy))
+                nb_active += 1
 
     result.save(f"{the_dump.stem}.png")
     print(f"nb active: {nb_active}")
