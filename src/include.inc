@@ -529,7 +529,7 @@ multiply_ab:
 	move.w	(a7)+,sr
 	.endm
 	
-	.macro	ENABLE_REGS_LOG
+	.macro	ENABLE_LOG_REGS
 	moveq	#1,d6		| enable
 	jbsr	osd_cpu_logging_control	
 	.endm

@@ -501,9 +501,21 @@ _user:
 	
 	jsr	 _detect_controller_types 
 
+	.ifndef	RELEASE
+	* install dump and quit handler
+	pea		dump_and_quit
+	lea		2.W,a0
+	move.l	#0x4AFC4EF9,(a0)+
+	move.l	(a7)+,(a0)+
+	.endif
 
 	jra		demo_game
 
+	.ifndef	RELEASE
+dump_and_quit:	
+	jbsr	osd_dump_logs
+	illegal
+	.endif
 
 	
 * < D0: bcpl string (with leading size byte)
