@@ -74,6 +74,7 @@ checksum_failed_flag_0306 = $306
 sync_1000 = $1000
 task_stack_pointer_1002 = $1002
 nb_lives_1703 = $1703
+current_level_1704 = $1704
 stack_top_1900 = $1900
 watchdog_8000 = $8000
 video_stuff_5009 = $5009
@@ -539,7 +540,7 @@ end_zero_io_81f6:
 839C: 7A 10 4F       DEC    $104F
 839F: 26 F8          BNE    $8399
 83A1: BD 85 38       JSR    $8538
-83A4: BD C1 2A       JSR    $C12A
+83A4: BD C1 2A       JSR    write_playfield_c12a
 83A7: BD 81 50       JSR    suspend_task_8150
 83AA: BD 88 24       JSR    $8824
 83AD: BD 81 50       JSR    suspend_task_8150
@@ -685,6 +686,7 @@ end_zero_io_81f6:
 8532: 84 01          ANDA   #$01
 8534: B7 10 05       STA    $1005
 8537: 39             RTS
+
 8538: 86 01          LDA    #$01
 853A: B7 10 1B       STA    $101B
 853D: B7 25 00       STA    $2500
@@ -693,6 +695,7 @@ end_zero_io_81f6:
 8546: B7 10 D4       STA    $10D4
 8549: B7 10 E8       STA    $10E8
 854C: 39             RTS
+
 854D: 4F             CLRA
 854E: B7 10 D1       STA    $10D1
 8551: B7 10 D0       STA    $10D0
@@ -704,6 +707,7 @@ end_zero_io_81f6:
 8563: B7 10 D2       STA    $10D2
 8566: B7 10 D4       STA    $10D4
 8569: 39             RTS
+
 856A: 8E 48 00       LDX    #namco_io_4800
 856D: CE 85 88       LDU    #$8588
 8570: A6 88 14       LDA    $14,X
@@ -1844,7 +1848,7 @@ task_entry_04_909c:
 90D6: A6 5F          LDA    -$1,U
 90D8: B7 10 09       STA    $1009
 90DB: BD C8 03       JSR    $C803
-90DE: BD C1 2A       JSR    $C12A
+90DE: BD C1 2A       JSR    write_playfield_c12a
 90E1: 8E 17 07       LDX    #$1707
 90E4: CE 92 99       LDU    #$9299
 90E7: BD C4 DB       JSR    $C4DB
@@ -2792,7 +2796,7 @@ task_entry_15_9cb6:
 9CBE: BD 87 06       JSR    clear_screen_8706
 9CC1: BD 8B 3D       JSR    $8B3D
 9CC4: CC 01 01       LDD    #$0101
-9CC7: FD 17 04       STD    $1704
+9CC7: FD 17 04       STD    current_level_1704
 9CCA: B7 10 1B       STA    $101B
 9CCD: BD 87 C5       JSR    $87C5
 9CD0: BD 81 50       JSR    suspend_task_8150
@@ -2824,7 +2828,7 @@ task_entry_15_9cb6:
 9D07: 20 C4          BRA    $9CCD
 9D09: 7F 10 E1       CLR    $10E1
 9D0C: 7F 10 1B       CLR    $101B
-9D0F: 7A 17 04       DEC    $1704
+9D0F: 7A 17 04       DEC    current_level_1704
 9D12: B6 17 05       LDA    $1705
 9D15: 8B 99          ADDA   #$99
 9D17: 19             DAA
@@ -2995,7 +2999,7 @@ task_entry_16_9d20:
 9EBC: CE 9E FB       LDU    #$9EFB
 9EBF: 48             ASLA
 9EC0: EC C6          LDD    A,U
-9EC2: FD 17 04       STD    $1704
+9EC2: FD 17 04       STD    current_level_1704
 9EC5: BD 87 32       JSR    $8732
 9EC8: CC 00 01       LDD    #$0001
 9ECB: B7 10 1B       STA    $101B
@@ -4179,7 +4183,7 @@ A9B8: AE 9F 10 3A    LDX    [$103A]
 A9BC: C6 20          LDB    #$20
 A9BE: 3D             MUL
 A9BF: 31 AB          LEAY   D,Y
-A9C1: BD C1 67       JSR    $C167
+A9C1: BD C1 67       JSR    write_macro_block_c167
 A9C4: BE 10 36       LDX    $1036
 A9C7: 39             RTS
 A9C8: 81 0D          CMPA   #$0D
@@ -5599,7 +5603,7 @@ B74A: 86 04          LDA    #$04
 B74C: 3D             MUL
 B74D: C3 00 20       ADDD   #$0020
 B750: ED 1E          STD    -$2,X
-B752: F6 17 04       LDB    $1704
+B752: F6 17 04       LDB    current_level_1704
 B755: C1 10          CMPB   #$10
 B757: 23 0C          BLS    $B765
 B759: BD 8A A0       JSR    $8AA0
@@ -5780,10 +5784,11 @@ C0DE: BD C1 9A       JSR    $C19A
 C0E1: 8E 16 40       LDX    #$1640
 C0E4: B6 17 44       LDA    $1744
 C0E7: 20 0C          BRA    $C0F5
+
 C0E9: BD C7 D8       JSR    $C7D8
 C0EC: BD C1 A2       JSR    $C1A2
 C0EF: 8E 15 80       LDX    #$1580
-C0F2: B6 17 04       LDA    $1704
+C0F2: B6 17 04       LDA    current_level_1704
 C0F5: 4A             DECA
 C0F6: 84 0F          ANDA   #$0F
 C0F8: BB 17 21       ADDA   $1721
@@ -5812,9 +5817,12 @@ C122: E7 80          STB    ,X+
 C124: 7A 10 09       DEC    $1009
 C127: 26 DF          BNE    $C108
 C129: 39             RTS
+
+write_playfield_c12a:
 C12A: BD 87 06       JSR    clear_screen_8706
 C12D: 8E 15 80       LDX    #$1580
 C130: CE D3 88       LDU    #$D388
+; write playfield tile background (but not holes & cracks)
 C133: 10 8E CE 48    LDY    #$CE48
 C137: B6 80 00       LDA    watchdog_8000
 C13A: A6 80          LDA    ,X+
@@ -5824,18 +5832,21 @@ C13F: 31 AB          LEAY   D,Y
 C141: BF 10 36       STX    $1036
 C144: AE C4          LDX    ,U
 C146: FF 10 3A       STU    $103A
-C149: 8D 1C          BSR    $C167
+C149: 8D 1C          BSR    write_macro_block_c167
 C14B: BE 10 36       LDX    $1036
 C14E: 8C 15 F8       CMPX   #$15F8
 C151: 27 07          BEQ    $C15A
 C153: FE 10 3A       LDU    $103A
 C156: 33 42          LEAU   $2,U
 C158: 20 D9          BRA    $C133
-C15A: BD C1 D2       JSR    $C1D2
+; finished writing map, except for cracks & holes
+C15A: BD C1 D2       JSR    draw_holes_c1d2
 C15D: BD C2 04       JSR    $C204
-C160: BD C2 66       JSR    $C266
-C163: BD C8 11       JSR    $C811
+C160: BD C2 66       JSR    draw_edges_c266
+C163: BD C8 11       JSR    draw_cracks_c811
 C166: 39             RTS
+
+write_macro_block_c167:
 C167: CE C1 92       LDU    #$C192
 C16A: FF 10 38       STU    $1038
 C16D: 8D 0F          BSR    $C17E
@@ -5845,6 +5856,7 @@ C174: 27 1B          BEQ    $C191
 C176: AE 9F 10 3A    LDX    [$103A]
 C17A: 30 86          LEAX   A,X
 C17C: 20 EC          BRA    $C16A
+
 C17E: CE C1 96       LDU    #$C196
 C181: EC A1          LDD    ,Y++
 C183: A7 84          STA    ,X		; [video_address]
@@ -5859,7 +5871,7 @@ C19A: 8E 16 FC       LDX    #$16FC
 C19D: B6 17 44       LDA    $1744
 C1A0: 20 06          BRA    $C1A8
 C1A2: 8E 16 3C       LDX    #$163C
-C1A5: B6 17 04       LDA    $1704
+C1A5: B6 17 04       LDA    current_level_1704
 C1A8: C6 3C          LDB    #$3C
 C1AA: 6F 82          CLR    ,-X
 C1AC: 5A             DECB
@@ -5882,6 +5894,8 @@ C1CA: 26 FA          BNE    $C1C6
 C1CC: 7A 10 09       DEC    $1009
 C1CF: 26 F1          BNE    $C1C2
 C1D1: 39             RTS
+
+draw_holes_c1d2:
 C1D2: 8E 16 00       LDX    #$1600
 C1D5: CE D4 78       LDU    #$D478
 C1D8: B6 80 00       LDA    watchdog_8000
@@ -5926,13 +5940,14 @@ C23A: E5 41          BITB   $1,U
 C23C: 27 02          BEQ    $C240
 C23E: AA 42          ORA    $2,U
 C240: 33 43          LEAU   $3,U
-C242: 11 83 C2 66    CMPU   #$C266
+C242: 11 83 C2 66    CMPU   #$c266		; top table bound (not included)
 C246: 26 E4          BNE    $C22C
 C248: A7 1F          STA    -$1,X
 C24A: 8C 15 70       CMPX   #$1570
 C24D: 26 D6          BNE    $C225
 C24F: 39             RTS
 
+draw_edges_c266:
 C266: 8E 15 89       LDX    #$1589
 C269: CE D3 9A       LDU    #$D39A
 C26C: A6 80          LDA    ,X+
@@ -6085,8 +6100,8 @@ C4C4: 19             DAA
 C4C5: A7 05          STA    $5,X
 C4C7: A6 04          LDA    $4,X
 C4C9: 84 0F          ANDA   #$0F
-C4CB: 4C             INCA
-C4CC: 6C 04          INC    $4,X
+C4CB: 4C             INCA				; compute level number modulus 16 plus one (1-16)
+C4CC: 6C 04          INC    $4,X		; increase level number
 C4CE: AB 88 21       ADDA   $21,X
 C4D1: CE DD 5B       LDU    #$DD5B
 C4D4: C6 19          LDB    #$19
@@ -6386,7 +6401,7 @@ C7E6: A7 80          STA    ,X+
 C7E8: 5A             DECB
 C7E9: 26 FB          BNE    $C7E6
 C7EB: 8E E0 94       LDX    #$E094
-C7EE: F6 17 04       LDB    $1704
+C7EE: F6 17 04       LDB    current_level_1704
 C7F1: 5A             DECB
 C7F2: C4 0F          ANDB   #$0F
 C7F4: FB 17 21       ADDB   $1721
@@ -6404,6 +6419,8 @@ C809: A7 84          STA    ,X
 C80B: 7A 10 09       DEC    $1009
 C80E: 26 F3          BNE    $C803
 C810: 39             RTS
+
+draw_cracks_c811:
 C811: 8E 15 00       LDX    #$1500
 C814: 10 8E D3 88    LDY    #$D388
 C818: A6 80          LDA    ,X+

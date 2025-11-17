@@ -3,6 +3,7 @@ import os,pathlib,struct
 
 from shared import *
 
+# dump sprite area on MAME/ save sprites_title,$1780,$1080
 
 sprite_names = get_sprite_names()
 
@@ -54,9 +55,9 @@ def process(the_dump,name_filter=None,hide_named_sprite=None):
     # in input, we use a MAME memory dump: save sprites,$A000,$400
     # (0x200 are read, but there's a kind of double buffering
     with open(the_dump,"rb") as f:
-        mem_1000 = bytearray(f.read())
+        mem_1780 = bytearray(f.read())
 
-    spriteram = mem_1000
+    spriteram = mem_1780
     spriteram_2 = spriteram[0x800:]
     spriteram_3 = spriteram[0x1000:]
 
@@ -90,7 +91,7 @@ def process(the_dump,name_filter=None,hide_named_sprite=None):
             flipx,flipy = flipy,flipx
             sx,sy = sy,sx
 
-            if sx != -24:
+            if color != 0:
                 if flipy:
                     im = ImageOps.flip(im)
                 if flipx:
@@ -105,5 +106,6 @@ def process(the_dump,name_filter=None,hide_named_sprite=None):
     print(f"nb active: {nb_active}")
 
 
-process(r"sprites")
+process(r"sprites_title")
+process(r"sprites_title_higher")
 

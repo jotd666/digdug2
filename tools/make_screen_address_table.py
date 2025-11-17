@@ -33,6 +33,7 @@ address_table = [INVALID_XY] * 0x800
 def set_value(offset,value):
     if address_table[offset] != INVALID_XY and offset not in [0x780,0x781,0x791,0x7B1]:
         print(f"Already defined: {offset:04x} old={address_table[offset]} new={value}")
+        return
     address_table[offset] = value
 
 # top status
@@ -45,10 +46,10 @@ for y,line_offset in enumerate(range(0,0x40,0x20)):
 # main playfield
 
 for screen_part in [0,1]:
-    screen_offset = 0 if screen_part == 1 else 0x400
+    screen_offset = 0x400 if screen_part == 1 else 0
     x_offset = 0 if screen_part == 0 else 28
-    x_offset = 28
-    for line_offset,y in enumerate(range(0,32),2):
+
+    for y,line_offset in enumerate(range(0,32),2):
         start = 0x360+line_offset+screen_offset
         x = x_offset
         for i in range(start,start-28*32,-0x20):
@@ -88,5 +89,5 @@ for a in address_table:
     dumpable_table.append(a[0])
     dumpable_table.append(a[1]*8)  # pre-multiply Y by 8
 
-with open(shared.amiga_source_dir / "tiles_layout_.68k","w") as f:
+with open(shared.amiga_source_dir / "tiles_layout.68k","w") as f:
     bitplanelib.dump_asm_bytes(dumpable_table,f,mit_format=True,size=2)

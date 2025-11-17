@@ -1,4 +1,4 @@
-- if space is written, one part overwrites the other. Log writes in left part
+- set_status_bitplanes 33 v 32 cheat
 - optimize 0x20 write = clear
 - implement sprites
 - implement insert coin / start game / controls
