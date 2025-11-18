@@ -106,6 +106,5 @@ def process(the_dump,name_filter=None,hide_named_sprite=None):
     print(f"nb active: {nb_active}")
 
 
-process(r"sprites_title")
-process(r"sprites_title_higher")
+process(r"sprites_game")
 

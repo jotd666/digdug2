@@ -46,7 +46,36 @@ def get_sprite_names():
     rval = dict()
 
 ##    rval[0x155] = "blank"
-##    set_names(rval,0x100,0x103,"bullet")
+    set_names(rval,0x5C,0x5E,"flame")
+    set_names(rval,0x58,0x5A,"flame")
+    set_names(rval,0x6C,0x6D,"flame")
+    set_names(rval,0x60,0x62,"flame")
+    set_names(rval,0x64,0x6A,"flame")
+    set_names(rval,0xF5,0x100,"points")
+    set_names(rval,0x18,0x20,"dragon")
+    set_names(rval,0x3C,0x3E,"game_over")
+    set_names(rval,0x6C,0x70,"ghost")
+
+    rval[0x7C] = "banana"
+    rval[0x7D] = "corn"
+    rval[0x7E] = "pineapple"
+    rval[0x7F] = "cocktail"
+    rval[0x50] = "eggplant"
+    rval[0x51] = "tomato"
+    rval[0x52] = "watermelon"
+    rval[0x53] = "grapes"
+    rval[0x69] = "dragon"
+    set_names(rval,0x80,0xC8,"earth_crumbling")
+    set_names(rval,0x38,0x3C,"splash")
+    set_names(rval,0x10,0x18,"red_enemy")
+    set_names(rval,0xC8,0xD4,"red_enemy")  # double height
+    set_names(rval,0xD4,0xE0,"dragon")  # double height
+    set_names(rval,0xE0,0xF5,"title_letter")
+    set_names(rval,0x20,0x38,"player_digging")  # double height
+    set_names(rval,0x0,0x10,"player")
+
+    set_names(rval,0x44,0x46,"player_falling")
+    set_names(rval,0x54,0x58,"player_dying")
 
 
 

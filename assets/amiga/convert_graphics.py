@@ -4,7 +4,7 @@ import os,sys,bitplanelib
 from shared import *
 
 
-sprite_names = dict() #get_sprite_names()
+sprite_names = get_sprite_names()
 
 mirror_sprites = get_mirror_sprites()
 
