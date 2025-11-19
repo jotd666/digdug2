@@ -115,6 +115,10 @@ player_decoded_directions_1013 = $1013
 hammer_button_pressed_1014 = $1014
 pump_button_pressed_1015 = $1015
 demo_on_1010 = $1010
+; vertical coord (portrait!) never referenced directly
+player_x_250d = $250d
+; horizontal coord (portrait!)
+player_y_16_bit_250e = $250e
 
 irq_8000:
 8000: B7 50 02       STA    video_stuff_5002
@@ -3097,7 +3101,7 @@ task_entry_06_9f03:
 9F8A: A7 1B          STA    -$5,X
 9F8C: BD C0 00       JSR    $C000
 9F8F: BD C0 9F       JSR    $C09F
-9F92: BD C4 80       JSR    $C480
+9F92: BD C4 80       JSR    scrolling_following_player_c480
 9F95: BD 81 50       JSR    suspend_task_8150
 9F98: B6 10 DA       LDA    $10DA
 9F9B: 10 27 FF 64    LBEQ   task_entry_06_9f03
@@ -3220,7 +3224,7 @@ A0B1: B6 10 DA       LDA    $10DA
 A0B4: 26 EE          BNE    $A0A4
 A0B6: B6 25 02       LDA    $2502
 A0B9: 26 E9          BNE    $A0A4
-A0BB: B6 25 01       LDA    $2501
+A0BB: B6 25 01       LDA    hammer_active_2501
 A0BE: 26 E4          BNE    $A0A4
 A0C0: B6 25 0A       LDA    $250A
 A0C3: 27 DF          BEQ    $A0A4
@@ -3233,9 +3237,9 @@ A0D0: B6 25 02       LDA    $2502
 A0D3: 27 06          BEQ    $A0DB
 A0D5: BD A5 4F       JSR    $A54F
 A0D8: 7F 25 02       CLR    $2502
-A0DB: B6 25 01       LDA    $2501
+A0DB: B6 25 01       LDA    hammer_active_2501
 A0DE: 27 03          BEQ    $A0E3
-A0E0: 7F 25 01       CLR    $2501
+A0E0: 7F 25 01       CLR    hammer_active_2501
 A0E3: BD 81 50       JSR    suspend_task_8150
 A0E6: B6 25 00       LDA    $2500
 A0E9: 26 F8          BNE    $A0E3
@@ -3252,13 +3256,18 @@ A10A: E7 1A          STB    -$6,X
 A10C: B6 17 07       LDA    $1707
 A10F: A7 03          STA    $3,X
 A111: BD C8 EA       JSR    $C8EA
-A114: 7E C4 80       JMP    $C480
+A114: 7E C4 80       JMP    scrolling_following_player_c480
+
+hammer_active_2501 = $2501
+
+player_hammer_and_movement_a117:
 A117: B6 10 14       LDA    hammer_button_pressed_1014
 A11A: 27 04          BEQ    $A120
-A11C: 7C 25 01       INC    $2501
+A11C: 7C 25 01       INC    hammer_active_2501
 A11F: 39             RTS
 A120: B6 10 13       LDA    player_decoded_directions_1013
 A123: 2A 01          BPL    $A126
+; player is not moving: return
 A125: 39             RTS
 A126: A1 05          CMPA   $5,X
 A128: 27 7A          BEQ    $A1A4
@@ -3331,7 +3340,7 @@ A1B1: 86 10          LDA    #$10
 A1B3: A7 1B          STA    -$5,X
 A1B5: BD C0 00       JSR    $C000
 A1B8: BD C0 9F       JSR    $C09F
-A1BB: 7E C4 80       JMP    $C480
+A1BB: 7E C4 80       JMP    scrolling_following_player_c480
 A1BE: A7 05          STA    $5,X
 A1C0: 48             ASLA
 A1C1: A7 0A          STA    $A,X
@@ -3339,6 +3348,7 @@ A1C3: CC 02 08       LDD    #$0208
 A1C6: A7 1A          STA    -$6,X
 A1C8: E7 04          STB    $4,X
 A1CA: 39             RTS
+
 A1CB: 6A 04          DEC    $4,X
 A1CD: 26 02          BNE    $A1D1
 A1CF: 6A 1A          DEC    -$6,X
@@ -3347,7 +3357,7 @@ A1D2: A6 1B          LDA    -$5,X
 A1D4: 27 09          BEQ    $A1DF
 A1D6: BD C0 00       JSR    $C000
 A1D9: BD C0 9F       JSR    $C09F
-A1DC: 7E C4 80       JMP    $C480
+A1DC: 7E C4 80       JMP    scrolling_following_player_c480
 A1DF: CC 01 10       LDD    #$0110
 A1E2: A7 1A          STA    -$6,X
 A1E4: F0 10 C2       SUBB   $10C2
@@ -3357,6 +3367,7 @@ A1EC: A7 05          STA    $5,X
 A1EE: 48             ASLA
 A1EF: A7 0A          STA    $A,X
 A1F1: 39             RTS
+
 A1F2: A6 04          LDA    $4,X
 A1F4: 26 03          BNE    $A1F9
 A1F6: A7 0B          STA    $B,X
@@ -3414,7 +3425,7 @@ A253: 81 01          CMPA   #$01
 A255: 26 DB          BNE    task_entry_07_a232
 A257: 8E 25 10       LDX    #$2510
 A25A: A7 12          STA    -$E,X
-A25C: F6 25 01       LDB    $2501
+A25C: F6 25 01       LDB    hammer_active_2501
 A25F: 27 0B          BEQ    $A26C
 A261: 6F 11          CLR    -$F,X
 A263: F6 17 07       LDB    $1707
@@ -3759,7 +3770,7 @@ A558: 7E 87 32       JMP    $8732
 
 task_entry_08_a55b:
 A55B: BD 81 50       JSR    suspend_task_8150
-A55E: B6 25 01       LDA    $2501
+A55E: B6 25 01       LDA    hammer_active_2501
 A561: 27 F8          BEQ    task_entry_08_a55b
 A563: B7 40 47       STA    $4047
 A566: 8E 25 10       LDX    #$2510
@@ -3783,10 +3794,10 @@ A58B: E3 1E          ADDD   -$2,X
 A58D: C4 F0          ANDB   #$F0
 A58F: ED 1E          STD    -$2,X
 A591: 6F 1B          CLR    -$5,X
-A593: BD C4 80       JSR    $C480
+A593: BD C4 80       JSR    scrolling_following_player_c480
 A596: 20 24          BRA    $A5BC
 A598: BD 81 50       JSR    suspend_task_8150
-A59B: B6 25 01       LDA    $2501
+A59B: B6 25 01       LDA    hammer_active_2501
 A59E: 27 BB          BEQ    task_entry_08_a55b
 A5A0: B7 40 47       STA    $4047
 A5A3: B6 10 14       LDA    hammer_button_pressed_1014
@@ -3795,7 +3806,7 @@ A5AA: 8E 25 10       LDX    #$2510
 A5AD: A6 1B          LDA    -$5,X
 A5AF: 27 0B          BEQ    $A5BC
 A5B1: BD C0 00       JSR    $C000
-A5B4: BD C4 80       JSR    $C480
+A5B4: BD C4 80       JSR    scrolling_following_player_c480
 A5B7: BD C0 78       JSR    $C078
 A5BA: 20 DC          BRA    $A598
 A5BC: 86 01          LDA    #$01
@@ -3830,7 +3841,7 @@ A5FB: F7 10 40       STB    $1040
 A5FE: 7C 10 D5       INC    $10D5
 A601: BD C0 78       JSR    $C078
 A604: BD 81 50       JSR    suspend_task_8150
-A607: B6 25 01       LDA    $2501
+A607: B6 25 01       LDA    hammer_active_2501
 A60A: 10 27 FF 4D    LBEQ   task_entry_08_a55b
 A60E: B6 10 14       LDA    hammer_button_pressed_1014
 A611: 27 4E          BEQ    $A661
@@ -3845,7 +3856,7 @@ A627: 27 A6          BEQ    $A5CF
 A629: 20 D6          BRA    $A601
 A62B: BD C0 78       JSR    $C078
 A62E: BD 81 50       JSR    suspend_task_8150
-A631: B6 25 01       LDA    $2501
+A631: B6 25 01       LDA    hammer_active_2501
 A634: 10 27 FF 23    LBEQ   task_entry_08_a55b
 A638: B6 10 14       LDA    hammer_button_pressed_1014
 A63B: 27 24          BEQ    $A661
@@ -3872,7 +3883,7 @@ A669: B6 17 07       LDA    $1707
 A66C: A7 03          STA    $3,X
 A66E: 6F 08          CLR    $8,X
 A670: 6F 1D          CLR    -$3,X
-A672: 7F 25 01       CLR    $2501
+A672: 7F 25 01       CLR    hammer_active_2501
 A675: 7E A5 5B       JMP    task_entry_08_a55b
 A678: CE A6 84       LDU    #$A684
 A67B: E6 05          LDB    $5,X
@@ -4458,7 +4469,7 @@ AC27: 7F 25 02       CLR    $2502
 AC2A: BF 10 36       STX    $1036
 AC2D: BD A5 4F       JSR    $A54F
 AC30: BE 10 36       LDX    $1036
-AC33: 7F 25 01       CLR    $2501
+AC33: 7F 25 01       CLR    hammer_active_2501
 AC36: 7F 10 DA       CLR    $10DA
 AC39: 30 88 20       LEAX   $20,X
 AC3C: 8C 26 70       CMPX   #$2670
@@ -4580,9 +4591,9 @@ AD7C: 26 43          BNE    $ADC1
 AD7E: C5 04          BITB   #$04
 AD80: 26 07          BNE    $AD89
 AD82: EC 1E          LDD    -$2,X
-AD84: B3 25 0E       SUBD   $250E
+AD84: B3 25 0E       SUBD   player_y_16_bit_250e
 AD87: 20 05          BRA    $AD8E
-AD89: FC 25 0E       LDD    $250E
+AD89: FC 25 0E       LDD    player_y_16_bit_250e
 AD8C: A3 1E          SUBD   -$2,X
 AD8E: 10 83 00 40    CMPD   #$0040
 AD92: 22 2D          BHI    $ADC1
@@ -5004,7 +5015,7 @@ B18C: 10 27 00 AB    LBEQ   $B23B
 B190: F7 10 CF       STB    $10CF
 B193: A6 05          LDA    $5,X
 B195: EE 1E          LDU    -$2,X
-B197: 11 B3 25 0E    CMPU   $250E
+B197: 11 B3 25 0E    CMPU   player_y_16_bit_250e
 B19B: 27 1B          BEQ    $B1B8
 B19D: 25 09          BCS    $B1A8
 B19F: 81 06          CMPA   #$06
@@ -5025,7 +5036,7 @@ B1C2: 40             NEGA
 B1C3: 33 44          LEAU   $4,U
 B1C5: 81 18          CMPA   #$18
 B1C7: 22 27          BHI    $B1F0
-B1C9: FC 25 0E       LDD    $250E
+B1C9: FC 25 0E       LDD    player_y_16_bit_250e
 B1CC: A3 1E          SUBD   -$2,X
 B1CE: 2A 07          BPL    $B1D7
 B1D0: 43             COMA
@@ -5178,7 +5189,7 @@ B319: B6 25 02       LDA    $2502
 B31C: 27 06          BEQ    $B324
 B31E: BD A5 4F       JSR    $A54F
 B321: 7F 25 02       CLR    $2502
-B324: 7F 25 01       CLR    $2501
+B324: 7F 25 01       CLR    hammer_active_2501
 B327: 7F 10 DA       CLR    $10DA
 B32A: BE 10 36       LDX    $1036
 B32D: 86 01          LDA    #$01
@@ -5372,7 +5383,7 @@ B4D8: 81 D0          CMPA   #$D0
 B4DA: 10 24 FC 91    LBCC   $B16F
 B4DE: A6 05          LDA    $5,X
 B4E0: EE 1E          LDU    -$2,X
-B4E2: 11 B3 25 0E    CMPU   $250E
+B4E2: 11 B3 25 0E    CMPU   player_y_16_bit_250e
 B4E6: 27 1B          BEQ    $B503
 B4E8: 25 09          BCS    $B4F3
 B4EA: 81 06          CMPA   #$06
@@ -5408,7 +5419,7 @@ B530: 40             NEGA
 B531: 33 44          LEAU   $4,U
 B533: 81 18          CMPA   #$18
 B535: 22 43          BHI    $B57A
-B537: FC 25 0E       LDD    $250E
+B537: FC 25 0E       LDD    player_y_16_bit_250e
 B53A: A3 1E          SUBD   -$2,X
 B53C: 2A 07          BPL    $B545
 B53E: 43             COMA
@@ -5711,7 +5722,7 @@ C013: 85 01          BITA   #$01
 C015: 26 09          BNE    $C020
 C017: C5 80          BITB   #$80
 C019: 26 03          BNE    $C01E
-C01B: E7 1D          STB    -$3,X
+C01B: E7 1D          STB    -$3,X	; set X coord (vertical)
 C01D: 39             RTS
 C01E: C4 7F          ANDB   #$7F
 C020: E7 1D          STB    -$3,X
@@ -6084,19 +6095,23 @@ C383: 8C 15 F0       CMPX   #$15F0
 C386: 10 26 FE E2    LBNE   $C26C
 C38A: 39             RTS
 
-C480: EC 1E          LDD    -$2,X
+scrolling_following_player_c480:
+	: EC 1E          LDD    -$2,X
 C482: 10 83 00 80    CMPD   #$0080
 C486: 2F 11          BLE    $C499
 C488: 10 83 01 7F    CMPD   #$017F
 C48C: 2C 11          BGE    $C49F
+; scroll not 0 not maxxed
 C48E: 83 00 80       SUBD   #$0080
 C491: F7 10 08       STB    scroll_value_1008
 C494: 86 80          LDA    #$80
 C496: A7 0D          STA    $D,X
 C498: 39             RTS
+; scroll min value (hard right)
 C499: E7 0D          STB    $D,X
 C49B: 7F 10 08       CLR    scroll_value_1008
 C49E: 39             RTS
+; scroll max value (hard left)
 C49F: 5C             INCB
 C4A0: E7 0D          STB    $D,X
 C4A2: 86 FF          LDA    #$FF
@@ -6974,7 +6989,7 @@ CD51: A7 08          STA    $8,X
 CD53: CC 01 5F       LDD    #$015F
 CD56: B7 10 DA       STA    $10DA
 CD59: E7 04          STB    $4,X
-CD5B: 7F 25 01       CLR    $2501
+CD5B: 7F 25 01       CLR    hammer_active_2501
 CD5E: B6 25 02       LDA    $2502
 CD61: 26 01          BNE    $CD64
 CD63: 39             RTS
@@ -7721,7 +7736,7 @@ table_961d:
 
 table_a0f1:
 	dc.w	$2098	; $a0f1 0: bogus never reached state
-	dc.w	$a117	; $a0f3 1
+	dc.w	player_hammer_and_movement_a117	; $a0f3 1
 	dc.w	$a1cb	; $a0f5 2
 	dc.w	$a1d2	; $a0f7 3
 	dc.w	$0      ; $a0f9 4: bogus never reached state
