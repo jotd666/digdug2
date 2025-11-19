@@ -20,7 +20,7 @@ input_dict = {"system_3300":"read_system_inputs",
 
 nb_cases_dict = {0x9538:14,
 0xa0cc:7,
-0xa281:8,
+0xa281:7,
 0xabe2:22
 
 }
@@ -94,6 +94,7 @@ with open(source_dir / "conv.s") as f:
 \tbset\t#15,d0                  | watermark for safety (TEMP)
 \tGET_REG_ADDRESS\t0,d2         | get stack pointers buffer real address
 \tmove.w\td0,(a0)               | store to stack pointers buffer ($18xx)
+\tmoveq\t#0,d0                  | so D0 MSB is 0
 * continue to unwind_stack, return to main task scheduler
 """
         elif address == 0x8f67:

@@ -2904,8 +2904,40 @@ osd_read_dsw_3:
 *	not.b	d0		| active low
 	rts
 
+* toggle bit 3 
+start_1p_game:
+	movem.l	d0/a5/a6,-(a7)
+	GET_MEMORY_START_AND_DP
+	move.b	(start_1p_4805,a6),d0 
+	bchg	#3,d0
+	move.b	d0,(start_1p_4805,a6)
+	movem.l	(a7)+,d0/a5/a6
+	rts
 	
-
+add_one_credit:
+	movem.l	d0/a5/a6,-(a7)
+	GET_MEMORY_START_AND_DP
+	move.b	(credits_unit_4803,a6),d0
+	and.b	#0xF,d0
+	addq	#1,d0
+	cmp.b	#0xA,d0
+	jne		1f
+	move.w	d1,-(a7)
+	* increment tens (not that it is useful...)
+	move.b	(credits_tens_4802,a6),d1
+	and.b	#0xF,d1
+	cmp.b	#9,d1
+	jeq		0f
+	addq	#1,d1
+	or.b	#0xF0,d1
+	move.b	d1,(credits_tens_4802,a6)
+0:
+	move.w	(a7)+,d1
+1:
+	or.b	#0xF0,d0
+	move.b	d0,(credits_unit_4803,a6)
+	movem.l	(a7)+,d0/a5/a6
+	rts
 	
 
 level2_interrupt:
@@ -2929,6 +2961,15 @@ handle_keyboard:
     bclr    #7,d0
     seq (a0,d0.w)       | updates keyboard table
     jne   2f     | we don't care about key release
+	
+	cmp.b	#1,d0		| "1" key
+	jne		0f
+	jbsr	start_1p_game
+0:
+	cmp.b	#5,d0		| "5" key
+	jne		0f
+	jbsr	add_one_credit
+0:
 	
     cmp.b   #0x19,d0	| "P" key
     bne.b   0f

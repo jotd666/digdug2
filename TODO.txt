@@ -2,6 +2,9 @@
 - set_status_bitplanes 33 v 32 cheat
 - demo attract mode not working properly
 - optimize 0x20 write = clear
-- implement sprite double height
-- implement insert coin / start game / controls
+- implement sprite double height: test in start game screen
+- implement start game : doesn't work, reverse that 4805 is not read...
+- implement controls
 - report 2 last optimization phases in 6809 converter
+- implement trainer invincible.infinite lives
+- start screen: bottom right dragon flipped not mirrored (mockup ok)

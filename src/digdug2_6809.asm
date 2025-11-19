@@ -87,6 +87,9 @@ video_stuff_500a = $500A
 namco_io_4800 = $4800
 credits_tens_4802 = $4802
 credits_unit_4803 = $4803
+; bit 3 bot both
+start_1p_4805 = $4805
+start_2p_4807 = $4807
 joystick_directions_4804 = $4804
 joystick_button_1_4805 = $4805
 joystick_button_2_4815 = $4815
@@ -3384,6 +3387,7 @@ A203: 84 03          ANDA   #$03
 A205: 8B 38          ADDA   #$38
 A207: A7 0A          STA    $A,X
 A209: 39             RTS
+
 A20A: B6 10 10       LDA    demo_on_1010
 A20D: 26 0E          BNE    $A21D
 A20F: B6 10 4F       LDA    $104F
@@ -3892,7 +3896,7 @@ A67F: A7 0A          STA    $A,X
 A681: E7 08          STB    $8,X
 A683: 39             RTS
 
-
+A694: 7F 10 D5       CLR    $10D5                                       
 task_entry_09_a697:
 A697: BD 81 50       JSR    suspend_task_8150
 A69A: B6 10 D5       LDA    $10D5
@@ -6096,7 +6100,7 @@ C386: 10 26 FE E2    LBNE   $C26C
 C38A: 39             RTS
 
 scrolling_following_player_c480:
-	: EC 1E          LDD    -$2,X
+C480: EC 1E          LDD    -$2,X
 C482: 10 83 00 80    CMPD   #$0080
 C486: 2F 11          BLE    $C499
 C488: 10 83 01 7F    CMPD   #$017F
@@ -6582,6 +6586,7 @@ C943: C3 00 20       ADDD   #$0020
 C946: ED 1E          STD    -$2,X
 C948: B6 80 00       LDA    watchdog_8000
 C94B: 39             RTS
+
 C94C: B7 10 C0       STA    $10C0
 C94F: 84 02          ANDA   #$02
 C951: B7 10 09       STA    $1009
@@ -7750,7 +7755,6 @@ table_a2e9:
 	dc.w	$a357	; $a2f1
 	dc.w	$a38a	; $a2f3
 	dc.w	$a4c1	; $a2f5
-	dc.w	$a688	; $a2f7
 table_ac66:
 	dc.w	task_entry_0c_ab85	; $ac66
 	dc.w	$ad49	; $ac68
