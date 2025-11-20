@@ -85,6 +85,8 @@ video_stuff_5004 = $5004
 video_stuff_500b = $500B
 video_stuff_500a = $500A
 namco_io_4800 = $4800
+; set by namco chip when enough credits, 0: none, 1: 1 player, 2: 2 players
+number_of_players_4801 = $4801
 credits_tens_4802 = $4802
 credits_unit_4803 = $4803
 ; bit 3 bot both
@@ -97,6 +99,7 @@ dsw_nb_lives_4814 = $4814
 dsw_extra_lives_select_level_4816 = $4816
 io_register_4818 = $4818
 
+game_in_play_10e7 = $10e7
 ; there are 3 pointer array zones for tasks
 stack_location_pointer_array_1800 = $1800
 stack_location_pointer_array_1f10 = $1F10
@@ -120,8 +123,15 @@ pump_button_pressed_1015 = $1015
 demo_on_1010 = $1010
 ; vertical coord (portrait!) never referenced directly
 player_x_250d = $250d
+; decoded from current_level_bcd_1705 and printable on screen
+round_number_1034 = $1034
 ; horizontal coord (portrait!)
 player_y_16_bit_250e = $250e
+
+; screen positions
+credits_units_screen_address_07a3 = $7a3
+credits_tens_screen_address_07a4 = $7a4
+
 
 irq_8000:
 8000: B7 50 02       STA    video_stuff_5002
@@ -228,9 +238,10 @@ sync_loop_80c1:
 80E3: B7 40 54       STA    $4054
 80E6: 7F 48 00       CLR    namco_io_4800
 end_of_io_stuff_80e6:
-80E9: B6 10 E7       LDA    $10E7
+80E9: B6 10 E7       LDA    game_in_play_10e7
 80EC: 26 03          BNE    $80F1
-80EE: BD 86 35       JSR    $8635
+; write credits only if game not in play (else write round number)
+80EE: BD 86 35       JSR    write_nb_credits_8635
 80F1: B6 10 EF       LDA    $10EF
 80F4: 27 25          BEQ    $811B
 80F6: B6 10 1B       LDA    game_in_play_101b
@@ -444,8 +455,8 @@ end_zero_io_81f6:
 8269: B7 10 07       STA    $1007
 826C: B7 10 0A       STA    $100A
 826F: B7 10 1B       STA    game_in_play_101b
-8272: B7 10 E7       STA    $10E7
-8275: B7 48 01       STA    $4801
+8272: B7 10 E7       STA    game_in_play_10e7
+8275: B7 48 01       STA    number_of_players_4801
 8278: B7 48 09       STA    $4809
 827B: BD 87 06       JSR    clear_screen_8706
 827E: BD 8B 3D       JSR    $8B3D
@@ -506,24 +517,25 @@ end_zero_io_81f6:
 830D: BD 86 5B       JSR    $865B
 8310: BD 8A A0       JSR    $8AA0
 8313: BD 81 50       JSR    suspend_task_8150
-8316: B6 48 01       LDA    $4801
+8316: B6 48 01       LDA    number_of_players_4801
 8319: 84 0F          ANDA   #$0F
 831B: 27 F0          BEQ    $830D
 831D: 7F 10 E3       CLR    $10E3
-8320: 7C 10 E7       INC    $10E7
+; set game in play
+8320: 7C 10 E7       INC    game_in_play_10e7
 8323: BD 84 D5       JSR    $84D5
 8326: B6 10 EF       LDA    $10EF
 8329: 27 25          BEQ    $8350
 832B: 7C 10 E1       INC    $10E1
 832E: 7F 48 00       CLR    namco_io_4800
-8331: B6 48 01       LDA    $4801
+8331: B6 48 01       LDA    number_of_players_4801
 8334: 84 0F          ANDA   #$0F
 8336: 4A             DECA
 8337: B7 10 04       STA    nb_players_minus_one_1004
 833A: 43             COMA
 833B: 84 01          ANDA   #$01
 833D: B7 10 DE       STA    $10DE
-8340: 7F 48 01       CLR    $4801
+8340: 7F 48 01       CLR    number_of_players_4801
 8343: 7C 48 09       INC    $4809
 8346: BD 81 50       JSR    suspend_task_8150
 8349: B6 10 E1       LDA    $10E1
@@ -535,12 +547,12 @@ end_zero_io_81f6:
 8358: B6 10 05       LDA    current_player_1005
 835B: 26 15          BNE    $8372
 835D: 7F 48 00       CLR    namco_io_4800
-8360: B6 48 01       LDA    $4801
+8360: B6 48 01       LDA    number_of_players_4801
 8363: 84 0F          ANDA   #$0F
 8365: 4A             DECA
 8366: B7 10 04       STA    nb_players_minus_one_1004
 8369: BD 8B 3D       JSR    $8B3D
-836C: 7F 48 01       CLR    $4801
+836C: 7F 48 01       CLR    number_of_players_4801	; ack!
 836F: 7C 48 09       INC    $4809
 8372: BD 81 50       JSR    suspend_task_8150
 8375: B6 10 E9       LDA    start_game_flag_10e9
@@ -820,6 +832,8 @@ write_copyright_texts_85ca:
 860A: 70 20 31       NEG    $2031
 860D: 39             RTS
 
+
+write_nb_credits_8635:
 8635: 8E 07 AB       LDX    #$07AB                                       
 8638: CE 86 B4       LDU    #$86B4                                       
 863B: 86 08          LDA    #$08
@@ -829,12 +843,13 @@ write_copyright_texts_85ca:
 8645: C6 06          LDB    #$06
 8647: BD 85 BD       JSR    clear_status_text_85bd
 864A: FC 48 02       LDD    credits_tens_4802
-864D: C4 0F          ANDB   #$0F
-864F: F7 07 A3       STB    $07A3
+864D: C4 0F          ANDB   #$0F		; units
+864F: F7 07 A3       STB    credits_units_screen_address_07a3	; [video_address]
 8652: 84 0F          ANDA   #$0F
 8654: 26 01          BNE    $8657
 8656: 39             RTS
-8657: B7 07 A4       STA    $07A4
+
+8657: B7 07 A4       STA    credits_tens_screen_address_07a4	; [video_address]
 865A: 39             RTS
 865B: B6 10 01       LDA    $1001
 865E: 85 08          BITA   #$08
@@ -959,7 +974,7 @@ wirte_round_and_player_87b3:
 87C8: CE 88 0D       LDU    #$880D		; ROUND
 87CB: 86 05          LDA    #$05
 87CD: BD 85 90       JSR    write_text_8590
-87D0: B6 10 E7       LDA    $10E7
+87D0: B6 10 E7       LDA    game_in_play_10e7
 87D3: 27 0B          BEQ    $87E0
 87D5: 8E 07 AB       LDX    #$07AB
 87D8: CE 88 0D       LDU    #$880D		; ROUND (in status text)
@@ -968,7 +983,7 @@ wirte_round_and_player_87b3:
 87E0: B6 17 05       LDA    current_level_bcd_1705
 87E3: 84 0F          ANDA   #$0F		; level unit
 87E5: B7 01 70       STA    $0170
-87E8: B7 10 34       STA    $1034
+87E8: B7 10 34       STA    round_number_1034
 87EB: B6 17 05       LDA    current_level_bcd_1705
 87EE: 84 F0          ANDA   #$F0
 87F0: 27 06          BEQ    $87F8		; level tenth
@@ -980,11 +995,11 @@ wirte_round_and_player_87b3:
 87F8: 86 20          LDA    #$20		; level < 10: blank in tenth
 87FA: B7 01 90       STA    $0190
 87FD: B7 10 35       STA    $1035
-8800: B6 10 E7       LDA    $10E7
+8800: B6 10 E7       LDA    game_in_play_10e7
 8803: 26 01          BNE    $8806
 8805: 39             RTS
-8806: FC 10 34       LDD    $1034
-8809: FD 07 A3       STD    $07A3
+8806: FC 10 34       LDD    round_number_1034
+8809: FD 07 A3       STD    credits_units_screen_address_07a3	; [video_address_word]
 880C: 39             RTS
 
 8815: F6 10 CC       LDB    $10CC           
@@ -1029,7 +1044,7 @@ wirte_round_and_player_87b3:
 8872: 8C 88 90       CMPX   #$8890
 8875: 26 EA          BNE    $8861
 8877: 39             RTS
-8878: ED C3          STD    ,--U
+8878: ED C3          STD    ,--U		; [video_address]
 887A: 7A 10 09       DEC    $1009
 887D: 26 F9          BNE    $8878
 887F: 39             RTS
@@ -1487,7 +1502,7 @@ task_entry_0e_8d48:
 8D63: 25 19          BCS    $8D7E
 8D65: 7A 10 E6       DEC    $10E6
 8D68: 20 DE          BRA    task_entry_0e_8d48
-8D6A: B7 10 34       STA    $1034
+8D6A: B7 10 34       STA    round_number_1034
 8D6D: 6F 86          CLR    A,X
 8D6F: 8B 04          ADDA   #$04
 8D71: E6 86          LDB    A,X
@@ -1514,7 +1529,7 @@ task_entry_0e_8d48:
 8DA0: 7A 10 E6       DEC    $10E6
 8DA3: 20 A3          BRA    task_entry_0e_8d48
 8DA5: 8E 12 88       LDX    #$1288
-8DA8: B6 10 34       LDA    $1034
+8DA8: B6 10 34       LDA    round_number_1034
 8DAB: A1 80          CMPA   ,X+
 8DAD: 26 02          BNE    $8DB1
 8DAF: E7 1F          STB    -$1,X
@@ -1618,8 +1633,8 @@ task_entry_0f_8dfa:
 8EAC: 39             RTS
 8EAD: 8E 25 10       LDX    #$2510
 8EB0: CC 00 00       LDD    #$0000
-8EB3: FD 10 34       STD    $1034
-8EB6: 7C 10 34       INC    $1034
+8EB3: FD 10 34       STD    round_number_1034
+8EB6: 7C 10 34       INC    round_number_1034
 8EB9: A6 10          LDA    -$10,X
 8EBB: 26 05          BNE    $8EC2
 8EBD: 7C 10 35       INC    $1035
@@ -1628,7 +1643,7 @@ task_entry_0f_8dfa:
 8EC5: E6 0D          LDB    $D,X
 8EC7: 27 1B          BEQ    $8EE4
 8EC9: 5F             CLRB
-8ECA: B6 10 34       LDA    $1034
+8ECA: B6 10 34       LDA    round_number_1034
 8ECD: B7 10 09       STA    $1009
 8ED0: A6 0F          LDA    $F,X
 8ED2: A1 45          CMPA   $5,U
@@ -1640,7 +1655,7 @@ task_entry_0f_8dfa:
 8EDE: 27 1B          BEQ    $8EFB
 8EE0: 33 46          LEAU   $6,U
 8EE2: 20 EE          BRA    $8ED2
-8EE4: B6 10 34       LDA    $1034
+8EE4: B6 10 34       LDA    round_number_1034
 8EE7: 4A             DECA
 8EE8: B7 10 CE       STA    $10CE
 8EEB: 48             ASLA
@@ -1952,7 +1967,7 @@ demo_loop_9144:
 9199: 7A 10 4F       DEC    $104F
 919C: 26 F3          BNE    $9191
 919E: B6 40 54       LDA    $4054
-91A1: B7 10 34       STA    $1034
+91A1: B7 10 34       STA    round_number_1034
 91A4: CC 00 00       LDD    #$0000
 91A7: 8E 14 00       LDX    #$1400
 91AA: ED 81          STD    ,X++
@@ -1977,7 +1992,7 @@ demo_loop_9144:
 91E1: ED 81          STD    ,X++
 91E3: 8C 40 60       CMPX   #$4060
 91E6: 26 F9          BNE    $91E1
-91E8: B6 10 34       LDA    $1034
+91E8: B6 10 34       LDA    round_number_1034
 91EB: B7 40 54       STA    $4054
 91EE: 8E 20 10       LDX    #$2010
 91F1: A6 10          LDA    -$10,X
@@ -2152,7 +2167,7 @@ task_entry_13_94e4:
 95AB: 84 04          ANDA   #$04
 95AD: 44             LSRA
 95AE: 44             LSRA
-95AF: B7 10 34       STA    $1034
+95AF: B7 10 34       STA    round_number_1034
 95B2: 8E 20 10       LDX    #$2010
 95B5: EC 11          LDD    -$F,X
 95B7: AB 0F          ADDA   $F,X
@@ -2167,7 +2182,7 @@ task_entry_13_94e4:
 95C9: 81 6A          CMPA   #$6A
 95CB: 24 33          BCC    $9600
 95CD: 84 1E          ANDA   #$1E
-95CF: BA 10 34       ORA    $1034
+95CF: BA 10 34       ORA    round_number_1034
 95D2: 20 2A          BRA    $95FE
 95D4: A6 05          LDA    $5,X
 95D6: CE 99 13       LDU    #$9913
@@ -2303,10 +2318,10 @@ task_entry_13_94e4:
 96F1: 84 04          ANDA   #$04
 96F3: 44             LSRA
 96F4: 44             LSRA
-96F5: B7 10 34       STA    $1034
+96F5: B7 10 34       STA    round_number_1034
 96F8: A6 0A          LDA    $A,X
 96FA: 84 1E          ANDA   #$1E
-96FC: BB 10 34       ADDA   $1034
+96FC: BB 10 34       ADDA   round_number_1034
 96FF: A7 0A          STA    $A,X
 9701: 6F 0C          CLR    $C,X
 9703: 39             RTS
@@ -2469,17 +2484,17 @@ task_entry_13_94e4:
 988A: 84 04          ANDA   #$04
 988C: 44             LSRA
 988D: 44             LSRA
-988E: B7 10 34       STA    $1034
+988E: B7 10 34       STA    round_number_1034
 9891: A6 0A          LDA    $A,X
 9893: 84 5E          ANDA   #$5E
-9895: BA 10 34       ORA    $1034
+9895: BA 10 34       ORA    round_number_1034
 9898: A7 0A          STA    $A,X
 989A: A7 88 2A       STA    $2A,X
 989D: 80 02          SUBA   #$02
 989F: A7 88 4A       STA    $4A,X
 98A2: A7 88 6A       STA    $6A,X
 98A5: 86 03          LDA    #$03
-98A7: BB 10 34       ADDA   $1034
+98A7: BB 10 34       ADDA   round_number_1034
 98AA: 84 05          ANDA   #$05
 98AC: 8A 60          ORA    #$60
 98AE: A7 89 00 CA    STA    $00CA,X
@@ -2925,8 +2940,8 @@ task_entry_16_level_select_and_start_9d20:
 9DAC: B7 10 09       STA    $1009
 9DAF: F7 09 76       STB    $0976
 9DB2: EC C1          LDD    ,U++
-9DB4: A7 84          STA    ,X
-9DB6: E7 88 E0       STB    -$20,X
+9DB4: A7 84          STA    ,X		    ; [video_address]
+9DB6: E7 88 E0       STB    -$20,X		; [video_address]
 9DB9: 30 88 80       LEAX   -$80,X
 9DBC: 7A 10 09       DEC    $1009
 9DBF: 26 F1          BNE    $9DB2
@@ -2942,11 +2957,11 @@ task_entry_16_level_select_and_start_9d20:
 9DD9: A7 0A          STA    $A,X
 9DDB: 6F 0C          CLR    $C,X
 9DDD: BE 10 C9       LDX    $10C9
-9DE0: E7 84          STB    ,X
-9DE2: E7 88 E0       STB    -$20,X
-9DE5: A6 89 F7 E0    LDA    -$0820,X
-9DE9: E6 89 F8 00    LDB    -$0800,X
-9DED: FD 07 A3       STD    $07A3
+9DE0: E7 84          STB    ,X		; [video_address]
+9DE2: E7 88 E0       STB    -$20,X		; [video_address]
+9DE5: A6 89 F7 E0    LDA    -$0820,X		; [video_address]
+9DE9: E6 89 F8 00    LDB    -$0800,X		; [video_address]
+9DED: FD 07 A3       STD    credits_units_screen_address_07a3	; [video_address_word]
 9DF0: BD 81 50       JSR    suspend_task_8150
 9DF3: 8E 25 10       LDX    #$2510
 9DF6: B6 10 50       LDA    $1050
@@ -2994,11 +3009,11 @@ task_entry_16_level_select_and_start_9d20:
 9E5B: 6A 1B          DEC    -$5,X
 9E5D: A6 0A          LDA    $A,X
 9E5F: 84 0C          ANDA   #$0C
-9E61: B7 10 34       STA    $1034
+9E61: B7 10 34       STA    round_number_1034
 9E64: A6 1B          LDA    -$5,X
 9E66: 84 06          ANDA   #$06
 9E68: 44             LSRA
-9E69: BB 10 34       ADDA   $1034
+9E69: BB 10 34       ADDA   round_number_1034
 9E6C: A7 0A          STA    $A,X
 9E6E: 6F 0C          CLR    $C,X
 9E70: BD 81 50       JSR    suspend_task_8150
@@ -3013,9 +3028,9 @@ task_entry_16_level_select_and_start_9d20:
 9E88: B7 10 4F       STA    $104F
 9E8B: F7 25 1A       STB    $251A
 9E8E: BE 10 C9       LDX    $10C9
-9E91: A6 89 F7 E0    LDA    -$0820,X
-9E95: E6 89 F8 00    LDB    -$0800,X
-9E99: FD 07 A3       STD    $07A3
+9E91: A6 89 F7 E0    LDA    -$0820,X  ; [video_address]
+9E95: E6 89 F8 00    LDB    -$0800,X  ; [video_address]
+9E99: FD 07 A3       STD    credits_units_screen_address_07a3   ; [video_address_word]
 9E9C: BD 81 50       JSR    suspend_task_8150
 9E9F: 7A 10 4F       DEC    $104F
 9EA2: 27 13          BEQ    $9EB7
@@ -3024,8 +3039,8 @@ task_entry_16_level_select_and_start_9d20:
 9EA9: 27 02          BEQ    $9EAD
 9EAB: 86 0B          LDA    #$0B
 9EAD: BE 10 C9       LDX    $10C9
-9EB0: A7 84          STA    ,X
-9EB2: A7 88 E0       STA    -$20,X
+9EB0: A7 84          STA    ,X		; [video_address]
+9EB2: A7 88 E0       STA    -$20,X	; [video_address]
 9EB5: 20 E5          BRA    $9E9C
 9EB7: 8E 25 10       LDX    #$2510
 9EBA: A6 04          LDA    $4,X
@@ -3057,10 +3072,10 @@ task_entry_06_9f03:
 9F20: 84 04          ANDA   #$04
 9F22: 44             LSRA
 9F23: 44             LSRA
-9F24: B7 10 34       STA    $1034
+9F24: B7 10 34       STA    round_number_1034
 9F27: B6 25 1A       LDA    $251A
 9F2A: 84 46          ANDA   #$46
-9F2C: BA 10 34       ORA    $1034
+9F2C: BA 10 34       ORA    round_number_1034
 9F2F: B7 25 1A       STA    $251A
 9F32: 20 DA          BRA    $9F0E
 9F34: BD 81 50       JSR    suspend_task_8150
@@ -3073,18 +3088,18 @@ task_entry_06_9f03:
 9F45: 84 04          ANDA   #$04
 9F47: 44             LSRA
 9F48: 44             LSRA
-9F49: B7 10 34       STA    $1034
+9F49: B7 10 34       STA    round_number_1034
 9F4C: A6 0A          LDA    $A,X
 9F4E: 84 46          ANDA   #$46
-9F50: BA 10 34       ORA    $1034
+9F50: BA 10 34       ORA    round_number_1034
 9F53: A7 0A          STA    $A,X
 9F55: B6 10 13       LDA    player_decoded_directions_1013
 9F58: 2B DA          BMI    $9F34
-9F5A: B7 10 34       STA    $1034
+9F5A: B7 10 34       STA    round_number_1034
 9F5D: BD C9 B8       JSR    $C9B8
 9F60: B6 10 D8       LDA    $10D8
 9F63: 26 CF          BNE    $9F34
-9F65: B6 10 34       LDA    $1034
+9F65: B6 10 34       LDA    round_number_1034
 9F68: A7 05          STA    $5,X
 9F6A: 48             ASLA
 9F6B: A7 0A          STA    $A,X
@@ -3736,12 +3751,12 @@ A500: B6 10 01       LDA    $1001
 A503: 84 04          ANDA   #$04
 A505: 44             LSRA
 A506: 44             LSRA
-A507: B7 10 34       STA    $1034
+A507: B7 10 34       STA    round_number_1034
 A50A: 86 01          LDA    #$01
 A50C: B7 40 46       STA    $4046
 A50F: A6 88 4A       LDA    $4A,X
 A512: 84 4E          ANDA   #$4E
-A514: BA 10 34       ORA    $1034
+A514: BA 10 34       ORA    round_number_1034
 A517: A7 88 4A       STA    $4A,X
 A51A: B6 10 01       LDA    $1001
 A51D: 84 02          ANDA   #$02
@@ -4027,10 +4042,10 @@ A7B3: F6 10 C1       LDB    $10C1
 A7B6: 3A             ABX
 A7B7: A6 84          LDA    ,X
 A7B9: 84 0C          ANDA   #$0C
-A7BB: B7 10 34       STA    $1034
+A7BB: B7 10 34       STA    round_number_1034
 A7BE: A6 09          LDA    $9,X
 A7C0: 84 03          ANDA   #$03
-A7C2: BA 10 34       ORA    $1034
+A7C2: BA 10 34       ORA    round_number_1034
 A7C5: 8E A8 44       LDX    #$A844
 A7C8: E6 86          LDB    A,X
 A7CA: 27 06          BEQ    $A7D2
@@ -4139,7 +4154,7 @@ A8EE: FC 17 0A       LDD    $170A
 A8F1: 7D 10 DB       TST    $10DB
 A8F4: 27 03          BEQ    $A8F9
 A8F6: 7F 10 DB       CLR    $10DB
-A8F9: B7 10 34       STA    $1034
+A8F9: B7 10 34       STA    round_number_1034
 A8FC: 8E 25 30       LDX    #$2530
 A8FF: A6 10          LDA    -$10,X
 A901: 27 13          BEQ    $A916
@@ -4148,7 +4163,7 @@ A905: 81 02          CMPA   #$02
 A907: 27 0D          BEQ    $A916
 A909: A6 19          LDA    -$7,X
 A90B: 2A 07          BPL    $A914
-A90D: B6 10 34       LDA    $1034
+A90D: B6 10 34       LDA    round_number_1034
 A910: A7 03          STA    $3,X
 A912: 20 02          BRA    $A916
 A914: E7 03          STB    $3,X
@@ -4161,7 +4176,7 @@ A924: B6 10 D7       LDA    $10D7
 A927: 10 27 FF 40    LBEQ   $A86B
 A92B: CC 00 09       LDD    #$0009
 A92E: B7 10 CD       STA    $10CD
-A931: B7 10 34       STA    $1034
+A931: B7 10 34       STA    round_number_1034
 A934: 8E 14 00       LDX    #$1400
 A937: A6 85          LDA    B,X
 A939: 2F 4E          BLE    $A989
@@ -4169,7 +4184,7 @@ A93B: 6A 85          DEC    B,X
 A93D: 26 47          BNE    $A986
 A93F: 6A 85          DEC    B,X
 A941: F7 10 35       STB    $1035
-A944: 7C 10 34       INC    $1034
+A944: 7C 10 34       INC    round_number_1034
 A947: 3A             ABX
 A948: A6 89 01 80    LDA    $0180,X
 A94C: 8D 7A          BSR    $A9C8
@@ -4199,7 +4214,7 @@ A986: 7C 10 CD       INC    $10CD
 A989: 5C             INCB
 A98A: C1 6F          CMPB   #$6F
 A98C: 25 A9          BCS    $A937
-A98E: B6 10 34       LDA    $1034
+A98E: B6 10 34       LDA    round_number_1034
 A991: 27 03          BEQ    $A996
 A993: BD C9 DA       JSR    $C9DA
 A996: BD CC 6A       JSR    $CC6A
@@ -4626,12 +4641,12 @@ ADC4: A6 1A          LDA    -$6,X
 ADC6: 81 01          CMPA   #$01
 ADC8: 27 03          BEQ    $ADCD
 ADCA: 7E C0 BB       JMP    $C0BB
-ADCD: B6 10 34       LDA    $1034
+ADCD: B6 10 34       LDA    round_number_1034
 ADD0: A1 05          CMPA   $5,X
 ADD2: 27 0B          BEQ    $ADDF
 ADD4: E6 0A          LDB    $A,X
 ADD6: C4 18          ANDB   #$18
-ADD8: FB 10 34       ADDB   $1034
+ADD8: FB 10 34       ADDB   round_number_1034
 ADDB: E7 0A          STB    $A,X
 ADDD: A7 05          STA    $5,X
 ADDF: 86 10          LDA    #$10
@@ -4716,10 +4731,10 @@ AED7: A6 04          LDA    $4,X
 AED9: 84 04          ANDA   #$04
 AEDB: 44             LSRA
 AEDC: 44             LSRA
-AEDD: B7 10 34       STA    $1034
+AEDD: B7 10 34       STA    round_number_1034
 AEE0: A6 0A          LDA    $A,X
 AEE2: 84 1E          ANDA   #$1E
-AEE4: BB 10 34       ADDA   $1034
+AEE4: BB 10 34       ADDA   round_number_1034
 AEE7: A7 0A          STA    $A,X
 AEE9: 7E C0 BB       JMP    $C0BB
 AEEC: 10 8E 11 8A    LDY    #$118A
@@ -4811,10 +4826,10 @@ AFA7: 27 14          BEQ    $AFBD
 AFA9: A7 04          STA    $4,X
 AFAB: 84 02          ANDA   #$02
 AFAD: 44             LSRA
-AFAE: B7 10 34       STA    $1034
+AFAE: B7 10 34       STA    round_number_1034
 AFB1: A6 0A          LDA    $A,X
 AFB3: 84 1E          ANDA   #$1E
-AFB5: BB 10 34       ADDA   $1034
+AFB5: BB 10 34       ADDA   round_number_1034
 AFB8: A7 0A          STA    $A,X
 AFBA: 7E C0 BB       JMP    $C0BB
 AFBD: CE 15 80       LDU    #$1580
@@ -4872,12 +4887,12 @@ B028: 7E C0 BB       JMP    $C0BB
 B02B: 6C 1A          INC    -$6,X
 B02D: 7E C0 BB       JMP    $C0BB
 B030: CC F5 20       LDD    #$F520
-B033: B7 10 34       STA    $1034
+B033: B7 10 34       STA    round_number_1034
 B036: A6 19          LDA    -$7,X
 B038: 2A 08          BPL    $B042
 B03A: A6 14          LDA    -$C,X
 B03C: 27 04          BEQ    $B042
-B03E: 7C 10 34       INC    $1034
+B03E: 7C 10 34       INC    round_number_1034
 B041: 58             ASLB
 B042: 4F             CLRA
 B043: BF 10 36       STX    $1036
@@ -4889,7 +4904,7 @@ B051: E7 04          STB    $4,X
 B053: CC 00 0C       LDD    #$000C
 B056: A7 08          STA    $8,X
 B058: E7 0B          STB    $B,X
-B05A: B6 10 34       LDA    $1034
+B05A: B6 10 34       LDA    round_number_1034
 B05D: A7 0A          STA    $A,X
 B05F: 7E C0 BB       JMP    $C0BB
 B062: 6A 04          DEC    $4,X
@@ -5092,7 +5107,7 @@ B233: A4 17          ANDA   -$9,X
 B235: 27 04          BEQ    $B23B
 B237: CB 02          ADDB   #$02
 B239: C4 06          ANDB   #$06
-B23B: F7 10 34       STB    $1034
+B23B: F7 10 34       STB    round_number_1034
 B23E: 39             RTS
 B23F: 6A 1B          DEC    -$5,X
 B241: 27 11          BEQ    $B254
@@ -5280,11 +5295,11 @@ B3E1: 23 1F          BLS    $B402
 B3E3: 8B E0          ADDA   #$E0
 B3E5: E1 C6          CMPB   A,U		; [video_address]
 B3E7: 23 19          BLS    $B402
-B3E9: B7 10 34       STA    $1034
+B3E9: B7 10 34       STA    round_number_1034
 B3EC: B6 10 09       LDA    $1009
 B3EF: 85 01          BITA   #$01
 B3F1: 26 17          BNE    $B40A
-B3F3: B6 10 34       LDA    $1034
+B3F3: B6 10 34       LDA    round_number_1034
 B3F6: 8B 21          ADDA   #$21
 B3F8: E1 C6          CMPB   A,U		; [video_address]
 B3FA: 23 06          BLS    $B402
@@ -5488,7 +5503,7 @@ B5BB: A4 17          ANDA   -$9,X
 B5BD: 27 04          BEQ    $B5C3
 B5BF: CB 06          ADDB   #$06
 B5C1: C4 06          ANDB   #$06
-B5C3: F7 10 34       STB    $1034
+B5C3: F7 10 34       STB    round_number_1034
 B5C6: 39             RTS
 B5C7: A7 05          STA    $5,X
 B5C9: CC 00 6C       LDD    #$006C
@@ -5526,11 +5541,11 @@ B608: 54             LSRB
 B609: 54             LSRB
 B60A: 4F             CLRA
 B60B: F3 10 CE       ADDD   $10CE
-B60E: FD 10 34       STD    $1034
+B60E: FD 10 34       STD    round_number_1034
 B611: CE B6 D7       LDU    #$B6D7
 B614: A6 05          LDA    $5,X
 B616: E6 C6          LDB    A,U
-B618: FE 10 34       LDU    $1034
+B618: FE 10 34       LDU    round_number_1034
 B61B: 33 C5          LEAU   B,U
 B61D: CC 10 70       LDD    #$1070
 B620: E1 C4          CMPB   ,U		; [video_address]
@@ -5577,10 +5592,10 @@ B67B: A6 1B          LDA    -$5,X
 B67D: 84 04          ANDA   #$04
 B67F: 44             LSRA
 B680: 44             LSRA
-B681: B7 10 34       STA    $1034
+B681: B7 10 34       STA    round_number_1034
 B684: A6 0A          LDA    $A,X
 B686: 84 6E          ANDA   #$6E
-B688: BA 10 34       ORA    $1034
+B688: BA 10 34       ORA    round_number_1034
 B68B: A7 0A          STA    $A,X
 B68D: BD C0 00       JSR    $C000
 B690: 7E C0 BB       JMP    $C0BB
@@ -5608,12 +5623,12 @@ B710: 84 E0          ANDA   #$E0
 B712: 44             LSRA
 B713: 44             LSRA
 B714: 8B 08          ADDA   #$08
-B716: B7 10 34       STA    $1034
+B716: B7 10 34       STA    round_number_1034
 B719: 8B 2F          ADDA   #$2F
 B71B: B7 10 35       STA    $1035
 B71E: BD 8A A0       JSR    $8AA0
 B721: 84 7F          ANDA   #$7F
-B723: B1 10 34       CMPA   $1034
+B723: B1 10 34       CMPA   round_number_1034
 B726: 23 F6          BLS    $B71E
 B728: B1 10 35       CMPA   $1035
 B72B: 24 F1          BCC    $B71E
@@ -5789,16 +5804,16 @@ C099: 39             RTS
 C09A: CC 04 1E       LDD    #$041E
 C09D: 20 03          BRA    $C0A2
 C09F: CC 0C 0C       LDD    #$0C0C
-C0A2: FD 10 34       STD    $1034
+C0A2: FD 10 34       STD    round_number_1034
 C0A5: A6 1B          LDA    -$5,X
 C0A7: 43             COMA
-C0A8: B4 10 34       ANDA   $1034
+C0A8: B4 10 34       ANDA   round_number_1034
 C0AB: 44             LSRA
 C0AC: 44             LSRA
-C0AD: B7 10 34       STA    $1034
+C0AD: B7 10 34       STA    round_number_1034
 C0B0: A6 0A          LDA    $A,X
 C0B2: B4 10 35       ANDA   $1035
-C0B5: BA 10 34       ORA    $1034
+C0B5: BA 10 34       ORA    round_number_1034
 C0B8: A7 0A          STA    $A,X
 C0BA: 39             RTS
 C0BB: 7F 10 CE       CLR    $10CE
@@ -5966,10 +5981,10 @@ C227: 2B 21          BMI    $C24A
 C229: CE C2 5A       LDU    #$C25A
 C22C: A5 42          BITA   $2,U
 C22E: 26 10          BNE    $C240
-C230: B7 10 34       STA    $1034
+C230: B7 10 34       STA    round_number_1034
 C233: A6 C4          LDA    ,U
 C235: E6 86          LDB    A,X
-C237: B6 10 34       LDA    $1034
+C237: B6 10 34       LDA    round_number_1034
 C23A: E5 41          BITB   $1,U
 C23C: 27 02          BEQ    $C240
 C23E: AA 42          ORA    $2,U
@@ -6019,7 +6034,7 @@ C2C2: E6 C0          LDB    ,U+
 C2C4: 30 85          LEAX   B,X
 C2C6: 46             RORA
 C2C7: 10 24 00 9C    LBCC   $C367
-C2CB: B7 10 34       STA    $1034
+C2CB: B7 10 34       STA    round_number_1034
 C2CE: A6 84          LDA    ,X		; [video_address]
 C2D0: 2B 20          BMI    $C2F2
 C2D2: E6 89 08 00    LDB    $0800,X		; [video_address]
@@ -6084,7 +6099,7 @@ C35A: 24 04          BCC    $C360
 C35C: C4 0F          ANDB   #$0F
 C35E: CA 10          ORB    #$10
 C360: E7 89 08 00    STB    $0800,X	; [video_address]
-C364: B6 10 34       LDA    $1034
+C364: B6 10 34       LDA    round_number_1034
 C367: 7A 10 CE       DEC    $10CE
 C36A: 10 26 FF 54    LBNE   $C2C2
 C36E: 20 04          BRA    $C374
@@ -6354,7 +6369,7 @@ C69A: 2B 01          BMI    $C69D
 C69C: 4C             INCA
 C69D: 8C 14 F0       CMPX   #$14F0
 C6A0: 26 F6          BNE    $C698
-C6A2: B7 10 34       STA    $1034
+C6A2: B7 10 34       STA    round_number_1034
 C6A5: 4F             CLRA
 C6A6: E6 82          LDB    ,-X
 C6A8: C5 01          BITB   #$01
@@ -6363,7 +6378,7 @@ C6AC: 4C             INCA
 C6AD: 8C 14 88       CMPX   #$1488
 C6B0: 26 F4          BNE    $C6A6
 C6B2: 8E 14 F8       LDX    #$14F8
-C6B5: B1 10 34       CMPA   $1034
+C6B5: B1 10 34       CMPA   round_number_1034
 C6B8: 25 0E          BCS    $C6C8
 C6BA: A6 82          LDA    ,-X
 C6BC: 43             COMA
@@ -6387,13 +6402,13 @@ C6E1: 8E 14 89       LDX    #$1489
 C6E4: 86 06          LDA    #$06
 C6E6: E6 80          LDB    ,X+
 C6E8: 27 35          BEQ    $C71F
-C6EA: B7 10 34       STA    $1034
+C6EA: B7 10 34       STA    round_number_1034
 C6ED: CC 00 FF       LDD    #$00FF
 C6F0: E7 88 7F       STB    $7F,X
 C6F3: E6 86          LDB    A,X
 C6F5: 27 06          BEQ    $C6FD
 C6F7: 4C             INCA
-C6F8: B1 10 34       CMPA   $1034
+C6F8: B1 10 34       CMPA   round_number_1034
 C6FB: 26 F6          BNE    $C6F3
 C6FD: 48             ASLA
 C6FE: 4C             INCA
@@ -6408,7 +6423,7 @@ C710: E6 89 01 00    LDB    $0100,X
 C714: C1 0A          CMPB   #$0A
 C716: 23 04          BLS    $C71C
 C718: A7 89 FE 00    STA    -$0200,X
-C71C: B6 10 34       LDA    $1034
+C71C: B6 10 34       LDA    round_number_1034
 C71F: 4A             DECA
 C720: 26 C4          BNE    $C6E6
 C722: 30 02          LEAX   $2,X
@@ -6562,13 +6577,13 @@ C913: 26 05          BNE    $C91A
 C915: 7D 10 69       TST    $1069
 C918: 27 E2          BEQ    $C8FC
 C91A: CE 17 0C       LDU    #$170C
-C91D: B7 10 34       STA    $1034
+C91D: B7 10 34       STA    round_number_1034
 C920: A6 19          LDA    -$7,X
 C922: 84 80          ANDA   #$80
-C924: BA 10 34       ORA    $1034
+C924: BA 10 34       ORA    round_number_1034
 C927: C4 0F          ANDB   #$0F
 C929: A7 C5          STA    B,U
-C92B: B6 10 34       LDA    $1034
+C92B: B6 10 34       LDA    round_number_1034
 C92E: 1F 89          TFR    A,B
 C930: 84 07          ANDA   #$07
 C932: 48             ASLA
@@ -6780,7 +6795,7 @@ CB10: B6 10 3A       LDA    $103A
 CB13: 85 02          BITA   #$02
 CB15: 27 43          BEQ    $CB5A
 CB17: 20 70          BRA    $CB89
-CB19: B7 10 34       STA    $1034
+CB19: B7 10 34       STA    round_number_1034
 CB1C: A6 C4          LDA    ,U				; [video_address]
 CB1E: 81 67          CMPA   #$67
 CB20: 27 13          BEQ    $CB35
@@ -6806,7 +6821,7 @@ CB4C: C4 0F          ANDB   #$0F
 CB4E: CA 20          ORB    #$20
 CB50: E7 C9 08 01    STB    $0801,U		; [video_address]
 CB54: 7E CA B4       JMP    $CAB4
-CB57: B6 10 34       LDA    $1034
+CB57: B6 10 34       LDA    round_number_1034
 CB5A: 84 01          ANDA   #$01
 CB5C: 43             COMA
 CB5D: 84 1F          ANDA   #$1F
@@ -7217,13 +7232,13 @@ E6A8: F7 03 06       STB    checksum_failed_flag_0306
 continue_boot_e6ab:
 ; clear io registers
 E6AB: 86 08          LDA    #$08
-E6AD: B7 10 34       STA    $1034
+E6AD: B7 10 34       STA    round_number_1034
 E6B0: 8E 48 00       LDX    #namco_io_4800
 E6B3: A7 84          STA    ,X
 E6B5: 7F 80 00       CLR    watchdog_8000
 E6B8: E6 80          LDB    ,X+
 E6BA: C4 0F          ANDB   #$0F
-E6BC: F1 10 34       CMPB   $1034
+E6BC: F1 10 34       CMPB   round_number_1034
 E6BF: 26 0D          BNE    $E6CE
 E6C1: 8C 4C 00       CMPX   #$4C00
 E6C4: 26 ED          BNE    $E6B3
@@ -7612,11 +7627,11 @@ EA83: CE EB 42       LDU    #$EB42
 EA86: B6 48 14       LDA    dsw_nb_lives_4814
 EA89: 84 0C          ANDA   #$0C
 EA8B: 44             LSRA
-EA8C: B7 10 34       STA    $1034
+EA8C: B7 10 34       STA    round_number_1034
 EA8F: EC 86          LDD    A,X
 EA91: B7 03 0D       STA    $030D
 EA94: F7 02 0D       STB    $020D
-EA97: B6 10 34       LDA    $1034
+EA97: B6 10 34       LDA    round_number_1034
 EA9A: EC C6          LDD    A,U
 EA9C: B7 02 4D       STA    $024D
 EA9F: F7 01 0D       STB    $010D
