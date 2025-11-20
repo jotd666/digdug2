@@ -2904,18 +2904,42 @@ osd_read_dsw_3:
 *	not.b	d0		| active low
 	rts
 
-* toggle bit 3 
-start_1p_game:
-	movem.l	d0/a5/a6,-(a7)
+* we have to emulate namco chip, it handles credits
+* and issues "game start" flag only if there were enough credits
+get_nb_credits:
+	move.l	d1,-(a7)
 	GET_MEMORY_START_AND_DP
-
-	move.b	#0xF1,(number_of_players_4801,a6)
-
-	move.b	(credits_unit_4803,a6),d0
-	subq	#1,d0
-	move.b	d0,(credits_unit_4803,a6)
+	move.b	(credits_tens_4802,a6),d0
+	and.b	#0xF,d0
+	lsl.b	#4,d0
+	move.b	(credits_unit_4803,a6),d1
+	and.b	#0xF,d1
+	or.b	d1,d0
+	move.l	(a7)+,d1
+	rts
 	
-	movem.l	(a7)+,d0/a5/a6
+start_2p_game:
+	movem.l	d0/d1/a5/a6,-(a7)
+	moveq	#2,d1
+	jra		start_xp_game
+start_1p_game:
+	movem.l	d0/d1/a5/a6,-(a7)
+	moveq	#1,d1
+start_xp_game:
+	jbsr	get_nb_credits
+	sbcd	d1,d0
+	jmi		0f			| not enough money
+	or.b	#0xF0,d1
+	move.b	d1,(number_of_players_4801,a6)
+	move.b	d0,d1
+	and.b	#0xF,d0
+	or.b	#0xF0,d0
+	move.b	d0,(credits_unit_4803,a6)
+	lsr.b	#4,d1
+	or.b	#0xF0,d1
+	move.b	d1,(credits_tens_4802,a6)
+0:	
+	movem.l	(a7)+,d0/d1/a5/a6
 	rts
 	
 add_one_credit:
@@ -2969,6 +2993,10 @@ handle_keyboard:
 	cmp.b	#1,d0		| "1" key
 	jne		0f
 	jbsr	start_1p_game
+0:
+	cmp.b	#2,d0		| "2" key
+	jne		0f
+	jbsr	start_2p_game
 0:
 	cmp.b	#5,d0		| "5" key
 	jne		0f

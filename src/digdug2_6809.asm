@@ -121,6 +121,20 @@ player_decoded_directions_1013 = $1013
 hammer_button_pressed_1014 = $1014
 pump_button_pressed_1015 = $1015
 demo_on_1010 = $1010
+level_completed_flag_10d1 = $10d1
+goto_next_life_10d0 = $10d0
+; the absolute character positions
+; ex: player struct is in $1100
+; 6 bytes per character
+;
+; 0: draw priority/order (for 3D perspective). Highest: top priority
+; 1: size/mirror flags
+; 2: animation frame index (helps computing the sprite code)
+; 3: color (useful for the dragon)
+; 4: X
+; 5: Y
+ 
+logical_character_positions_1100 = $1100
 ; vertical coord (portrait!) never referenced directly
 player_x_250d = $250d
 ; decoded from current_level_bcd_1705 and printable on screen
@@ -173,7 +187,7 @@ irq_8000:
 8056: 26 E8          BNE    $8040
 8058: B6 25 00       LDA    $2500
 805B: 27 03          BEQ    $8060
-805D: BD 8E 81       JSR    $8E81
+805D: BD 8E 81       JSR    copy_character_positions_8e81
 8060: 7C 10 01       INC    $1001
 8063: 7C 10 00       INC    sync_1000
 8066: B6 10 50       LDA    $1050
@@ -393,7 +407,7 @@ update_sprite_logic_819e:
 81D0: 85 08          BITA   #$08
 81D2: 26 02          BNE    $81D6
 81D4: CB 08          ADDB   #$08
-81D6: E7 06          STB    $6,X
+81D6: E7 06          STB    $6,X		; store sprite Y (portrait)
 81D8: 39             RTS
 
 startup_task_81d9:
@@ -563,8 +577,8 @@ end_zero_io_81f6:
 8382: BD C4 A8       JSR    $C4A8
 8385: BD 87 06       JSR    clear_screen_8706
 8388: BD 87 67       JSR    write_ready_player_8767
-838B: BD 87 B3       JSR    wirte_round_and_player_87b3
-838E: BD 88 24       JSR    $8824
+838B: BD 87 B3       JSR    write_round_and_player_87b3
+838E: BD 88 24       JSR    display_nb_lives_8824
 8391: 86 3C          LDA    #$3C
 8393: B7 10 4F       STA    $104F
 8396: 7C 40 40       INC    $4040
@@ -574,16 +588,19 @@ end_zero_io_81f6:
 83A1: BD 85 38       JSR    set_game_running_flags_8538
 83A4: BD C1 2A       JSR    write_playfield_c12a
 83A7: BD 81 50       JSR    suspend_task_8150
-83AA: BD 88 24       JSR    $8824
+83AA: BD 88 24       JSR    display_nb_lives_8824
 83AD: BD 81 50       JSR    suspend_task_8150
-83B0: B6 10 D0       LDA    $10D0
-83B3: 26 4A          BNE    $83FF
-83B5: B6 10 D1       LDA    $10D1
+; at this point, enemies & player are in their
+; start positions, start game loop
+83B0: B6 10 D0       LDA    goto_next_life_10d0
+83B3: 26 4A          BNE    player_killed_83ff
+83B5: B6 10 D1       LDA    level_completed_flag_10d1
 83B8: 26 0B          BNE    $83C5
 83BA: FC 10 DC       LDD    $10DC
 83BD: B7 40 41       STA    $4041
 83C0: F7 40 42       STB    $4042
 83C3: 20 E8          BRA    $83AD
+; level completed!
 83C5: CC 00 00       LDD    #$0000
 83C8: B7 40 41       STA    $4041
 83CB: B7 40 42       STA    $4042
@@ -599,11 +616,12 @@ end_zero_io_81f6:
 83E9: 26 E9          BNE    $83D4
 83EB: BD C4 A8       JSR    $C4A8
 83EE: BD C0 E9       JSR    $C0E9
-83F1: B6 10 D0       LDA    $10D0
+83F1: B6 10 D0       LDA    goto_next_life_10d0
 83F4: 26 45          BNE    $843B
 83F6: BD C4 9B       JSR    $C49B
 83F9: BD 85 4D       JSR    set_game_not_running_flags_854d
 83FC: 7E 83 50       JMP    $8350
+player_killed_83ff:
 83FF: CC 00 00       LDD    #$0000
 8402: B7 40 41       STA    $4041
 8405: B7 40 42       STA    $4042
@@ -619,14 +637,14 @@ end_zero_io_81f6:
 8423: BA 10 E6       ORA    $10E6
 8426: BA 10 5E       ORA    $105E
 8429: 26 E3          BNE    $840E
-842B: B6 10 D1       LDA    $10D1
+842B: B6 10 D1       LDA    level_completed_flag_10d1
 842E: 27 08          BEQ    $8438
 8430: BD C4 A8       JSR    $C4A8
 8433: BD C0 E9       JSR    $C0E9
 8436: 20 03          BRA    $843B
 8438: BD 84 E3       JSR    $84E3
-843B: B6 10 D0       LDA    $10D0
-843E: B4 10 D1       ANDA   $10D1
+843B: B6 10 D0       LDA    goto_next_life_10d0
+843E: B4 10 D1       ANDA   level_completed_flag_10d1
 8441: B7 10 E0       STA    $10E0
 8444: BD C4 9B       JSR    $C49B
 8447: BD 85 4D       JSR    set_game_not_running_flags_854d
@@ -672,7 +690,7 @@ end_zero_io_81f6:
 84B9: 7E 82 65       JMP    $8265
 84BC: 7C 10 0A       INC    $100A
 84BF: CC 00 00       LDD    #$0000
-84C2: FD 10 D0       STD    $10D0
+84C2: FD 10 D0       STD    goto_next_life_10d0
 84C5: FD 10 DC       STD    $10DC
 84C8: BD 8C 81       JSR    $8C81
 84CB: BD 88 15       JSR    $8815
@@ -731,8 +749,8 @@ set_game_running_flags_8538:
 
 set_game_not_running_flags_854d:
 854D: 4F             CLRA
-854E: B7 10 D1       STA    $10D1
-8551: B7 10 D0       STA    $10D0
+854E: B7 10 D1       STA    level_completed_flag_10d1
+8551: B7 10 D0       STA    goto_next_life_10d0
 8554: B7 10 1B       STA    game_in_play_101b
 8557: B7 10 E4       STA    $10E4
 855A: B7 10 D6       STA    $10D6
@@ -962,7 +980,7 @@ write_ready_player_8767:
 879A: B7 09 6E       STA    $096E
 879D: 39             RTS
 ; READYPLAYERGAME OVER
-wirte_round_and_player_87b3:
+write_round_and_player_87b3:
 87B3: 8E 0A 50       LDX    #$0A50
 87B6: 86 0A          LDA    #$0A
 87B8: C6 05          LDB    #$05
@@ -1009,6 +1027,7 @@ wirte_round_and_player_87b3:
 8820: F7 17 43       STB    $1743           
 8823: 39             RTS                    
 
+display_nb_lives_8824:
 8824: 8E 07 BC       LDX    #$07BC
 8827: 86 20          LDA    #$20
 8829: C6 0A          LDB    #$0A
@@ -1401,7 +1420,7 @@ write_highscore_text_8bdf:
 8C51: AB 88 24       ADDA   $24,X
 8C54: E6 C6          LDB    A,U
 8C56: E7 88 23       STB    $23,X
-8C59: BD 88 24       JSR    $8824
+8C59: BD 88 24       JSR    display_nb_lives_8824
 8C5C: 39             RTS
 8C5D: E6 88 23       LDB    $23,X
 8C60: E7 88 22       STB    $22,X
@@ -1413,11 +1432,11 @@ write_highscore_text_8bdf:
 8C6E: AB 88 23       ADDA   $23,X
 8C71: 19             DAA
 8C72: A7 88 23       STA    $23,X
-8C75: BD 88 24       JSR    $8824
+8C75: BD 88 24       JSR    display_nb_lives_8824
 8C78: 39             RTS
 8C79: 86 FF          LDA    #$FF
 8C7B: A7 06          STA    $6,X
-8C7D: BD 88 24       JSR    $8824
+8C7D: BD 88 24       JSR    display_nb_lives_8824
 8C80: 39             RTS
 8C81: 8E 17 00       LDX    #$1700
 8C84: CE 8D 19       LDU    #$8D19
@@ -1610,8 +1629,10 @@ task_entry_0f_8dfa:
 8E78: A7 84          STA    ,X
 8E7A: 7E 8D FA       JMP    task_entry_0f_8dfa
 
+
+copy_character_positions_8e81:
 8E81: 8E 25 10       LDX    #$2510
-8E84: CE 11 00       LDU    #$1100
+8E84: CE 11 00       LDU    #logical_character_positions_1100
 8E87: A6 10          LDA    -$10,X
 8E89: 27 17          BEQ    $8EA2
 8E8B: A6 41          LDA    $1,U
@@ -1639,7 +1660,7 @@ task_entry_0f_8dfa:
 8EBB: 26 05          BNE    $8EC2
 8EBD: 7C 10 35       INC    $1035
 8EC0: 20 4C          BRA    $8F0E
-8EC2: CE 11 00       LDU    #$1100
+8EC2: CE 11 00       LDU    #logical_character_positions_1100
 8EC5: E6 0D          LDB    $D,X
 8EC7: 27 1B          BEQ    $8EE4
 8EC9: 5F             CLRB
@@ -1669,8 +1690,8 @@ task_entry_0f_8dfa:
 8EFB: F0 10 35       SUBB   $1035
 8EFE: E7 C4          STB    ,U
 8F00: E6 0D          LDB    $D,X
-8F02: E7 44          STB    $4,U
-8F04: A7 45          STA    $5,U
+8F02: E7 44          STB    $4,U    ; store logical coord
+8F04: A7 45          STA    $5,U	; store logical coord
 8F06: A6 08          LDA    $8,X
 8F08: A7 41          STA    $1,U
 8F0A: EC 0A          LDD    $A,X
@@ -1691,7 +1712,7 @@ task_entry_0f_8dfa:
 8F2A: 30 88 20       LEAX   $20,X
 8F2D: 8C 27 90       CMPX   #$2790
 8F30: 26 EB          BNE    $8F1D
-8F32: CE 11 00       LDU    #$1100
+8F32: CE 11 00       LDU    #logical_character_positions_1100
 8F35: A6 C4          LDA    ,U
 8F37: 27 25          BEQ    $8F5E
 8F39: 8E 11 77       LDX    #$1177
@@ -1934,7 +1955,7 @@ demo_loop_9144:
 9144: BD 81 50       JSR    suspend_task_8150
 9147: B6 10 10       LDA    demo_on_1010
 914A: 27 52          BEQ    $919E
-914C: FC 10 D0       LDD    $10D0
+914C: FC 10 D0       LDD    goto_next_life_10d0
 914F: 26 3B          BNE    $918C
 9151: 7A 10 60       DEC    $1060
 9154: 26 0E          BNE    $9164
@@ -1977,7 +1998,7 @@ demo_loop_9144:
 91B4: B7 10 50       STA    $1050
 91B7: B7 25 00       STA    $2500
 91BA: B7 10 D2       STA    $10D2
-91BD: FD 10 D0       STD    $10D0
+91BD: FD 10 D0       STD    goto_next_life_10d0
 91C0: B7 10 08       STA    scroll_value_1008
 91C3: FD 10 DC       STD    $10DC
 91C6: B7 10 D6       STA    $10D6
@@ -2064,8 +2085,8 @@ task_entry_14_9438:
 94AB: BA 10 D9       ORA    $10D9
 94AE: BA 10 D7       ORA    $10D7
 94B1: BA 10 E6       ORA    $10E6
-94B4: BA 10 D0       ORA    $10D0
-94B7: BA 10 D1       ORA    $10D1
+94B4: BA 10 D0       ORA    goto_next_life_10d0
+94B7: BA 10 D1       ORA    level_completed_flag_10d1
 94BA: BA 10 DA       ORA    $10DA
 94BD: 10 26 FF 77    LBNE   task_entry_14_9438
 94C1: 7C 10 EC       INC    $10EC
@@ -3138,11 +3159,11 @@ task_entry_06_9f03:
 9FB9: A7 1B          STA    -$5,X
 9FBB: E7 1A          STB    -$6,X
 9FBD: 7E A0 76       JMP    $A076
-9FC0: FC 10 D0       LDD    $10D0
+9FC0: FC 10 D0       LDD    goto_next_life_10d0
 9FC3: 10 26 00 AF    LBNE   $A076
 9FC7: CC 01 05       LDD    #$0105
 9FCA: B7 40 51       STA    $4051
-9FCD: B7 10 D0       STA    $10D0
+9FCD: B7 10 D0       STA    goto_next_life_10d0
 9FD0: E7 1A          STB    -$6,X
 9FD2: CC 00 3F       LDD    #$003F
 9FD5: B7 10 4F       STA    $104F
@@ -3236,7 +3257,7 @@ A0A1: 7C 10 DC       INC    $10DC
 A0A4: BD 81 50       JSR    suspend_task_8150
 A0A7: B6 25 00       LDA    $2500
 A0AA: 27 3F          BEQ    $A0EB
-A0AC: B6 10 D1       LDA    $10D1
+A0AC: B6 10 D1       LDA    level_completed_flag_10d1
 A0AF: 26 1F          BNE    $A0D0
 A0B1: B6 10 DA       LDA    $10DA
 A0B4: 26 EE          BNE    $A0A4
@@ -3430,7 +3451,7 @@ task_entry_07_a232:
 A232: BD 81 50       JSR    suspend_task_8150
 A235: B6 40 40       LDA    $4040
 A238: 26 F8          BNE    task_entry_07_a232
-A23A: FC 10 D0       LDD    $10D0
+A23A: FC 10 D0       LDD    goto_next_life_10d0
 A23D: 26 F3          BNE    task_entry_07_a232
 A23F: B6 25 00       LDA    $2500
 A242: 27 EE          BEQ    task_entry_07_a232
@@ -3466,7 +3487,7 @@ A285: 2B 0F          BMI    $A296
 A287: BD 81 50       JSR    suspend_task_8150
 A28A: B6 25 02       LDA    $2502
 A28D: 27 A3          BEQ    task_entry_07_a232
-A28F: FC 10 D0       LDD    $10D0
+A28F: FC 10 D0       LDD    goto_next_life_10d0
 A292: 26 9E          BNE    task_entry_07_a232
 A294: 20 E2          BRA    $A278
 A296: BD A5 4F       JSR    $A54F
@@ -3474,7 +3495,7 @@ A299: B6 25 15       LDA    $2515
 A29C: 48             ASLA
 A29D: B7 25 1A       STA    $251A
 A2A0: BD 81 50       JSR    suspend_task_8150
-A2A3: FC 10 D0       LDD    $10D0
+A2A3: FC 10 D0       LDD    goto_next_life_10d0
 A2A6: 26 8A          BNE    task_entry_07_a232
 A2A8: B6 25 02       LDA    $2502
 A2AB: 27 85          BEQ    task_entry_07_a232
@@ -4104,7 +4125,7 @@ A86E: B6 10 D6       LDA    $10D6
 A871: 27 E6          BEQ    task_entry_0d_a859
 A873: B6 10 50       LDA    $1050
 A876: 10 26 00 AA    LBNE   $A924
-A87A: FC 10 D0       LDD    $10D0
+A87A: FC 10 D0       LDD    goto_next_life_10d0
 A87D: 10 26 00 A3    LBNE   $A924
 A881: B6 17 17       LDA    $1717
 A884: 10 27 00 9C    LBEQ   $A924
@@ -4336,7 +4357,7 @@ AAC3: 27 F8          BEQ    task_entry_0b_aabd
 AAC5: BD 81 50       JSR    suspend_task_8150
 AAC8: B6 10 D2       LDA    $10D2
 AACB: 27 F0          BEQ    task_entry_0b_aabd
-AACD: FC 10 D0       LDD    $10D0
+AACD: FC 10 D0       LDD    goto_next_life_10d0
 AAD0: 10 26 00 A6    LBNE   $AB7A
 AAD4: B6 10 50       LDA    $1050
 AAD7: 26 EC          BNE    $AAC5
@@ -4377,7 +4398,7 @@ AB1A: 20 12          BRA    $AB2E
 AB1C: BD 81 50       JSR    suspend_task_8150
 AB1F: B6 10 D2       LDA    $10D2
 AB22: 27 99          BEQ    task_entry_0b_aabd
-AB24: FC 10 D0       LDD    $10D0
+AB24: FC 10 D0       LDD    goto_next_life_10d0
 AB27: 26 51          BNE    $AB7A
 AB29: B6 10 DB       LDA    $10DB
 AB2C: 27 2C          BEQ    $AB5A
@@ -4428,9 +4449,9 @@ AB96: 26 F8          BNE    $AB90
 AB98: BD 81 50       JSR    suspend_task_8150
 AB9B: B6 10 D2       LDA    $10D2
 AB9E: 10 27 00 AD    LBEQ   $AC4F
-ABA2: B6 10 D0       LDA    $10D0
+ABA2: B6 10 D0       LDA    goto_next_life_10d0
 ABA5: 26 09          BNE    $ABB0
-ABA7: B6 10 D1       LDA    $10D1
+ABA7: B6 10 D1       LDA    level_completed_flag_10d1
 ABAA: 10 26 00 96    LBNE   $AC44
 ABAE: 20 23          BRA    $ABD3
 ABB0: 7F 10 DF       CLR    $10DF
@@ -4456,7 +4477,7 @@ ABDD: A6 1A          LDA    -$6,X
 ABDF: 27 58          BEQ    $AC39
 ABE1: 48             ASLA
 ABE2: AD D6          JSR    [A,U]	; [indirect_jump]
-ABE4: B6 10 D0       LDA    $10D0
+ABE4: B6 10 D0       LDA    goto_next_life_10d0
 ABE7: 26 50          BNE    $AC39
 ABE9: A6 1A          LDA    -$6,X
 ABEB: 81 14          CMPA   #$14
@@ -4470,7 +4491,7 @@ ABFA: BD C4 F4       JSR    $C4F4
 ABFD: B6 10 D3       LDA    $10D3
 AC00: 27 37          BEQ    $AC39	; bra => invincible
 AC02: CC 01 06       LDD    #$0106
-AC05: B7 10 D0       STA    $10D0
+AC05: B7 10 D0       STA    goto_next_life_10d0
 AC08: 6C 4F          INC    $F,U
 AC0A: E7 5A          STB    -$6,U
 AC0C: CC 3C 57       LDD    #$3C57
@@ -4933,7 +4954,7 @@ B099: B1 10 5C       CMPA   $105C
 B09C: 10 22 D6 92    LBHI   $8732
 B0A0: B7 10 5C       STA    $105C
 B0A3: 7E 87 32       JMP    $8732
-B0A6: 7C 10 D1       INC    $10D1
+B0A6: 7C 10 D1       INC    level_completed_flag_10d1
 B0A9: 7E 87 32       JMP    $8732
 B0AC: A6 1B          LDA    -$5,X
 B0AE: 27 09          BEQ    $B0B9
@@ -5024,7 +5045,7 @@ B177: 27 1A          BEQ    $B193
 B179: 25 09          BCS    $B184
 B17B: C1 04          CMPB   #$04
 B17D: 27 14          BEQ    $B193
-B17F: CC 11 00       LDD    #$1100
+B17F: CC 11 00       LDD    #logical_character_positions_1100
 B182: 20 06          BRA    $B18A
 B184: 5D             TSTB
 B185: 27 0C          BEQ    $B193
@@ -5195,7 +5216,7 @@ B2F9: A7 0F          STA    $F,X
 B2FB: B6 10 D3       LDA    $10D3
 B2FE: 27 2A          BEQ    $B32A	; bra => invincible
 B300: CC 01 06       LDD    #$0106
-B303: B7 10 D0       STA    $10D0
+B303: B7 10 D0       STA    goto_next_life_10d0
 B306: E7 5A          STB    -$6,U
 B308: 6A 4F          DEC    $F,U
 B30A: CC 00 3C       LDD    #$003C
@@ -5422,7 +5443,7 @@ B50A: 27 1A          BEQ    $B526
 B50C: 25 09          BCS    $B517
 B50E: C1 04          CMPB   #$04
 B510: 27 14          BEQ    $B526
-B512: CC 11 00       LDD    #$1100
+B512: CC 11 00       LDD    #logical_character_positions_1100
 B515: 20 06          BRA    $B51D
 B517: 5D             TSTB
 B518: 27 0C          BEQ    $B526
@@ -5606,7 +5627,7 @@ B6E2: BD 81 50       JSR    suspend_task_8150
 B6E5: B6 1F 60       LDA    $1F60
 B6E8: 27 F8          BEQ    task_entry_10_b6e2
 B6EA: BD 81 50       JSR    suspend_task_8150
-B6ED: FC 10 D0       LDD    $10D0
+B6ED: FC 10 D0       LDD    goto_next_life_10d0
 B6F0: 26 ED          BNE    $B6DF
 B6F2: B6 1F 60       LDA    $1F60
 B6F5: 27 EB          BEQ    task_entry_10_b6e2
@@ -5673,7 +5694,7 @@ B775: BD C0 BB       JSR    $C0BB
 B778: BD 81 50       JSR    suspend_task_8150
 B77B: B6 1F 60       LDA    $1F60
 B77E: 27 7C          BEQ    $B7FC
-B780: FC 10 D0       LDD    $10D0
+B780: FC 10 D0       LDD    goto_next_life_10d0
 B783: 26 65          BNE    $B7EA
 B785: 8E 1F 70       LDX    #$1F70
 B788: CE 25 10       LDU    #$2510
@@ -5710,7 +5731,7 @@ B7CE: 6F 0C          CLR    $C,X
 B7D0: BD 81 50       JSR    suspend_task_8150
 B7D3: B6 1F 60       LDA    $1F60
 B7D6: 27 24          BEQ    $B7FC
-B7D8: FC 10 D0       LDD    $10D0
+B7D8: FC 10 D0       LDD    goto_next_life_10d0
 B7DB: 26 0D          BNE    $B7EA
 B7DD: 8E 1F 70       LDX    #$1F70
 B7E0: 6A 04          DEC    $4,X
@@ -6949,7 +6970,7 @@ CCBF: 30 88 20       LEAX   $20,X
 CCC2: 8C 26 70       CMPX   #$2670
 CCC5: 26 BB          BNE    $CC82
 CCC7: B6 10 DA       LDA    $10DA
-CCCA: BA 10 D0       ORA    $10D0
+CCCA: BA 10 D0       ORA    goto_next_life_10d0
 CCCD: 27 01          BEQ    $CCD0
 CCCF: 39             RTS
 CCD0: 8E 25 10       LDX    #$2510

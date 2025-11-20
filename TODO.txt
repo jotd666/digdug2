@@ -1,9 +1,10 @@
+- if instrumented, sprite positions are completely off, if not instrumented
+  it is almost ok
 - write in 1008 during title see if scroll works (it does not)
 - set_status_bitplanes 33 v 32 cheat
 - demo attract mode not working properly
 - optimize 0x20 write = clear
 - implement sprite double height: test in start game screen
-- implement start game : doesn't work, reverse that 4805 is not read...
 - implement controls
 - report 2 last optimization phases in 6809 converter
 - implement trainer invincible.infinite lives
