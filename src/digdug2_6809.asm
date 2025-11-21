@@ -72,6 +72,7 @@
 
 checksum_failed_flag_0306 = $306
 sync_1000 = $1000
+random_seed_1011 = $1011
 task_stack_pointer_1002 = $1002
 nb_lives_1703 = $1703
 current_level_1704 = $1704
@@ -529,7 +530,7 @@ end_zero_io_81f6:
 8307: BD 8C B6       JSR    $8CB6
 830A: BD 85 CA       JSR    write_copyright_texts_85ca
 830D: BD 86 5B       JSR    $865B
-8310: BD 8A A0       JSR    $8AA0
+8310: BD 8A A0       JSR    random_8aa0
 8313: BD 81 50       JSR    suspend_task_8150
 8316: B6 48 01       LDA    number_of_players_4801
 8319: 84 0F          ANDA   #$0F
@@ -1074,7 +1075,7 @@ task_entry_11_8890:
 8896: 27 F8          BEQ    task_entry_11_8890
 8898: 8E 20 10       LDX    #$2010
 889B: CE 8A 05       LDU    #$8A05
-889E: BD 8A A0       JSR    $8AA0
+889E: BD 8A A0       JSR    random_8aa0
 88A1: 84 1F          ANDA   #$1F
 88A3: 4C             INCA
 88A4: A7 04          STA    $4,X
@@ -1214,15 +1215,16 @@ task_entry_11_8890:
 8A00: 26 F5          BNE    $89F7
 8A02: 7E 88 90       JMP    task_entry_11_8890
 
-8AA0: B6 10 11       LDA    $1011                                      
+random_8aa0:
+8AA0: B6 10 11       LDA    random_seed_1011                                      
 8AA3: 48             ASLA
 8AA4: 48             ASLA
 8AA5: 48             ASLA
-8AA6: B8 10 11       EORA   $1011
+8AA6: B8 10 11       EORA   random_seed_1011
 8AA9: 43             COMA
 8AAA: 48             ASLA
-8AAB: 79 10 11       ROL    $1011
-8AAE: B6 10 11       LDA    $1011
+8AAB: 79 10 11       ROL    random_seed_1011
+8AAE: B6 10 11       LDA    random_seed_1011
 8AB1: 39             RTS
 
 8AB2: 8E 0F FD       LDX    #$0FFD
@@ -2060,15 +2062,16 @@ task_entry_14_9438:
 9475: 24 2E          BCC    $94A5
 9477: B7 10 6D       STA    $106D
 947A: BE 10 36       LDX    $1036
-947D: B6 10 11       LDA    $1011
+; inlined random
+947D: B6 10 11       LDA    random_seed_1011
 9480: 48             ASLA
 9481: 48             ASLA
 9482: 48             ASLA
-9483: B8 10 11       EORA   $1011
+9483: B8 10 11       EORA   random_seed_1011
 9486: 43             COMA
 9487: 48             ASLA
-9488: 79 10 11       ROL    $1011
-948B: B6 10 11       LDA    $1011
+9488: 79 10 11       ROL    random_seed_1011
+948B: B6 10 11       LDA    random_seed_1011
 948E: 84 1F          ANDA   #$1F
 9490: E6 86          LDB    A,X				; [video_address]
 9492: C1 FC          CMPB   #$FC
@@ -2150,19 +2153,19 @@ task_entry_13_94e4:
 9554: 26 F1          BNE    $9547
 9556: 20 8C          BRA    task_entry_13_94e4
 9558: 10 8E 99 33    LDY    #$9933
-955C: BD 8A A0       JSR    $8AA0
+955C: BD 8A A0       JSR    random_8aa0
 955F: 84 7E          ANDA   #$7E
 9561: 8B 30          ADDA   #$30
 9563: A7 0F          STA    $F,X
-9565: BD 8A A0       JSR    $8AA0
+9565: BD 8A A0       JSR    random_8aa0
 9568: 84 7E          ANDA   #$7E
 956A: 8B 30          ADDA   #$30
 956C: A7 0D          STA    $D,X
-956E: BD 8A A0       JSR    $8AA0
+956E: BD 8A A0       JSR    random_8aa0
 9571: 84 07          ANDA   #$07
 9573: A7 05          STA    $5,X
 9575: E6 05          LDB    $5,X
-9577: BD 8A A0       JSR    $8AA0
+9577: BD 8A A0       JSR    random_8aa0
 957A: 84 08          ANDA   #$08
 957C: AB A5          ADDA   B,Y
 957E: A7 0A          STA    $A,X
@@ -3005,8 +3008,8 @@ task_entry_16_level_select_and_start_9d20:
 9E1F: CC FE 04       LDD    #$FE04
 9E22: 6C 04          INC    $4,X
 9E24: FE 10 C9       LDU    $10C9
-9E27: 6F C4          CLR    ,U
-9E29: 6F C8 E0       CLR    -$20,U
+9E27: 6F C4          CLR    ,U		; [video_address]
+9E29: 6F C8 E0       CLR    -$20,U		; [video_address]
 9E2C: 33 C8 80       LEAU   -$80,U
 9E2F: 20 15          BRA    $9E46
 9E31: A6 04          LDA    $4,X
@@ -3014,8 +3017,8 @@ task_entry_16_level_select_and_start_9d20:
 9E35: CC 02 0C       LDD    #$020C
 9E38: 6A 04          DEC    $4,X
 9E3A: FE 10 C9       LDU    $10C9
-9E3D: 6F C4          CLR    ,U
-9E3F: 6F C8 E0       CLR    -$20,U
+9E3D: 6F C4          CLR    ,U		; [video_address]
+9E3F: 6F C8 E0       CLR    -$20,U	; [video_address]
 9E42: 33 C9 00 80    LEAU   $0080,U
 9E46: FF 10 C9       STU    $10C9
 9E49: A7 05          STA    $5,X
@@ -4365,15 +4368,16 @@ AAD9: 7A 10 4A       DEC    $104A
 AADC: 26 E7          BNE    $AAC5
 AADE: 7C 10 DB       INC    $10DB
 AAE1: 8E 15 80       LDX    #$1580
-AAE4: B6 10 11       LDA    $1011
+; inlined random
+AAE4: B6 10 11       LDA    random_seed_1011
 AAE7: 48             ASLA
 AAE8: 48             ASLA
 AAE9: 48             ASLA
-AAEA: B8 10 11       EORA   $1011
+AAEA: B8 10 11       EORA   random_seed_1011
 AAED: 43             COMA
 AAEE: 48             ASLA
-AAEF: 79 10 11       ROL    $1011
-AAF2: B6 10 11       LDA    $1011
+AAEF: 79 10 11       ROL    random_seed_1011
+AAF2: B6 10 11       LDA    random_seed_1011
 AAF5: 84 7F          ANDA   #$7F
 AAF7: 81 78          CMPA   #$78
 AAF9: 24 E9          BCC    $AAE4
@@ -4566,7 +4570,7 @@ ACDE: E7 10          STB    -$10,X
 ACE0: CC 04 12       LDD    #$0412
 ACE3: A7 05          STA    $5,X
 ACE5: E7 1A          STB    -$6,X
-ACE7: BD 8A A0       JSR    $8AA0
+ACE7: BD 8A A0       JSR    random_8aa0
 ACEA: 84 0F          ANDA   #$0F
 ACEC: 4C             INCA
 ACED: A7 04          STA    $4,X
@@ -4623,7 +4627,7 @@ AD6A: 23 55          BLS    $ADC1
 AD6C: 20 04          BRA    $AD72
 AD6E: 81 E8          CMPA   #$E8
 AD70: 24 4F          BCC    $ADC1
-AD72: BD 8A A0       JSR    $8AA0
+AD72: BD 8A A0       JSR    random_8aa0
 AD75: B1 17 1A       CMPA   $171A
 AD78: 23 1A          BLS    $AD94
 AD7A: A6 11          LDA    -$F,X
@@ -5413,7 +5417,7 @@ B4BF: A7 17          STA    -$9,X
 B4C1: A6 05          LDA    $5,X
 B4C3: B7 10 CE       STA    $10CE
 B4C6: B7 10 CF       STA    $10CF
-B4C9: BD 8A A0       JSR    $8AA0
+B4C9: BD 8A A0       JSR    random_8aa0
 B4CC: E6 19          LDB    -$7,X
 B4CE: 2A 08          BPL    $B4D8
 B4D0: 81 D0          CMPA   #$D0
@@ -5647,7 +5651,7 @@ B714: 8B 08          ADDA   #$08
 B716: B7 10 34       STA    round_number_1034
 B719: 8B 2F          ADDA   #$2F
 B71B: B7 10 35       STA    $1035
-B71E: BD 8A A0       JSR    $8AA0
+B71E: BD 8A A0       JSR    random_8aa0
 B721: 84 7F          ANDA   #$7F
 B723: B1 10 34       CMPA   round_number_1034
 B726: 23 F6          BLS    $B71E
@@ -5677,7 +5681,7 @@ B750: ED 1E          STD    -$2,X
 B752: F6 17 04       LDB    current_level_1704
 B755: C1 10          CMPB   #$10
 B757: 23 0C          BLS    $B765
-B759: BD 8A A0       JSR    $8AA0
+B759: BD 8A A0       JSR    random_8aa0
 B75C: 84 0F          ANDA   #$0F
 B75E: CE B8 15       LDU    #$B815
 B761: E6 C6          LDB    A,U
@@ -6584,7 +6588,7 @@ C8F3: CE 15 80       LDU    #$1580
 C8F6: E6 C6          LDB    A,U
 C8F8: C1 09          CMPB   #$09
 C8FA: 23 0B          BLS    $C907
-C8FC: BD 8A A0       JSR    $8AA0
+C8FC: BD 8A A0       JSR    random_8aa0
 C8FF: 84 7F          ANDA   #$7F
 C901: 81 78          CMPA   #$78
 C903: 25 F1          BCS    $C8F6
