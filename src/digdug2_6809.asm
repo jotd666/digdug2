@@ -124,6 +124,10 @@ pump_button_pressed_1015 = $1015
 demo_on_1010 = $1010
 level_completed_flag_10d1 = $10d1
 goto_next_life_10d0 = $10d0
+
+; set by sound CPU when start music has played
+music_done_4040 = $4040
+
 ; the absolute character positions
 ; ex: player struct is in $1100
 ; 6 bytes per character
@@ -142,6 +146,7 @@ player_x_250d = $250d
 round_number_1034 = $1034
 ; horizontal coord (portrait!)
 player_y_16_bit_250e = $250e
+hammer_active_2501 = $2501
 
 ; screen positions
 credits_units_screen_address_07a3 = $7a3
@@ -582,7 +587,7 @@ end_zero_io_81f6:
 838E: BD 88 24       JSR    display_nb_lives_8824
 8391: 86 3C          LDA    #$3C
 8393: B7 10 4F       STA    $104F
-8396: 7C 40 40       INC    $4040
+8396: 7C 40 40       INC    music_done_4040
 8399: BD 81 50       JSR    suspend_task_8150
 839C: 7A 10 4F       DEC    $104F
 839F: 26 F8          BNE    $8399
@@ -2011,7 +2016,7 @@ demo_loop_9144:
 91D5: B7 40 B1       STA    $40B1
 91D8: B7 1F 02       STA    $1F02
 91DB: B7 1F 1D       STA    $1F1D
-91DE: 8E 40 40       LDX    #$4040
+91DE: 8E 40 40       LDX    #music_done_4040
 91E1: ED 81          STD    ,X++
 91E3: 8C 40 60       CMPX   #$4060
 91E6: 26 F9          BNE    $91E1
@@ -3254,7 +3259,7 @@ A091: 27 F8          BEQ    task_entry_05_a08b
 A093: BD A0 FF       JSR    $A0FF
 A096: BD 8D BB       JSR    $8DBB
 A099: BD 81 50       JSR    suspend_task_8150
-A09C: B6 40 40       LDA    $4040
+A09C: B6 40 40       LDA    music_done_4040
 A09F: 26 F8          BNE    $A099
 A0A1: 7C 10 DC       INC    $10DC
 A0A4: BD 81 50       JSR    suspend_task_8150
@@ -3300,7 +3305,6 @@ A10F: A7 03          STA    $3,X
 A111: BD C8 EA       JSR    $C8EA
 A114: 7E C4 80       JMP    scrolling_following_player_c480
 
-hammer_active_2501 = $2501
 
 player_hammer_and_movement_a117:
 A117: B6 10 14       LDA    hammer_button_pressed_1014
@@ -3452,7 +3456,7 @@ A231: 39             RTS
 
 task_entry_07_a232:
 A232: BD 81 50       JSR    suspend_task_8150
-A235: B6 40 40       LDA    $4040
+A235: B6 40 40       LDA    music_done_4040
 A238: 26 F8          BNE    task_entry_07_a232
 A23A: FC 10 D0       LDD    goto_next_life_10d0
 A23D: 26 F3          BNE    task_entry_07_a232
@@ -4117,7 +4121,7 @@ A82A: 20 DE          BRA    $A80A
 
 task_entry_0d_a859:
 A859: BD 81 50       JSR    suspend_task_8150
-A85C: B6 40 40       LDA    $4040
+A85C: B6 40 40       LDA    music_done_4040
 A85F: 26 F8          BNE    task_entry_0d_a859
 A861: B6 10 D6       LDA    $10D6
 A864: 27 F3          BEQ    task_entry_0d_a859
@@ -4448,7 +4452,7 @@ AB88: B6 10 D2       LDA    $10D2
 AB8B: 27 F8          BEQ    task_entry_0c_ab85
 AB8D: BD AC 90       JSR    $AC90
 AB90: BD 81 50       JSR    suspend_task_8150
-AB93: B6 40 40       LDA    $4040
+AB93: B6 40 40       LDA    music_done_4040
 AB96: 26 F8          BNE    $AB90
 AB98: BD 81 50       JSR    suspend_task_8150
 AB9B: B6 10 D2       LDA    $10D2
@@ -5828,6 +5832,7 @@ C097: A7 0A          STA    $A,X
 C099: 39             RTS
 C09A: CC 04 1E       LDD    #$041E
 C09D: 20 03          BRA    $C0A2
+
 C09F: CC 0C 0C       LDD    #$0C0C
 C0A2: FD 10 34       STD    round_number_1034
 C0A5: A6 1B          LDA    -$5,X
@@ -5841,6 +5846,7 @@ C0B2: B4 10 35       ANDA   $1035
 C0B5: BA 10 34       ORA    round_number_1034
 C0B8: A7 0A          STA    $A,X
 C0BA: 39             RTS
+
 C0BB: 7F 10 CE       CLR    $10CE
 C0BE: F6 10 08       LDB    scroll_value_1008
 C0C1: F7 10 CF       STB    $10CF
@@ -7158,7 +7164,7 @@ E5D8: A1 80          CMPA   ,X+
 E5DA: 26 3D          BNE    $E619
 E5DC: 8C 28 00       CMPX   #$2800
 E5DF: 26 F2          BNE    $E5D3
-E5E1: 8E 40 40       LDX    #$4040
+E5E1: 8E 40 40       LDX    #music_done_4040
 E5E4: A7 84          STA    ,X
 E5E6: 7F 80 00       CLR    watchdog_8000
 E5E9: A1 80          CMPA   ,X+
@@ -7172,7 +7178,7 @@ E5FA: E1 80          CMPB   ,X+
 E5FC: 26 1B          BNE    $E619
 E5FE: 8C 28 00       CMPX   #$2800
 E601: 26 F2          BNE    $E5F5
-E603: 8E 40 40       LDX    #$4040
+E603: 8E 40 40       LDX    #music_done_4040
 E606: E6 84          LDB    ,X
 E608: 7F 80 00       CLR    watchdog_8000
 E60B: E1 80          CMPB   ,X+
@@ -7213,7 +7219,7 @@ E651: 7F 80 00       CLR    watchdog_8000
 E654: 8C 28 00       CMPX   #$2800
 E657: 26 F6          BNE    $E64F
 ; clear ... all memory doing a X wrap. Bug? whatever
-E659: 8E 40 40       LDX    #$4040
+E659: 8E 40 40       LDX    #music_done_4040
 E65C: EF 81          STU    ,X++
 E65E: 7F 80 00       CLR    watchdog_8000
 E661: 8C 44 00       CMPX   #$4400
@@ -7437,7 +7443,7 @@ E87A: B6 10 1A       LDA    $101A
 E87D: 81 01          CMPA   #$01
 E87F: 27 4B          BEQ    $E8CC
 E881: BD EA 80       JSR    $EA80
-E884: 8E 40 40       LDX    #$4040
+E884: 8E 40 40       LDX    #music_done_4040
 E887: B6 10 17       LDA    $1017
 E88A: 81 01          CMPA   #$01
 E88C: 27 15          BEQ    $E8A3

@@ -1,5 +1,9 @@
 - if instrumented, sprite positions are completely off, if not instrumented
-  it is almost ok
+  it is ok
+- random crash at start (stack shift when resuming task)
+- up/down character works, left/right scrolling completely fucked
+- enemies don't move
+- set flag when intro tune is played (4040)
 - write in 1008 during title see if scroll works (it does not)
 - set_status_bitplanes 33 v 32 cheat
 - demo attract mode not working properly
