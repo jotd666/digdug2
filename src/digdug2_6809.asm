@@ -124,10 +124,35 @@ pump_button_pressed_1015 = $1015
 demo_on_1010 = $1010
 level_completed_flag_10d1 = $10d1
 goto_next_life_10d0 = $10d0
+timer_104f = $104f
 
-; cleared by sound CPU when start music has played,
-; allowing characters to move
-music_playing_4040 = $4040
+
+; shared variables with sound cpu. Each byte matches one sound or tune
+; writing non-zero triggers the sound, zero stops it
+sound_level_start_tune_4040 = $4040
+sound_caught_404d = $404d
+sound_level_completed_tune_4052 = $4052
+sound_game_over_tune_4044 = $4044
+sound_highscore_tune_404a = $404a
+sound_in_game_tune_4041 = $4041
+sound_credit_4054 = $4054
+sound_extra_life_4053 = $4053
+sound_flame_404e = $404e
+sound_hammer_4047 = $4047
+sound_hurry_4043 = $4043
+sound_killed_4051 = $4051
+sound_sfx_4045 = $4045
+sound_sfx_4046 = $4046
+sound_sfx_4048 = $4048
+sound_sfx_404c = $404c
+sound_sfx_404f = $404f
+sound_sfx_4050 = $4050
+sound_sfx_4055 = $4055
+sound_warning_4042 = $4042
+
+; unused small nice tunes!
+sound_unknown_tune_4049 = $4049
+sound_unknown_tune_404b = $404b
 
 ; the absolute character positions
 ; ex: player struct is in $1100
@@ -255,8 +280,8 @@ sync_loop_80c1:
 80D7: 10 26 64 DF    LBNE   reset_e5ba		; hardware fault / service mode?
 80DB: B6 48 00       LDA    namco_io_4800
 80DE: 84 0F          ANDA   #$0F
-80E0: BB 40 54       ADDA   $4054
-80E3: B7 40 54       STA    $4054
+80E0: BB 40 54       ADDA   sound_credit_4054
+80E3: B7 40 54       STA    sound_credit_4054
 80E6: 7F 48 00       CLR    namco_io_4800
 end_of_io_stuff_80e6:
 80E9: B6 10 E7       LDA    game_in_play_10e7
@@ -492,7 +517,7 @@ end_zero_io_81f6:
 8295: BD 85 CA       JSR    write_copyright_texts_85ca
 8298: CC 01 08       LDD    #$0108
 829B: B7 10 E2       STA    $10E2
-829E: F7 10 4F       STB    $104F
+829E: F7 10 4F       STB    timer_104f
 82A1: BD 81 50       JSR    suspend_task_8150
 82A4: FC 48 02       LDD    credits_tens_4802
 82A7: 84 0F          ANDA   #$0F
@@ -501,12 +526,12 @@ end_zero_io_81f6:
 82AD: 26 46          BNE    $82F5
 82AF: B6 10 50       LDA    $1050
 82B2: 26 ED          BNE    $82A1
-82B4: 7A 10 4F       DEC    $104F
+82B4: 7A 10 4F       DEC    timer_104f
 82B7: 26 E8          BNE    $82A1
 82B9: BD 9A D7       JSR    $9AD7
 82BC: CC 00 05       LDD    #$0005
 82BF: B7 10 E2       STA    $10E2
-82C2: F7 10 4F       STB    $104F
+82C2: F7 10 4F       STB    timer_104f
 82C5: BD 81 50       JSR    suspend_task_8150
 82C8: FC 48 02       LDD    credits_tens_4802
 82CB: 84 0F          ANDA   #$0F
@@ -515,7 +540,7 @@ end_zero_io_81f6:
 82D1: 26 22          BNE    $82F5
 82D3: B6 10 50       LDA    $1050
 82D6: 26 ED          BNE    $82C5
-82D8: 7A 10 4F       DEC    $104F
+82D8: 7A 10 4F       DEC    timer_104f
 82DB: 26 E8          BNE    $82C5
 82DD: 7C 10 10       INC    demo_on_1010
 82E0: BD 81 50       JSR    suspend_task_8150
@@ -587,10 +612,10 @@ end_zero_io_81f6:
 838B: BD 87 B3       JSR    write_round_and_player_87b3
 838E: BD 88 24       JSR    display_nb_lives_8824
 8391: 86 3C          LDA    #$3C
-8393: B7 10 4F       STA    $104F
-8396: 7C 40 40       INC    music_playing_4040
+8393: B7 10 4F       STA    timer_104f
+8396: 7C 40 40       INC    sound_level_start_tune_4040
 8399: BD 81 50       JSR    suspend_task_8150
-839C: 7A 10 4F       DEC    $104F
+839C: 7A 10 4F       DEC    timer_104f
 839F: 26 F8          BNE    $8399
 83A1: BD 85 38       JSR    set_game_running_flags_8538
 83A4: BD C1 2A       JSR    write_playfield_c12a
@@ -604,17 +629,18 @@ end_zero_io_81f6:
 83B5: B6 10 D1       LDA    level_completed_flag_10d1
 83B8: 26 0B          BNE    $83C5
 83BA: FC 10 DC       LDD    $10DC
-83BD: B7 40 41       STA    $4041
-83C0: F7 40 42       STB    $4042
+83BD: B7 40 41       STA    sound_in_game_tune_4041
+83C0: F7 40 42       STB    sound_warning_4042
 83C3: 20 E8          BRA    $83AD
 ; level completed!
 83C5: CC 00 00       LDD    #$0000
-83C8: B7 40 41       STA    $4041
-83CB: B7 40 42       STA    $4042
+83C8: B7 40 41       STA    sound_in_game_tune_4041		; stop music
+83CB: B7 40 42       STA    sound_warning_4042			; stop other music
 83CE: FD 10 DC       STD    $10DC
-83D1: 7C 40 52       INC    $4052
+83D1: 7C 40 52       INC    sound_level_completed_tune_4052	; start level completed
 83D4: BD 81 50       JSR    suspend_task_8150
-83D7: B6 40 52       LDA    $4052
+; wait until all flags are zeroed to skip to next level (including music playing)
+83D7: B6 40 52       LDA    sound_level_completed_tune_4052
 83DA: BA 10 D7       ORA    $10D7
 83DD: BA 10 D9       ORA    $10D9
 83E0: BA 10 DF       ORA    $10DF
@@ -630,15 +656,15 @@ end_zero_io_81f6:
 83FC: 7E 83 50       JMP    $8350
 player_killed_83ff:
 83FF: CC 00 00       LDD    #$0000
-8402: B7 40 41       STA    $4041
-8405: B7 40 42       STA    $4042
+8402: B7 40 41       STA    sound_in_game_tune_4041
+8405: B7 40 42       STA    sound_warning_4042
 8408: FD 10 DC       STD    $10DC
 840B: 7F 10 E8       CLR    $10E8
 ; loop until death music is done (with 40xx flags)
 840E: BD 81 50       JSR    suspend_task_8150
-8411: B6 40 51       LDA    $4051
-8414: BA 40 4D       ORA    $404D
-8417: BA 10 4F       ORA    $104F
+8411: B6 40 51       LDA    sound_killed_4051
+8414: BA 40 4D       ORA    sound_caught_404d
+8417: BA 10 4F       ORA    timer_104f
 841A: BA 10 D7       ORA    $10D7
 841D: BA 10 D9       ORA    $10D9
 8420: BA 10 DF       ORA    $10DF
@@ -667,13 +693,13 @@ player_killed_83ff:
 8463: BD 87 06       JSR    clear_screen_8706
 8466: BD 87 50       JSR    write_game_over_8750
 8469: CC 00 00       LDD    #$0000
-846C: B7 40 41       STA    $4041
-846F: B7 40 42       STA    $4042
+846C: B7 40 41       STA    sound_in_game_tune_4041 
+846F: B7 40 42       STA    sound_warning_4042
 8472: FD 10 DC       STD    $10DC
-8475: 7C 40 44       INC    $4044
+8475: 7C 40 44       INC    sound_game_over_tune_4044
 8478: 7C 10 E3       INC    $10E3
 847B: BD 81 50       JSR    suspend_task_8150
-847E: B6 40 44       LDA    $4044
+847E: B6 40 44       LDA    sound_game_over_tune_4044
 8481: 26 F8          BNE    $847B
 8483: 7F 10 E3       CLR    $10E3
 8486: BD 81 50       JSR    suspend_task_8150
@@ -1282,7 +1308,7 @@ random_8aa0:
 8B1C: 86 0B          LDA    #$0B
 8B1E: C6 02          LDB    #$02
 8B20: BD 85 BD       JSR    clear_status_text_85bd
-8B23: 7C 40 55       INC    $4055
+8B23: 7C 40 55       INC    sound_sfx_4055
 8B26: 20 15          BRA    $8B3D
 8B28: BD 8C 17       JSR    $8C17
 8B2B: 8E 17 00       LDX    #$1700
@@ -1416,7 +1442,7 @@ write_highscore_text_8bdf:
 8C33: 81 FF          CMPA   #$FF
 8C35: 27 05          BEQ    $8C3C
 8C37: 6C 03          INC    $3,X
-8C39: 7C 40 53       INC    $4053
+8C39: 7C 40 53       INC    sound_extra_life_4053
 8C3C: A6 06          LDA    $6,X
 8C3E: 85 01          BITA   #$01
 8C40: 26 1B          BNE    $8C5D
@@ -1804,7 +1830,7 @@ task_entry_03_read_joy_buttons_8fac:
 8FCF: C4 03          ANDB   #$03
 8FD1: F7 10 15       STB    pump_button_pressed_1015
 8FD4: A6 88 10       LDA    $10,X
-8FD7: F6 40 4A       LDB    $404A
+8FD7: F6 40 4A       LDB    sound_highscore_tune_404a
 8FDA: 27 10          BEQ    $8FEC
 8FDC: F6 10 14       LDB    hammer_button_pressed_1014
 8FDF: 58             ASLB
@@ -1990,13 +2016,13 @@ demo_loop_9144:
 918A: 20 B8          BRA    demo_loop_9144
 
 918C: 86 4F          LDA    #$4F
-918E: B7 10 4F       STA    $104F
+918E: B7 10 4F       STA    timer_104f
 9191: BD 81 50       JSR    suspend_task_8150
 9194: B6 10 10       LDA    demo_on_1010
 9197: 27 05          BEQ    $919E
-9199: 7A 10 4F       DEC    $104F
+9199: 7A 10 4F       DEC    timer_104f
 919C: 26 F3          BNE    $9191
-919E: B6 40 54       LDA    $4054
+919E: B6 40 54       LDA    sound_credit_4054
 91A1: B7 10 34       STA    round_number_1034
 91A4: CC 00 00       LDD    #$0000
 91A7: 8E 14 00       LDX    #$1400
@@ -2018,12 +2044,12 @@ demo_loop_9144:
 91D5: B7 40 B1       STA    $40B1
 91D8: B7 1F 02       STA    $1F02
 91DB: B7 1F 1D       STA    $1F1D
-91DE: 8E 40 40       LDX    #music_playing_4040
+91DE: 8E 40 40       LDX    #sound_level_start_tune_4040
 91E1: ED 81          STD    ,X++
 91E3: 8C 40 60       CMPX   #$4060
 91E6: 26 F9          BNE    $91E1
 91E8: B6 10 34       LDA    round_number_1034
-91EB: B7 40 54       STA    $4054
+91EB: B7 40 54       STA    sound_credit_4054
 91EE: 8E 20 10       LDX    #$2010
 91F1: A6 10          LDA    -$10,X
 91F3: 27 03          BEQ    $91F8
@@ -2117,7 +2143,7 @@ task_entry_13_94e4:
 94E7: B6 10 E3       LDA    $10E3
 94EA: 27 F8          BEQ    task_entry_13_94e4
 94EC: 8E 20 10       LDX    #$2010
-94EF: B6 40 44       LDA    $4044
+94EF: B6 40 44       LDA    sound_game_over_tune_4044
 94F2: 26 64          BNE    $9558
 94F4: CE 99 3B       LDU    #$993B
 94F7: EC C1          LDD    ,U++
@@ -2582,8 +2608,8 @@ task_entry_12_9955:
 995B: 27 F8          BEQ    task_entry_12_9955
 995D: BD 9A D7       JSR    $9AD7
 9960: CC 01 2E       LDD    #$012E
-9963: B7 40 4A       STA    $404A
-9966: F7 10 4F       STB    $104F
+9963: B7 40 4A       STA    sound_highscore_tune_404a
+9966: F7 10 4F       STB    timer_104f
 9969: CC 06 08       LDD    #$0608
 996C: B7 10 59       STA    $1059
 996F: F7 10 5A       STB    $105A
@@ -2616,7 +2642,7 @@ task_entry_12_9955:
 99BA: 10 26 00 FA    LBNE   $9AB8
 99BE: B6 10 50       LDA    $1050
 99C1: 26 07          BNE    $99CA
-99C3: 7A 10 4F       DEC    $104F
+99C3: 7A 10 4F       DEC    timer_104f
 99C6: 10 27 00 92    LBEQ   $9A5C
 99CA: B6 10 ED       LDA    $10ED
 99CD: 27 1E          BEQ    $99ED
@@ -2633,7 +2659,7 @@ task_entry_12_9955:
 99E8: C6 14          LDB    #$14
 99EA: BD 85 A0       JSR    clear_text_85a0
 99ED: 86 01          LDA    #$01
-99EF: B7 40 4A       STA    $404A
+99EF: B7 40 4A       STA    sound_highscore_tune_404a
 99F2: B1 10 15       CMPA   pump_button_pressed_1015
 99F5: 27 3B          BEQ    $9A32
 99F7: B1 10 14       CMPA   hammer_button_pressed_1014
@@ -2676,7 +2702,7 @@ task_entry_12_9955:
 9A59: 7E 99 A9       JMP    $99A9
 9A5C: BE 10 C7       LDX    $10C7
 9A5F: CC 00 01       LDD    #$0001
-9A62: F7 40 4A       STB    $404A
+9A62: F7 40 4A       STB    sound_highscore_tune_404a
 9A65: A7 89 08 00    STA    $0800,X
 9A69: B7 10 1B       STA    game_in_play_101b
 9A6C: BD 81 50       JSR    suspend_task_8150
@@ -2700,7 +2726,7 @@ task_entry_12_9955:
 9A99: 86 20          LDA    #$20
 9A9B: C6 14          LDB    #$14
 9A9D: BD 85 A0       JSR    clear_text_85a0
-9AA0: B6 40 4A       LDA    $404A
+9AA0: B6 40 4A       LDA    sound_highscore_tune_404a
 9AA3: 27 13          BEQ    $9AB8
 9AA5: C6 16          LDB    #$16
 9AA7: B6 10 01       LDA    $1001
@@ -2710,7 +2736,7 @@ task_entry_12_9955:
 9AB0: BE 10 C9       LDX    $10C9
 9AB3: BD 85 A0       JSR    clear_text_85a0
 9AB6: 20 B4          BRA    $9A6C
-9AB8: 7F 40 4A       CLR    $404A
+9AB8: 7F 40 4A       CLR    sound_highscore_tune_404a
 9ABB: 7F 10 E5       CLR    $10E5
 9ABE: 7F 10 ED       CLR    $10ED
 9AC1: 7E 99 55       JMP    task_entry_12_9955
@@ -2864,7 +2890,7 @@ task_entry_12_9955:
 9C0C: A7 84          STA    ,X
 9C0E: 86 01          LDA    #$01
 9C10: B7 10 E5       STA    $10E5
-9C13: B7 40 4A       STA    $404A
+9C13: B7 40 4A       STA    sound_highscore_tune_404a
 9C16: 39             RTS
 
 task_entry_15_9cb6:
@@ -3056,14 +3082,14 @@ task_entry_16_level_select_and_start_9d20:
 9E80: 7A 01 76       DEC    $0176
 9E83: 20 CC          BRA    $9E51
 9E85: CC 3F 08       LDD    #$3F08
-9E88: B7 10 4F       STA    $104F
+9E88: B7 10 4F       STA    timer_104f
 9E8B: F7 25 1A       STB    $251A
 9E8E: BE 10 C9       LDX    $10C9
 9E91: A6 89 F7 E0    LDA    -$0820,X  ; [video_address]
 9E95: E6 89 F8 00    LDB    -$0800,X  ; [video_address]
 9E99: FD 07 A3       STD    credits_units_screen_address_07a3   ; [video_address_word]
 9E9C: BD 81 50       JSR    suspend_task_8150
-9E9F: 7A 10 4F       DEC    $104F
+9E9F: 7A 10 4F       DEC    timer_104f
 9EA2: 27 13          BEQ    $9EB7
 9EA4: B6 10 01       LDA    $1001
 9EA7: 84 08          ANDA   #$08
@@ -3092,7 +3118,7 @@ task_entry_06_9f03:
 9F03: BD 81 50       JSR    suspend_task_8150
 9F06: B6 10 DA       LDA    $10DA
 9F09: 27 F8          BEQ    task_entry_06_9f03
-9F0B: B7 40 48       STA    $4048
+9F0B: B7 40 48       STA    sound_sfx_4048
 9F0E: BD 81 50       JSR    suspend_task_8150
 9F11: B6 10 DA       LDA    $10DA
 9F14: 27 ED          BEQ    task_entry_06_9f03
@@ -3172,11 +3198,11 @@ task_entry_06_9f03:
 9FC0: FC 10 D0       LDD    goto_next_life_10d0
 9FC3: 10 26 00 AF    LBNE   $A076
 9FC7: CC 01 05       LDD    #$0105
-9FCA: B7 40 51       STA    $4051
+9FCA: B7 40 51       STA    sound_killed_4051
 9FCD: B7 10 D0       STA    goto_next_life_10d0
 9FD0: E7 1A          STB    -$6,X
 9FD2: CC 00 3F       LDD    #$003F
-9FD5: B7 10 4F       STA    $104F
+9FD5: B7 10 4F       STA    timer_104f
 9FD8: E7 04          STB    $4,X
 9FDA: C6 08          LDB    #$08
 9FDC: A6 0A          LDA    $A,X
@@ -3261,7 +3287,7 @@ A091: 27 F8          BEQ    task_entry_05_player_management_a08b
 A093: BD A0 FF       JSR    $A0FF
 A096: BD 8D BB       JSR    $8DBB
 A099: BD 81 50       JSR    suspend_task_8150
-A09C: B6 40 40       LDA    music_playing_4040
+A09C: B6 40 40       LDA    sound_level_start_tune_4040
 A09F: 26 F8          BNE    $A099
 A0A1: 7C 10 DC       INC    $10DC
 A0A4: BD 81 50       JSR    suspend_task_8150
@@ -3437,12 +3463,12 @@ A209: 39             RTS
 player_dying_a20a:
 A20A: B6 10 10       LDA    demo_on_1010
 A20D: 26 0E          BNE    $A21D
-A20F: B6 10 4F       LDA    $104F
+A20F: B6 10 4F       LDA    timer_104f
 A212: 27 09          BEQ    $A21D
-A214: 7A 10 4F       DEC    $104F
+A214: 7A 10 4F       DEC    timer_104f
 A217: 27 01          BEQ    $A21A
 A219: 39             RTS
-A21A: 7C 40 51       INC    $4051
+A21A: 7C 40 51       INC    sound_killed_4051
 A21D: A6 04          LDA    $4,X
 A21F: 26 03          BNE    $A224
 A221: A7 0B          STA    $B,X
@@ -3460,7 +3486,7 @@ A231: 39             RTS
 
 task_entry_07_a232:
 A232: BD 81 50       JSR    suspend_task_8150
-A235: B6 40 40       LDA    music_playing_4040
+A235: B6 40 40       LDA    sound_level_start_tune_4040
 A238: 26 F8          BNE    task_entry_07_a232
 A23A: FC 10 D0       LDD    goto_next_life_10d0
 A23D: 26 F3          BNE    task_entry_07_a232
@@ -3483,7 +3509,7 @@ A263: F6 17 07       LDB    $1707
 A266: E7 03          STB    $3,X
 A268: 6F 1D          CLR    -$3,X
 A26A: 6F 08          CLR    $8,X
-A26C: B7 40 45       STA    $4045
+A26C: B7 40 45       STA    sound_sfx_4045
 A26F: A6 05          LDA    $5,X
 A271: 8B 48          ADDA   #$48
 A273: A7 0A          STA    $A,X
@@ -3699,7 +3725,7 @@ A450: 84 07          ANDA   #$07
 A452: A7 45          STA    $5,U
 A454: CC 06 F5       LDD    #$06F5
 A457: A7 1A          STA    -$6,X
-A459: 7F 40 45       CLR    $4045
+A459: 7F 40 45       CLR    sound_sfx_4045
 A45C: EB 0F          ADDB   $F,X
 A45E: E7 0F          STB    $F,X
 A460: 86 6A          LDA    #$6A
@@ -3785,7 +3811,7 @@ A505: 44             LSRA
 A506: 44             LSRA
 A507: B7 10 34       STA    round_number_1034
 A50A: 86 01          LDA    #$01
-A50C: B7 40 46       STA    $4046
+A50C: B7 40 46       STA    sound_sfx_4046
 A50F: A6 88 4A       LDA    $4A,X
 A512: 84 4E          ANDA   #$4E
 A514: BA 10 34       ORA    round_number_1034
@@ -3797,7 +3823,7 @@ A520: 8B 06          ADDA   #$06
 A522: A7 88 2B       STA    $2B,X
 A525: A7 0B          STA    $B,X
 A527: 39             RTS
-A528: 7C 40 50       INC    $4050
+A528: 7C 40 50       INC    sound_sfx_4050
 A52B: CC 1E 0D       LDD    #$1E0D
 A52E: A7 44          STA    $4,U
 A530: E7 5A          STB    -$6,U
@@ -3810,8 +3836,8 @@ A53D: 2A 02          BPL    $A541
 A53F: 8B 0C          ADDA   #$0C
 A541: A7 4A          STA    $A,U
 A543: CC 00 FF       LDD    #$00FF
-A546: B7 40 45       STA    $4045
-A549: B7 40 46       STA    $4046
+A546: B7 40 45       STA    sound_sfx_4045
+A549: B7 40 46       STA    sound_sfx_4046
 A54C: E7 1A          STB    -$6,X
 A54E: 39             RTS
 A54F: 8E 24 D0       LDX    #$24D0
@@ -3823,7 +3849,7 @@ task_entry_08_a55b:
 A55B: BD 81 50       JSR    suspend_task_8150
 A55E: B6 25 01       LDA    hammer_active_2501
 A561: 27 F8          BEQ    task_entry_08_a55b
-A563: B7 40 47       STA    $4047
+A563: B7 40 47       STA    sound_hammer_4047
 A566: 8E 25 10       LDX    #$2510
 A569: BD A6 78       JSR    $A678
 A56C: 64 03          LSR    $3,X
@@ -3850,7 +3876,7 @@ A596: 20 24          BRA    $A5BC
 A598: BD 81 50       JSR    suspend_task_8150
 A59B: B6 25 01       LDA    hammer_active_2501
 A59E: 27 BB          BEQ    task_entry_08_a55b
-A5A0: B7 40 47       STA    $4047
+A5A0: B7 40 47       STA    sound_hammer_4047
 A5A3: B6 10 14       LDA    hammer_button_pressed_1014
 A5A6: 10 27 00 B7    LBEQ   $A661
 A5AA: 8E 25 10       LDX    #$2510
@@ -3896,7 +3922,7 @@ A607: B6 25 01       LDA    hammer_active_2501
 A60A: 10 27 FF 4D    LBEQ   task_entry_08_a55b
 A60E: B6 10 14       LDA    hammer_button_pressed_1014
 A611: 27 4E          BEQ    $A661
-A613: B7 40 47       STA    $4047
+A613: B7 40 47       STA    sound_hammer_4047
 A616: 8E 25 10       LDX    #$2510
 A619: B6 10 D5       LDA    $10D5
 A61C: 26 E3          BNE    $A601
@@ -3911,7 +3937,7 @@ A631: B6 25 01       LDA    hammer_active_2501
 A634: 10 27 FF 23    LBEQ   task_entry_08_a55b
 A638: B6 10 14       LDA    hammer_button_pressed_1014
 A63B: 27 24          BEQ    $A661
-A63D: B7 40 47       STA    $4047
+A63D: B7 40 47       STA    sound_hammer_4047
 A640: 8E 25 10       LDX    #$2510
 A643: B6 10 13       LDA    player_decoded_directions_1013
 A646: 2B E3          BMI    $A62B
@@ -4125,7 +4151,7 @@ A82A: 20 DE          BRA    $A80A
 
 task_entry_0d_a859:
 A859: BD 81 50       JSR    suspend_task_8150
-A85C: B6 40 40       LDA    music_playing_4040
+A85C: B6 40 40       LDA    sound_level_start_tune_4040
 A85F: 26 F8          BNE    task_entry_0d_a859
 A861: B6 10 D6       LDA    $10D6
 A864: 27 F3          BEQ    task_entry_0d_a859
@@ -4319,7 +4345,7 @@ AA2F: 4A             DECA
 AA30: A7 5B          STA    -$5,U
 AA32: CC 08 01       LDD    #$0801
 AA35: A7 44          STA    $4,U
-AA37: F7 40 43       STB    $4043
+AA37: F7 40 43       STB    sound_hurry_4043
 AA3A: 1E 31          EXG    U,X
 AA3C: BD C0 BB       JSR    $C0BB
 AA3F: 6F 0C          CLR    $C,X
@@ -4350,7 +4376,7 @@ AA98: A7 0A          STA    $A,X
 AA9A: BD C0 BB       JSR    $C0BB
 AA9D: CC 00 01       LDD    #$0001
 AAA0: A7 0C          STA    $C,X
-AAA2: F7 40 43       STB    $4043
+AAA2: F7 40 43       STB    sound_hurry_4043
 AAA5: 7C 10 09       INC    $1009
 AAA8: 20 03          BRA    $AAAD
 AAAA: BD 87 32       JSR    $8732
@@ -4456,7 +4482,7 @@ AB88: B6 10 D2       LDA    $10D2
 AB8B: 27 F8          BEQ    task_entry_0c_ab85
 AB8D: BD AC 90       JSR    $AC90
 AB90: BD 81 50       JSR    suspend_task_8150
-AB93: B6 40 40       LDA    music_playing_4040
+AB93: B6 40 40       LDA    sound_level_start_tune_4040
 AB96: 26 F8          BNE    $AB90
 AB98: BD 81 50       JSR    suspend_task_8150
 AB9B: B6 10 D2       LDA    $10D2
@@ -4513,8 +4539,8 @@ AC13: 6F 48          CLR    $8,U
 AC15: B6 10 10       LDA    demo_on_1010
 AC18: 26 08          BNE    $AC22
 AC1A: 86 3C          LDA    #$3C
-AC1C: B7 10 4F       STA    $104F
-AC1F: 7C 40 4D       INC    $404D
+AC1C: B7 10 4F       STA    timer_104f
+AC1F: 7C 40 4D       INC    sound_caught_404d
 AC22: B6 25 02       LDA    $2502
 AC25: 27 0C          BEQ    $AC33
 AC27: 7F 25 02       CLR    $2502
@@ -4527,6 +4553,7 @@ AC39: 30 88 20       LEAX   $20,X
 AC3C: 8C 26 70       CMPX   #$2670
 AC3F: 26 95          BNE    $ABD6
 AC41: 7E AB 98       JMP    $AB98
+
 AC44: 7F 10 DF       CLR    $10DF
 AC47: BD 81 50       JSR    suspend_task_8150
 AC4A: B6 10 D2       LDA    $10D2
@@ -4878,7 +4905,7 @@ AFD1: 25 02          BCS    $AFD5
 AFD3: 86 06          LDA    #$06
 AFD5: A7 0F          STA    $F,X
 AFD7: CC 01 3F       LDD    #$013F
-AFDA: B7 40 4F       STA    $404F
+AFDA: B7 40 4F       STA    sound_sfx_404f
 AFDD: E7 04          STB    $4,X
 AFDF: CC 10 89       LDD    #$1089
 AFE2: A7 1A          STA    -$6,X
@@ -5172,7 +5199,7 @@ B277: 7E C0 BB       JMP    $C0BB
 B27A: 6A 1B          DEC    -$5,X
 B27C: 27 0F          BEQ    $B28D
 B27E: 86 01          LDA    #$01
-B280: B7 40 4E       STA    $404E
+B280: B7 40 4E       STA    sound_flame_404e
 B283: BD C0 BB       JSR    $C0BB
 B286: A6 0D          LDA    $D,X
 B288: 10 27 00 FD    LBEQ   $B389
@@ -5234,8 +5261,8 @@ B308: 6A 4F          DEC    $F,U
 B30A: CC 00 3C       LDD    #$003C
 B30D: A7 48          STA    $8,U
 B30F: E7 44          STB    $4,U
-B311: F7 10 4F       STB    $104F
-B314: 7C 40 4D       INC    $404D
+B311: F7 10 4F       STB    timer_104f
+B314: 7C 40 4D       INC    sound_caught_404d
 B317: 6C 4F          INC    $F,U
 B319: B6 25 02       LDA    $2502
 B31C: 27 06          BEQ    $B324
@@ -5245,7 +5272,7 @@ B324: 7F 25 01       CLR    hammer_active_2501
 B327: 7F 10 DA       CLR    $10DA
 B32A: BE 10 36       LDX    $1036
 B32D: 86 01          LDA    #$01
-B32F: B7 40 4E       STA    $404E
+B32F: B7 40 4E       STA    sound_flame_404e
 B332: 39             RTS
 B333: EE 15          LDU    -$B,X
 B335: 6A 1B          DEC    -$5,X
@@ -5305,7 +5332,7 @@ B3A8: A7 0A          STA    $A,X
 B3AA: 6F 14          CLR    -$C,X
 B3AC: 6F 1B          CLR    -$5,X
 B3AE: 6F 13          CLR    -$D,X
-B3B0: 7F 40 4E       CLR    $404E
+B3B0: 7F 40 4E       CLR    sound_flame_404e
 B3B3: 1E 31          EXG    U,X
 B3B5: BD 87 32       JSR    $8732
 B3B8: 1E 31          EXG    U,X
@@ -5737,7 +5764,7 @@ B7BF: E7 0A          STB    $A,X
 B7C1: CC 0C 3F       LDD    #$0C3F
 B7C4: A7 0B          STA    $B,X
 B7C6: E7 04          STB    $4,X
-B7C8: F7 40 4C       STB    $404C
+B7C8: F7 40 4C       STB    sound_sfx_404c
 B7CB: BD C0 BB       JSR    $C0BB
 B7CE: 6F 0C          CLR    $C,X
 B7D0: BD 81 50       JSR    suspend_task_8150
@@ -7168,7 +7195,7 @@ E5D8: A1 80          CMPA   ,X+
 E5DA: 26 3D          BNE    $E619
 E5DC: 8C 28 00       CMPX   #$2800
 E5DF: 26 F2          BNE    $E5D3
-E5E1: 8E 40 40       LDX    #music_playing_4040
+E5E1: 8E 40 40       LDX    #sound_level_start_tune_4040
 E5E4: A7 84          STA    ,X
 E5E6: 7F 80 00       CLR    watchdog_8000
 E5E9: A1 80          CMPA   ,X+
@@ -7182,7 +7209,7 @@ E5FA: E1 80          CMPB   ,X+
 E5FC: 26 1B          BNE    $E619
 E5FE: 8C 28 00       CMPX   #$2800
 E601: 26 F2          BNE    $E5F5
-E603: 8E 40 40       LDX    #music_playing_4040
+E603: 8E 40 40       LDX    #sound_level_start_tune_4040
 E606: E6 84          LDB    ,X
 E608: 7F 80 00       CLR    watchdog_8000
 E60B: E1 80          CMPB   ,X+
@@ -7223,7 +7250,7 @@ E651: 7F 80 00       CLR    watchdog_8000
 E654: 8C 28 00       CMPX   #$2800
 E657: 26 F6          BNE    $E64F
 ; clear ... all memory doing a X wrap. Bug? whatever
-E659: 8E 40 40       LDX    #music_playing_4040
+E659: 8E 40 40       LDX    #sound_level_start_tune_4040
 E65C: EF 81          STU    ,X++
 E65E: 7F 80 00       CLR    watchdog_8000
 E661: 8C 44 00       CMPX   #$4400
@@ -7447,7 +7474,7 @@ E87A: B6 10 1A       LDA    $101A
 E87D: 81 01          CMPA   #$01
 E87F: 27 4B          BEQ    $E8CC
 E881: BD EA 80       JSR    $EA80
-E884: 8E 40 40       LDX    #music_playing_4040
+E884: 8E 40 40       LDX    #sound_level_start_tune_4040
 E887: B6 10 17       LDA    $1017
 E88A: 81 01          CMPA   #$01
 E88C: 27 15          BEQ    $E8A3
@@ -7536,7 +7563,7 @@ E956: 7F 50 0A       CLR    video_stuff_500A
 E959: 7F 50 08       CLR    video_stuff_5008
 E95C: 7E 80 72       JMP    init_8072
 
-E95F: 7C 40 55       INC    $4055
+E95F: 7C 40 55       INC    sound_sfx_4055
 E962: 8E 07 FF       LDX    #$07FF
 E965: 86 20          LDA    #$20
 E967: C6 80          LDB    #$80
@@ -7558,7 +7585,7 @@ E990: 27 05          BEQ    $E997
 E992: 7A 10 08       DEC    scroll_value_1008
 E995: 20 E2          BRA    $E979
 E997: CC 01 08       LDD    #$0108
-E99A: B7 40 4A       STA    $404A
+E99A: B7 40 4A       STA    sound_highscore_tune_404a
 E99D: F7 10 72       STB    $1072
 E9A0: 8E EC 23       LDX    #$EC23
 E9A3: A6 80          LDA    ,X+
@@ -7574,7 +7601,7 @@ E9BC: 7F 10 00       CLR    sync_1000
 E9BF: BD EA 17       JSR    io_stuff_ea17
 E9C2: BD EB B9       JSR    $EBB9
 E9C5: CC 01 20       LDD    #$0120
-E9C8: B7 40 4A       STA    $404A
+E9C8: B7 40 4A       STA    sound_highscore_tune_404a
 E9CB: FE 10 74       LDU    $1074
 E9CE: B6 10 73       LDA    $1073
 E9D1: 48             ASLA
@@ -7600,7 +7627,7 @@ EA01: 7F 50 03       CLR    video_stuff_5003
 EA04: 7F 10 00       CLR    sync_1000
 EA07: BD EA 17       JSR    io_stuff_ea17
 EA0A: BD EB B9       JSR    $EBB9
-EA0D: B6 40 4A       LDA    $404A
+EA0D: B6 40 4A       LDA    sound_highscore_tune_404a
 EA10: 26 E7          BNE    $E9F9
 EA12: B6 80 00       LDA    watchdog_8000
 EA15: 20 FB          BRA    $EA12

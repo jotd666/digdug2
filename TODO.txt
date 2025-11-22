@@ -1,6 +1,8 @@
 - part of left screen tiles overlap right screen tiles (island is too small)
 - if instrumented, sprite positions are completely off, if not instrumented
   it is ok most of the time but sometimes not!
+- add sfx
+- find out if some tunes are unused
 - random crash at start (stack shift when resuming task) try to macro suspendtask with a regsave
 - set flag when intro tune is played (4040)
 - status parts (high & low) are too on the left

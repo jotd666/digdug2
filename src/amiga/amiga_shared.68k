@@ -23,7 +23,7 @@ SCORE_FILE_SIZE = 3+30*3   | wrong
 	lea		ram_buffer,a6
 	.else
 	move.l		ram_start_0000,a6
-	
+	illegal
 	* adjust offset to avoid subbing at run-time
 	sub.w	#0x1000,a6
 	.endif
