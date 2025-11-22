@@ -2947,6 +2947,8 @@ add_one_credit:
 1:
 	or.b	#0xF0,d0
 	move.b	d0,(credits_unit_4803,a6)
+	move.w	#credit_15_SND,d0
+	jbsr	osd_sound_start
 	movem.l	(a7)+,d0/a5/a6
 	rts
 	

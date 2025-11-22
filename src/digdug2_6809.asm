@@ -6742,7 +6742,7 @@ C9F0: 30 89 08 00    LEAX   $0800,X		; [video_address]
 C9F4: CE CC 20       LDU    #$CC20
 C9F7: 5F             CLRB
 C9F8: F7 10 CE       STB    $10CE
-C9FB: A6 85          LDA    B,X
+C9FB: A6 85          LDA    B,X		; [video_address]
 C9FD: 81 30          CMPA   #$30
 C9FF: 27 08          BEQ    $CA09
 CA01: B6 10 CE       LDA    $10CE
@@ -6887,36 +6887,36 @@ CB57: B6 10 34       LDA    round_number_1034
 CB5A: 84 01          ANDA   #$01
 CB5C: 43             COMA
 CB5D: 84 1F          ANDA   #$1F
-CB5F: AB C4          ADDA   ,U
+CB5F: AB C4          ADDA   ,U		; [video_address]
 CB61: 81 86          CMPA   #$86
 CB63: 27 04          BEQ    $CB69
 CB65: 81 82          CMPA   #$82
 CB67: 26 01          BNE    $CB6A
 CB69: 4A             DECA
-CB6A: A7 C4          STA    ,U
-CB6C: E7 C9 08 00    STB    $0800,U
+CB6A: A7 C4          STA    ,U		; [video_address]
+CB6C: E7 C9 08 00    STB    $0800,U		; [video_address]
 CB70: 7E CA B4       JMP    $CAB4
 CB73: B6 10 CE       LDA    $10CE
 CB76: 81 04          CMPA   #$04
 CB78: 10 27 FF 38    LBEQ   $CAB4
-CB7C: A6 C4          LDA    ,U
+CB7C: A6 C4          LDA    ,U		; [video_address]
 CB7E: 81 85          CMPA   #$85
 CB80: 26 01          BNE    $CB83
 CB82: 4C             INCA
 CB83: 80 1F          SUBA   #$1F
-CB85: A7 C4          STA    ,U
+CB85: A7 C4          STA    ,U		; [video_address]
 CB87: C4 0F          ANDB   #$0F
 CB89: B6 10 CE       LDA    $10CE
 CB8C: 85 01          BITA   #$01
 CB8E: 27 6B          BEQ    $CBFB
 CB90: 85 02          BITA   #$02
 CB92: 27 05          BEQ    $CB99
-CB94: A6 C8 20       LDA    $20,U
+CB94: A6 C8 20       LDA    $20,U		; [video_address]
 CB97: 20 03          BRA    $CB9C
-CB99: A6 C8 E0       LDA    -$20,U
+CB99: A6 C8 E0       LDA    -$20,U		; [video_address]
 CB9C: 81 FC          CMPA   #$FC
 CB9E: 25 36          BCS    $CBD6
-CBA0: A6 5F          LDA    -$1,U
+CBA0: A6 5F          LDA    -$1,U		; [video_address]
 CBA2: 81 FC          CMPA   #$FC
 CBA4: 24 55          BCC    $CBFB
 CBA6: 81 81          CMPA   #$81
@@ -6925,19 +6925,19 @@ CBAA: 81 8E          CMPA   #$8E
 CBAC: 27 2C          BEQ    $CBDA
 CBAE: 81 BC          CMPA   #$BC
 CBB0: 26 0C          BNE    $CBBE
-CBB2: A6 C9 07 FF    LDA    $07FF,U
+CBB2: A6 C9 07 FF    LDA    $07FF,U		; [video_address]
 CBB6: 81 28          CMPA   #$28
 CBB8: 26 1C          BNE    $CBD6
 CBBA: 86 01          LDA    #$01
 CBBC: 20 9C          BRA    $CB5A
 CBBE: 81 B5          CMPA   #$B5
 CBC0: 26 14          BNE    $CBD6
-CBC2: A6 C9 07 FF    LDA    $07FF,U
+CBC2: A6 C9 07 FF    LDA    $07FF,U		; [video_address]
 CBC6: 81 28          CMPA   #$28
 CBC8: 26 0C          BNE    $CBD6
 CBCA: CC 86 09       LDD    #$8609
-CBCD: A7 C4          STA    ,U
-CBCF: E7 C9 08 00    STB    $0800,U
+CBCD: A7 C4          STA    ,U		; [video_address]
+CBCF: E7 C9 08 00    STB    $0800,U		; [video_address]
 CBD3: 7E CA B4       JMP    $CAB4
 CBD6: 81 8D          CMPA   #$8D
 CBD8: 26 05          BNE    $CBDF
@@ -6946,16 +6946,16 @@ CBDD: 20 8B          BRA    $CB6A
 CBDF: B6 10 3A       LDA    $103A
 CBE2: 85 02          BITA   #$02
 CBE4: 27 15          BEQ    $CBFB
-CBE6: A6 C9 07 FF    LDA    $07FF,U
+CBE6: A6 C9 07 FF    LDA    $07FF,U		; [video_address]
 CBEA: 81 10          CMPA   #$10
 CBEC: 25 0D          BCS    $CBFB
 CBEE: 81 20          CMPA   #$20
 CBF0: 24 09          BCC    $CBFB
 CBF2: CA 10          ORB    #$10
-CBF4: E7 C9 08 00    STB    $0800,U
+CBF4: E7 C9 08 00    STB    $0800,U		; [video_address]
 CBF8: 7E CA B4       JMP    $CAB4
 CBFB: CA 20          ORB    #$20
-CBFD: E7 C9 08 00    STB    $0800,U
+CBFD: E7 C9 08 00    STB    $0800,U		; [video_address]
 CC01: 7E CA B4       JMP    $CAB4
 CC04: 30 05          LEAX   $5,X
 CC06: FE 10 38       LDU    $1038
@@ -7041,7 +7041,7 @@ CD11: F7 10 EB       STB    $10EB
 CD14: 5F             CLRB
 CD15: 8E CD 6B       LDX    #$CD6B
 CD18: A6 81          LDA    ,X++
-CD1A: A6 C6          LDA    A,U
+CD1A: A6 C6          LDA    A,U		; [video_address]
 CD1C: 81 90          CMPA   #$90
 CD1E: 25 02          BCS    $CD22
 CD20: EA 1F          ORB    -$1,X

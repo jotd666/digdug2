@@ -1,11 +1,11 @@
 from shared import *
+import re
 
 # post-conversion automatic patches, allowing not to change the asm file by hand
 
-
+sound_mem_regex = re.compile("\w+_(40[45]\w)")
 
 input_dict = {"system_3300":"read_system_inputs",
-"audio_register_w_1500":"sound_start",
 "watchdog_8000":"",
 "video_stuff_5009" : "",
 "video_stuff_5008" : "",
@@ -229,6 +229,13 @@ with open(source_dir / "conv.s") as f:
                 rest = re.sub(".*\"","",line)
                 nb_cases = nb_cases_dict[address]
                 line = f"\t{inst}_{ireg}_INDEXED\t{reg},{nb_cases}{rest}"
+
+        m = sound_mem_regex.search(line)
+        if m:
+            toks = line.split()
+            if "inc" in toks:
+                # enabling sfx
+                lines[i+1] += "\tjbsr\tplay_sound\n"
         if "ERROR" in line:
             print(line,end="")
         lines[i] = line
@@ -244,5 +251,15 @@ with open(source_dir / "digdug2.68k","w") as fw:
     fw.write("""\t.include "data.inc"
 \t.global\tirq_8000
 \t.global\treset_e5ba
+
+play_sound:
+    move.l  d0,-(a7)
+    move.l  a0,d0
+    sub.l   a6,d0
+    sub.w   #0x403F,d0
+    jbsr    osd_sound_start
+    move.l  (a7)+,d0
+    rts
+
 """)
     fw.writelines(lines)
