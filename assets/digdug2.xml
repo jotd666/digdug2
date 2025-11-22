@@ -1,0 +1,49 @@
+<mamecheat version="1">
+
+  <cheat desc="Infinite Lives">
+    <script state="run">
+      <action>maincpu.pb@1703=06</action>
+    </script>
+  </cheat>
+
+  <cheat desc="Invincibility"> <comment>You die though when you fall into the sea</comment>
+    <script state="on">
+      <action>temp0 =maincpu.mb@AC00</action>
+      <action>temp1 =maincpu.mb@B2FE</action>
+    </script>
+    <script state="run">
+      <action>maincpu.mb@AC00=20</action>
+      <action>maincpu.mb@B2FE=20</action> <!-- 1st = Enemy, 2nd = Fire -->
+    </script>
+    <script state="off">
+      <action>maincpu.mb@AC00=temp0 </action>
+      <action>maincpu.mb@B2FE=temp1 </action>
+    </script>
+  </cheat>
+
+  <cheat desc=" "/>
+
+  <cheat desc="Skip RAM/ROM Check">
+    <script state="on">
+      <action>temp0 =maincpu.mw@E5CE</action>
+    </script>
+    <script state="run">
+      <action>maincpu.mw@E5CE=2079</action>
+    </script>
+    <script state="off">
+      <action>maincpu.mw@E5CE=temp0 </action>
+    </script>
+  </cheat>
+
+  <cheat desc="Sound Test">
+    <parameter min="1" max="22" step="1"/>
+    <script state="change">
+      <action>sub.pb@temp1=00</action>
+      <action>temp0=003F+param</action>
+      <action>sub.pb@temp0=01</action>
+      <action>temp1=temp0</action>
+    </script>
+  </cheat>
+
+</mamecheat>
+<!-- Cheat file downloaded from https://www.mamecheat.co.uk, see cheat.txt for list of contributors. -->
