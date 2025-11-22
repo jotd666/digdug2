@@ -1,15 +1,15 @@
+- part of left screen tiles overlap right screen tiles (island is too small)
 - if instrumented, sprite positions are completely off, if not instrumented
-  it is ok
-- random crash at start (stack shift when resuming task)
-- up/down character works, left/right scrolling completely fucked
-- enemies don't move
+  it is ok most of the time but sometimes not!
+- random crash at start (stack shift when resuming task) try to macro suspendtask with a regsave
 - set flag when intro tune is played (4040)
-- write in 1008 during title see if scroll works (it does not)
+- status parts (high & low) are too on the left
 - set_status_bitplanes 33 v 32 cheat
+- when music is avail, change the clear 4040 in irq
 - demo attract mode not working properly
 - optimize 0x20 write = clear
 - implement sprite double height: test in start game screen
-- implement controls
 - report 2 last optimization phases in 6809 converter
 - implement trainer invincible.infinite lives
+- solve the issue of 288-high screen by sacrificing something in status
 - start screen: bottom right dragon flipped not mirrored (mockup ok)

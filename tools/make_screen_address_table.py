@@ -24,7 +24,7 @@ import bitplanelib
 import collections
 
 # it is so crazy that I decided to generate it instead of pre-computing it in the asm code
-# as it would take maybe 1 or 2 hours to code properly for zero benefit
+# as it would take maybe 1 or 2 hours to code properly in assembly for zero benefit
 
 INVALID_XY = (60,0)
 
@@ -47,7 +47,7 @@ for y,line_offset in enumerate(range(0,0x40,0x20)):
 
 for screen_part in [0,1]:
     screen_offset = 0x400 if screen_part == 1 else 0
-    x_offset = 0 if screen_part == 0 else 28
+    x_offset = 0 if screen_part == 1 else 28
 
     for y,line_offset in enumerate(range(0,32),2):
         start = 0x360+line_offset+screen_offset

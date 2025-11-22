@@ -38,7 +38,7 @@ BASE_BPLCON3_VALUE = (1<<12)+(BORDERBLANK<<5)  | dpf second playfield palette st
 BASE_BPLCON2_VALUE = 0x0024		| sprites above all playfields
 
 SPRITE_X_CORRECTION = 0
-SPRITE_Y_CORRECTION = 16
+SPRITE_Y_CORRECTION = 16+32		| X (portrait)
 SPRITE_HEIGHT = 16
 SPRITE_WIDTH = 16
 
@@ -850,6 +850,11 @@ do_irq:
 	* set base for RAM
 	jbsr	cpu_init
 	GET_MEMORY_START_AND_DP
+	* TEMP TEMP
+	clr.b	(0x4040,a6)  | start music is done
+	clr.b	(0x4051,a6)  | death sfx is done
+	clr.b	(0x404D,a6)  | death sfx is done
+	
 	jra			irq_8000					| pass control to the cpu core
 	
 * just in case some hardware calls nmi
@@ -1157,14 +1162,20 @@ really_update_scroll:
 	GET_MEMORY_START_AND_DP
 	lea		scroll_table,a2
 	move.l		background_ptr,a4
-
+	sub.w #8,a4
+	moveq	#0,d5
 	move.b	(scroll_value_1008,a6),d5	| scroll value 0=>0xFF
+	not.b	d5
+	add.w	d5,d5
+	add.w	d5,d5
+	add.w	d5,a2
+0:
 	lea		scrolling_bitplanes,a0
-	move.l	a4,d0				| base address
-	add.l	#BG_NB_BYTES_PER_ROW*16,d0		| skip 2 first tile rows
-	move.w	(a2,d5.w),(a0)	| set bplcon value
-	add.w	(2,a2,d5.w),d0	| bytes offset
+	add.w	#BG_NB_BYTES_PER_ROW*16,a4		| skip 2 first tile rows
+	move.w	(a2)+,(a0)	| set bplcon value
+	add.w	(a2),a4	| bytes offset
 	
+	move.l	a4,d0
 	addq	#4,a0				| pointer on first bitplane
 	jbsr	set_static_bitplanes
 	
@@ -2175,8 +2186,8 @@ platform_init:
 	move.w	#BASE_BPLCON2_VALUE,bplcon2(a5)
 	move.w	#BASE_BPLCON3_VALUE,bplcon3(a5)
  	*         VVHH
-    move.w #0x99-0X18+0x40+(COPPER_Y_START<<8),diwstrt(a5)
-    move.w #0x79+0x3F+(COPPER_Y_START<<8)+0x1000,diwstop(a5)
+    move.w #0x99+0x48+(COPPER_Y_START<<8),diwstrt(a5)
+    move.w #0x79+0x48+(COPPER_Y_START<<8)+0x1000,diwstop(a5)
     move.w #0x0038,ddfstrt(a5)
     move.w #0x00D0,ddfstop(a5)
 
@@ -3318,7 +3329,7 @@ cpu_log_enable:
 	.section	.datachip
 
 * title
-.macro	DECL_BITPLANES	bpoff_start,nb_planes
+	.macro	DECL_BITPLANES	bpoff_start,nb_planes
 	.set	bpoff,\bpoff_start
 	.rept	\nb_planes
 	dc.w  0xe0+bpoff,0
@@ -3328,7 +3339,7 @@ cpu_log_enable:
 	.endm
 
 	
-.macro	DECL_COLORS	offset,nb_colors
+	.macro	DECL_COLORS	offset,nb_colors
 	.set	colidx,\offset
 	.rept	\nb_colors
 	dc.w	color+(colidx*2),0
@@ -3355,15 +3366,7 @@ cpu_log_enable:
     .endr
 	.endm
 
-	.macro  DEF_SCROLL_ROWS	nb_rows
-	.rept	\nb_rows
-	.word	0x01+(y_start*256),0xFFFE
-	.word	bplcon1
-	.word	0
-	DECL_EVEN_BITPLANES	4,4
-	.set	y_start,y_start+8
-	.endr
-	.endm 
+
 	
 blank_sprite:
 	.long	0,0
@@ -3409,6 +3412,7 @@ bobs_colors:
 game_sprites:
 	DECL_SPRITES
 game_sprites_end:
+	* let the 2 rows from status pass
 	.word	0x01+((COPPER_Y_START+16)*256),0xFFFE
 	
 	.word	bplcon1
