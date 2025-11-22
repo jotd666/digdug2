@@ -2095,7 +2095,7 @@ task_entry_14_9438:
 9475: 24 2E          BCC    $94A5
 9477: B7 10 6D       STA    $106D
 947A: BE 10 36       LDX    $1036
-; inlined random
+; inlined random for sea tiles animation
 947D: B6 10 11       LDA    random_seed_1011
 9480: 48             ASLA
 9481: 48             ASLA
@@ -2105,15 +2105,15 @@ task_entry_14_9438:
 9487: 48             ASLA
 9488: 79 10 11       ROL    random_seed_1011
 948B: B6 10 11       LDA    random_seed_1011
-948E: 84 1F          ANDA   #$1F
+948E: 84 1F          ANDA   #$1F			; pick a screen coordinate
 9490: E6 86          LDB    A,X				; [video_address]
 9492: C1 FC          CMPB   #$FC
-9494: 25 05          BCS    $949B
-9496: 5C             INCB
-9497: CA FC          ORB    #$FC
-9499: E7 86          STB    A,X		; [video_address]
+9494: 25 05          BCS    $949B			; < sea tile (0xFC-0xFF) => skip
+9496: 5C             INCB					; this is a sea tile, increment
+9497: CA FC          ORB    #$FC			; and wrap
+9499: E7 86          STB    A,X		; [video_address] change sea tile
 949B: 7A 10 09       DEC    $1009
-949E: 27 08          BEQ    $94A8
+949E: 27 08          BEQ    $94A8	; next row
 94A0: 30 88 20       LEAX   $20,X
 94A3: 20 D8          BRA    $947D
 94A5: B7 10 6D       STA    $106D

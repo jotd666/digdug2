@@ -2414,6 +2414,10 @@ update_bg_tile:
 	lea		tiles_layout,a0
 	* layout is a bloody nightmare, directly fetch
 	* the decoded X,Y values from a pre-generated table
+	cmp.w	#0x392,d7
+	jne		555f
+	move.b	#0,0x110
+555:
 	add.w	d7,d7
 	add.w	d7,d7
 	add.w	d7,a0

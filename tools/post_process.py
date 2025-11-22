@@ -234,8 +234,11 @@ with open(source_dir / "conv.s") as f:
         if m:
             toks = line.split()
             if "inc" in toks:
-                # enabling sfx
+                # INC sound_44xx: enabling sfx
                 lines[i+1] += "\tjbsr\tplay_sound\n"
+            elif "sta" in toks:
+                # STA sound_44xx: enabling or disabling sfx
+                lines[i+1] += "\tjbsr\tsound_control\n"
         if "ERROR" in line:
             print(line,end="")
         lines[i] = line
@@ -259,6 +262,13 @@ play_sound:
     sub.w   #0x403F,d0
     jbsr    osd_sound_start
     move.l  (a7)+,d0
+    rts
+
+sound_control:
+    tst.b   d0
+    jeq     0f
+    jbsr    play_sound
+0:
     rts
 
 """)

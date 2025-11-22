@@ -8,17 +8,17 @@ sox = "sox"
 
 sound_dir = this_dir / ".." / "sounds"
 
-sound_settings_dict = { 1 : {"channel":3,"priority":1},
- 3 : {"channel":1,"priority":20},
-  0x13 : {"channel":3,"priority":10},
-  0x20 : {"channel":2,"priority":10},
-  0x21 : {"channel":2,"priority":10},
-  0x22 : {"channel":2,"priority":10},
-  0x82 : {"channel":1,"priority":10},
-  0x83 : {"channel":1,"priority":10},
+sound_settings_dict = { 0x15 : {"channel":3,"priority":1},
+## 3 : {"channel":1,"priority":20},
+##  0x13 : {"channel":3,"priority":10},
+##  0x20 : {"channel":2,"priority":10},
+##  0x21 : {"channel":2,"priority":10},
+##  0x22 : {"channel":2,"priority":10},
+##  0x82 : {"channel":1,"priority":10},
+##  0x83 : {"channel":1,"priority":10},
 
 }
-sound_settings_dict = {}
+
 def convert():
     if not shutil.which("sox"):
         raise Exception("sox command not in path, please install it")

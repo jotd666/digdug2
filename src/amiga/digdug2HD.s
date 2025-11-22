@@ -64,7 +64,7 @@ DECL_VERSION:MACRO
 	ENDC
 	ENDM
 _data   dc.b    0
-_name	dc.b	"JailBreak",0
+_name	dc.b	"Dig Dug 2",0
 _copy	dc.b	'2025 JOTD',0
 _info
     ;dc.b    "Music by no9",0
