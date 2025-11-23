@@ -49,6 +49,21 @@ def loadtiles(i):
 
 tile_set = [loadtiles(i) for i in range(16)]
 
+def get_single_image(color,sprite,flipx,flipy):
+    im = tile_set[color][sprite]
+
+    if flipy:
+        im = ImageOps.flip(im)
+    if flipx:
+        im = ImageOps.mirror(im)
+    return im
+
+gfx_offs=  [
+                [ 0, 1, 4, 5 ],
+                [ 2, 3, 6, 7 ],
+                [ 8, 9,12,13 ],
+                [10,11,14,15 ]
+            ]
 
 def process(the_dump,name_filter=None,hide_named_sprite=None):
     the_dump = pathlib.Path(the_dump)
@@ -70,36 +85,51 @@ def process(the_dump,name_filter=None,hide_named_sprite=None):
 
     for offs in range(0,0x80,2):
         if ((spriteram_3[offs+1] & 2) == 0):
-            sprite = spriteram[offs]
             color = spriteram[offs+1]
-            sx = spriteram_2[offs+1] + 0x100 * (spriteram_3[offs+1] & 1) - 40
-            sy = spriteram_2[offs] - 1
-            flipx = (spriteram_3[offs] & 0x01)
-            flipy = (spriteram_3[offs] & 0x02) >> 1
-            sizex = (spriteram_3[offs] & 0x04) >> 2
-            sizey = (spriteram_3[offs] & 0x08) >> 3
-
-            sprite &= ~sizex;
-            sprite &= ~(sizey << 1);
-
-            sy -= 16 * sizey;
-            sy = (sy & 0xff) - 32
-
-
-            im = tile_set[color][sprite]
-
-            flipx,flipy = flipy,flipx
-            sx,sy = sy,sx
-
             if color != 0:
-                if flipy:
-                    im = ImageOps.flip(im)
-                if flipx:
-                    im = ImageOps.mirror(im)
+                sprite = spriteram[offs]
+                sx = spriteram_2[offs+1] + 0x100 * (spriteram_3[offs+1] & 1) - 40
+                sy = spriteram_2[offs] - 1
+                flipx = (spriteram_3[offs] & 0x01)
+                flipy = (spriteram_3[offs] & 0x02) >> 1
+                sizex = (spriteram_3[offs] & 0x04) >> 2
+                sizey = (spriteram_3[offs] & 0x08) >> 3
+
+                sprite &= ~sizex;
+                sprite &= ~(sizey << 1);
+
+                sy -= 16 * sizey;
+                sy = (sy & 0xff) - 32
+
+
+                flipx,flipy = flipy,flipx
+                sizex,sizey = sizey,sizex
+                sx,sy = sy,sx
+
+
+                im = get_single_image(color,sprite,flipx,flipy)
+
 
                 name = sprite_names.get(sprite,"unknown")
                 print(f"offs:{offs:02x}, name: {name}, code:{sprite:02x}, sizex: {sizex}, sizey: {sizey}, flipx: {flipx}, flipy: {flipy}, color:{color:02x}, X:{sx}, Y:{sy}")
-                result.paste(im,(sx,sy))
+
+                if sizex and sizey:
+                    if not flipx:
+                        sx += 32
+                        result.paste(im,(sx ,sy))
+                        im = get_single_image(color,sprite+1,flipx,flipy)
+                        result.paste(im,(sx ,sy+16))
+                        im = get_single_image(color,sprite+2,flipx,flipy)
+                        result.paste(im,(sx-16 ,sy))
+                        im = get_single_image(color,sprite+3,flipx,flipy)
+                        result.paste(im,(sx-16 ,sy+16))
+                elif sizey:
+                    if not flipx:
+                        result.paste(im,(sx ,sy))
+                        im = get_single_image(color,sprite+1,flipx,flipy)
+                        result.paste(im,(sx ,sy+16))
+                else:
+                    result.paste(im,(sx ,sy))
                 nb_active += 1
 
     result.save(f"{the_dump.stem}.png")

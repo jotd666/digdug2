@@ -13,6 +13,10 @@ magenta = (254,0,254)
 NB_SPRITES = 0x100
 NB_TILES = 0x100
 
+dsy_sprites = get_double_size_y_sprites()
+dsxy_sprites = get_double_size_xy_sprites()
+
+
 dump_it = True
 
 if dump_it:
@@ -55,24 +59,27 @@ dump=False,name_dict=None,cluts=None,tile_number=0,is_bob=False):
 
     palette = set()
 
+    # first read ALL data
     for j in range(nb_rows):
         for i in range(nb_cols):
+            img = Image.new("RGB",(width,height))
+            img.paste(tiles_1,(-i*width,-j*height))
+            tileset_1.append(img)
 
+    other_tile_failure = False
+    # now we can rework it
+    if not is_bob:
+        for tile_number,img in enumerate(tileset_1):
             if cluts is not None and (tile_number not in cluts or palette_index not in cluts[tile_number]):
                 # no clut declared for that tile
-                tileset_1.append(None)
+                tileset_1[tile_number] = None
             else:
-
-                img = Image.new("RGB",(width,height))
-                img.paste(tiles_1,(-i*width,-j*height))
 
                 # only consider colors of used tiles
                 palette.update(set(bitplanelib.palette_extract(img)))
 
-
-                tileset_1.append(img)
-                # dump tiles
-                if not is_bob and dump:
+                # dump tiles not bobs (must group by size first)
+                if dump:
                     img = ImageOps.scale(img,5,resample=Image.Resampling.NEAREST)
                     if name_dict:
                         name = name_dict.get(tile_number,"unknown")
@@ -80,29 +87,50 @@ dump=False,name_dict=None,cluts=None,tile_number=0,is_bob=False):
                         name = "unknown"
 
                     img.save(os.path.join(dump_subdir,f"{name}_{tile_number:02x}_{palette_index:02x}.png"))
-            tile_number += 1
 
-    other_tile_failure = False
-    if is_bob:
+    else:
         # rework & dump grouped / non grouped sprites
         # rework tiles which are grouped
         for tile_number,wtile in enumerate(tileset_1):
 
-            if wtile and tile_number in group_sprite_pairs:
-                # change wtile, fetch code +0x100
+            if wtile and tile_number in dsy_sprites:
+                # change wtile, fetch code +1
                 other_tile_index = tile_number+1
                 other_tile = tileset_1[other_tile_index]
                 if not other_tile:
                     print(f"warn: other tile index 0x{other_tile_index:02x} not found (palette ${palette_index:x})")
                     other_tile_failure = True
-                new_tile = Image.new("RGB",(wtile.size[0]*2,wtile.size[1]))
+                new_tile = Image.new("RGB",(wtile.size[0],wtile.size[1]*2))
 
                 new_tile.paste(wtile)
                 if other_tile:
-                    new_tile.paste(other_tile,(wtile.size[0],0))
+                    new_tile.paste(other_tile,(0,wtile.size[1]))
                 tileset_1[tile_number] = new_tile
-                tileset_1[tile_number+1] = None  # discatd
+                tileset_1[tile_number+1] = None  # discard
                 wtile = new_tile
+            if wtile and tile_number in dsxy_sprites:
+                # change wtile, fetch code +1
+                new_tile = Image.new("RGB",(wtile.size[0]*2,wtile.size[1]*2))
+
+                new_tile.paste(wtile,(wtile.size[0],0))
+                new_tile.paste(tileset_1[tile_number+1],(wtile.size[0],wtile.size[1]))
+                new_tile.paste(tileset_1[tile_number+2],(0,0))
+                new_tile.paste(tileset_1[tile_number+3],(0,wtile.size[1]))
+
+                tileset_1[tile_number] = new_tile
+                tileset_1[tile_number+1] = None  # discard
+                tileset_1[tile_number+2] = None  # discard
+                tileset_1[tile_number+3] = None  # discard
+                wtile = new_tile
+
+            if wtile:
+                palette.update(set(bitplanelib.palette_extract(wtile)))
+
+            if cluts is not None and (tile_number not in cluts or palette_index not in cluts[tile_number]):
+                # no clut declared for that tile: cancel it
+                tileset_1[tile_number] = None
+                wtile = None
+
             if dump_it and wtile:
                 img = ImageOps.scale(wtile,5,resample=Image.Resampling.NEAREST)
                 if sprite_names:
@@ -137,6 +165,7 @@ def add_tile(table,index,cluts=[0]):
 sprite_cluts = {}
 tile_cluts = {}
 
+
 try:
     with open(used_graphics_dir / "used_sprites","rb") as f:
         for index in range(NB_SPRITES):
@@ -144,17 +173,11 @@ try:
             cluts = [i for i,c in enumerate(d) if c]
             if cluts:
                 add_tile(sprite_cluts,index,cluts=cluts)
+
 except OSError:
     print("Cannot find used_sprites")
 
 
-player_cluts = [1,2]  # only 2 players supported: less memory
-# for all player frames with all player "races" (sorry)
-for index,name in sprite_names.items():
-    if "player" in name:
-        add_tile(sprite_cluts,index,cluts=player_cluts)
-        if index in player_sprite_pairs:
-            add_tile(sprite_cluts,index+1,cluts=player_cluts)
 
 if all_tile_cluts:
     tile_cluts = None
@@ -282,6 +305,7 @@ plane_orientations = [("standard",lambda x:x),
 ("flip",ImageOps.flip),
 ("mirror",ImageOps.mirror),
 ("flip_mirror",lambda x:ImageOps.flip(ImageOps.mirror(x)))]
+
 
 def read_tileset(img_set_list,palette,plane_orientation_flags,cache,is_bob):
     next_cache_id = 1

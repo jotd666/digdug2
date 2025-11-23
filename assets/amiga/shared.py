@@ -49,13 +49,16 @@ def get_sprite_names():
     set_names(rval,0x5C,0x5E,"flame")
     set_names(rval,0x58,0x5A,"flame")
     set_names(rval,0x6C,0x6D,"flame")
-    set_names(rval,0x60,0x62,"flame")
-    set_names(rval,0x64,0x6A,"flame")
+    set_names(rval,0x60,0x6a,"flame")
     set_names(rval,0xF5,0x100,"points")
     set_names(rval,0x18,0x20,"dragon")
+    set_names(rval,0x5a,0x60,"dragon")
     set_names(rval,0x3C,0x3E,"game_over")
     set_names(rval,0x6C,0x70,"ghost")
 
+    rval[0x6a] = "red_enemy_inflating"
+    rval[0x6b] = "dragon_inflating"
+    rval[0x62] = "dragon_firing"
     rval[0x7C] = "banana"
     rval[0x7D] = "corn"
     rval[0x7E] = "pineapple"
@@ -73,7 +76,9 @@ def get_sprite_names():
     set_names(rval,0xE0,0xF5,"title_letter")
     set_names(rval,0x20,0x38,"player_digging")  # double height
     set_names(rval,0x0,0x10,"player")
+    set_names(rval,0x70,0x7c,"hose")
 
+    set_names(rval,0x48,0x50,"player_pumping")
     set_names(rval,0x44,0x46,"player_falling")
     set_names(rval,0x54,0x58,"player_dying")
 
@@ -81,6 +86,11 @@ def get_sprite_names():
 
 
     return rval
+
+def get_double_size_y_sprites():
+    return set(range(0x20,0x38,2))   # drilling hero
+def get_double_size_xy_sprites():
+    return set(range(0xC8,0xE0,4))   # inflating monsters
 
 def get_mirror_sprites():
     """ return the index of the sprites that need mirroring
