@@ -1,4 +1,4 @@
-- pump moves diagonally
+- pump moves diagonally after a while
 - sometimes sprite positions are completely off: one enemy has the sprite
   of the main character
 - find why game locks up
@@ -9,6 +9,7 @@
 - when music is avail, change the clear 4040 in irq
 - demo attract mode not working properly
 - optimize 0x20 write = clear
+- bottom of the screen not showing (credit, round): check set_status_bitplanes
 - implement sprite double height: test in start game screen
 - report 2 last optimization phases in 6809 converter
 - implement trainer invincible.infinite lives

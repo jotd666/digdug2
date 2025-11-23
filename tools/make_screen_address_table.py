@@ -9,10 +9,10 @@
 ##
 ##*** bottom status *** unrotated X,Y, X decreasing, Y increasing by $20
 ##* with more wierdness
-##* $781: 12,32 $780: 13,32
-##* $78F: 14,32 => $782: 27,32
-##* $79E: 0,32 => $792: 11,32
-##* row 33: same with $20 added to all addresses
+##* $781: 34,34 $780: 13,34
+##* $78F: 36,34 => $782: 59,34
+##* $79D: 32,34 => $792: 43,34
+##* row 35: same with $20 added to all addresses
 
 import shared
 import bitplanelib
@@ -26,7 +26,7 @@ INVALID_XY = (60,0)
 address_table = [INVALID_XY] * 0x800
 
 def set_value(offset,value):
-    if address_table[offset] != INVALID_XY and offset not in [0x780,0x781,0x791,0x7B1]:
+    if value != INVALID_XY and address_table[offset] != INVALID_XY and offset not in [0x780,0x781,0x791,0x7B1]:
         print(f"Already defined: {offset:04x} old={address_table[offset]} new={value}")
         return
     address_table[offset] = value
@@ -34,7 +34,7 @@ def set_value(offset,value):
 # top status
 for y,line_offset in enumerate(range(0,0x40,0x20)):
     start = 0x7DD+line_offset
-    x = 0
+    x = 32
     for i in range(start,start-32,-1):
         set_value(i,(x,y))
         x += 1
@@ -46,21 +46,29 @@ for y,line_offset in enumerate(range(0,32),2):
     for x,i in enumerate(range(start,start-60*32,-0x20)):
         set_value(i,(x,y))
 
+
+
+##* $781: 44,34 $780: 45,34
+##* $78F: 46,34 => $782: 59,34
+##* $79D: 32,34 => $792: 43,34
+##* row 35: same with $20 added to all addresses
+
+x_offset = 32
 # bottom status
-for y,line_offset in enumerate(range(0,0x40,0x20)):
+for y,line_offset in enumerate(range(0,0x40,0x20),2):
     y += 32
     start = 0x78F+line_offset
-    x = 14
+    x = 14+x_offset
     for i in range(start,start-14,-1):
         set_value(i,(x,y))
         x += 1
-    start = 0x79E+line_offset
-    x = 0
+    start = 0x79D+line_offset
+    x = x_offset
     for i in range(start,start-14,-1):
         set_value(i,(x,y))
         x += 1
-    set_value(line_offset+0x780,(13,y))
-    set_value(line_offset+0x781,(12,y))
+    set_value(line_offset+0x780,(13+x_offset,y))
+    set_value(line_offset+0x781,(12+x_offset,y))
     set_value(line_offset+0x790,(INVALID_XY))  # seems not visible
     set_value(line_offset+0x791,(INVALID_XY))
 
