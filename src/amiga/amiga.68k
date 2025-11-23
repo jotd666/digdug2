@@ -38,7 +38,7 @@ BASE_BPLCON3_VALUE = (1<<12)+(BORDERBLANK<<5)  | dpf second playfield palette st
 BASE_BPLCON2_VALUE = 0x0024		| sprites above all playfields
 
 SPRITE_X_CORRECTION = 0
-SPRITE_Y_CORRECTION = 16+32		| X (portrait)
+SPRITE_Y_CORRECTION = 16		| X (portrait)
 SPRITE_HEIGHT = 16
 SPRITE_WIDTH = 16
 
@@ -863,7 +863,9 @@ _nmi:
 	move.w	#0x7FFF,_custom+intreq
 	rts
 	
-_vblank:
+level3_interrupt:
+	move.l	a7,saved_stack_level_3
+	lea		level3_stack,a7
     movem.l d0-d7/a0-a6,-(a7)
 	lea		_custom,a5
 	move.w	(intreqr,a5),d0
@@ -960,6 +962,7 @@ _vblank:
 
 3:
     movem.l (a7)+,d0-d7/a0-a6
+ 	move.l	saved_stack_level_3,a7
     rte
 	
 osd_read_4802:
@@ -1162,7 +1165,6 @@ really_update_scroll:
 	GET_MEMORY_START_AND_DP
 	lea		scroll_table,a2
 	move.l		background_ptr,a4
-	sub.w #8,a4
 	moveq	#0,d5
 	move.b	(scroll_value_1008,a6),d5	| scroll value 0=>0xFF
 	not.b	d5
@@ -2186,7 +2188,7 @@ platform_init:
 	move.w	#BASE_BPLCON2_VALUE,bplcon2(a5)
 	move.w	#BASE_BPLCON3_VALUE,bplcon3(a5)
  	*         VVHH
-    move.w #0x99+0x48+(COPPER_Y_START<<8),diwstrt(a5)
+    move.w #0x99+0x28+(COPPER_Y_START<<8),diwstrt(a5)
     move.w #0x79+0x48+(COPPER_Y_START<<8)+0x1000,diwstop(a5)
     move.w #0x0038,ddfstrt(a5)
     move.w #0x00D0,ddfstop(a5)
@@ -2243,7 +2245,7 @@ platform_init:
 	move.l	system_vbr(pc),a1
 	pea		level2_interrupt(pc)
 	move.l	(a7)+,(0x68,a1)
-	pea		_vblank(pc)
+	pea		level3_interrupt(pc)
 	move.l	(a7)+,(0x6C,a1)
 	pea		_nmi(pc)
 	move.l	(a7)+,(0x7C,a1)
@@ -2414,10 +2416,7 @@ update_bg_tile:
 	lea		tiles_layout,a0
 	* layout is a bloody nightmare, directly fetch
 	* the decoded X,Y values from a pre-generated table
-	cmp.w	#0x392,d7
-	jne		555f
-	move.b	#0,0x110
-555:
+
 	add.w	d7,d7
 	add.w	d7,d7
 	add.w	d7,a0
@@ -2958,8 +2957,11 @@ add_one_credit:
 	
 
 level2_interrupt:
-	bsr		handle_keyboard
+	move.l	a7,saved_stack_level_2
+	lea		level2_stack(pc),a7
+	jbsr		handle_keyboard
 	move.w	#8,_custom+intreq
+	move.l	saved_stack_level_2,a7
 	rte
 	
 handle_keyboard:
@@ -3141,6 +3143,10 @@ write_colorram_out_of_range_error:
 	.align	2
 	.endif
 
+saved_stack_level_2:
+	.long	0
+saved_stack_level_3:
+	.long	0
 old_intena:
 	.long	0
 old_dmacon:
@@ -3218,6 +3224,11 @@ pause_flag:
 	.word	0
 frameskip:
 	.word	0
+
+	.skip	0x100
+level2_stack:
+	.skip	0x400
+level3_stack:
 
 tiles_row_flags:
 	.skip	0x20

@@ -3,14 +3,9 @@
 ##* $7DD: 0,0 => $7C2: 27,0
 ##* $7FD: 0,1 => $7F2: 27,1
 ##*** main playfield: rotated X,Y, X decreasing by $20, Y increasing by 1
-##* $360: 28,2  => $000: 55,2 right screen
-##* $361: 28,3  => $001: 55,3
+##* $760: 0,2  => $000: 59,2 right screen
 ##* ...
-##* $37F: 18,31 => $01F: 55,31
-##*
-##* $760: 0,2  => $400: 27,2 left screen
-##* ...
-##* $77F: 0,31 => $41F: 27,31 left screen
+##* $77F: 0,33 => $01F: 59,33
 ##
 ##*** bottom status *** unrotated X,Y, X decreasing, Y increasing by $20
 ##* with more wierdness
@@ -40,21 +35,16 @@ def set_value(offset,value):
 for y,line_offset in enumerate(range(0,0x40,0x20)):
     start = 0x7DD+line_offset
     x = 0
-    for i in range(start,start-28,-1):
+    for i in range(start,start-32,-1):
         set_value(i,(x,y))
         x += 1
 # main playfield
 
-for screen_part in [0,1]:
-    screen_offset = 0x400 if screen_part == 1 else 0
-    x_offset = 0 if screen_part == 1 else 28
-
-    for y,line_offset in enumerate(range(0,32),2):
-        start = 0x360+line_offset+screen_offset
-        x = x_offset
-        for i in range(start,start-28*32,-0x20):
-            set_value(i,(x,y))
-            x += 1
+for y,line_offset in enumerate(range(0,32),2):
+    start = 0x760+line_offset
+    x = 0
+    for x,i in enumerate(range(start,start-60*32,-0x20)):
+        set_value(i,(x,y))
 
 # bottom status
 for y,line_offset in enumerate(range(0,0x40,0x20)):
@@ -83,6 +73,9 @@ for k,v in d.items():
     if k != INVALID_XY and len(v)>1:
         result = ",".join(hex(t) for t in v)
         print("coord {} defined for {}".format(k,result))
+
+invalid_count = sum(a == INVALID_XY for a in address_table)
+print(f'Invalid addresses: {invalid_count}')
 # transform coordinates
 dumpable_table = []
 for a in address_table:
