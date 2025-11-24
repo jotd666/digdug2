@@ -3,7 +3,7 @@ import shutil
 
 from shared import *
 
-gamename = "jailbreak"
+gamename = "digdug2"
 sox = "sox"
 
 sound_dir = this_dir / ".." / "sounds"
@@ -67,7 +67,7 @@ def convert():
 
 
 
-    dummy_sounds = [5,
+    dummy_sounds = [5,3,
     0xB,
     2,0x13,1,0xa,0xc
     ]

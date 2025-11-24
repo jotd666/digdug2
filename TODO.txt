@@ -1,9 +1,12 @@
+- enemy layout depends on the level: debug using that maybe (tables)
+- enemy positions corrupt at some point???
+- 10D2: set to 0 (cheat key toggle enemies) to debug better
 - pump moves diagonally after a while
 - sometimes sprite positions are completely off: one enemy has the sprite
   of the main character
 - find why game locks up
 - set flag when intro tune is played (4040)
-- status parts (high & low) are too on the left
+- credit: not showing anymore
 - set_status_bitplanes 33 v 32 "cheat": map "CREDIT" higher
   basically let right part of the bottom status bitplanes swap rows
 - when music is avail, change the clear 4040 in irq

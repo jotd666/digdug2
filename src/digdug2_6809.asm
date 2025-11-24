@@ -125,7 +125,10 @@ demo_on_1010 = $1010
 level_completed_flag_10d1 = $10d1
 goto_next_life_10d0 = $10d0
 timer_104f = $104f
-
+ground_collapses_10da = $10da
+hole_hit_10d5 = $10d5
+ground_crumbling_10d9 = $10d9
+enemies_active_10d2 = $10d2
 
 ; shared variables with sound cpu. Each byte matches one sound or tune
 ; writing non-zero triggers the sound, zero stops it
@@ -141,7 +144,7 @@ sound_flame_404e = $404e
 sound_hammer_4047 = $4047
 sound_hurry_4043 = $4043
 sound_killed_4051 = $4051
-sound_sfx_4045 = $4045
+sound_pump_deploying_4045 = $4045
 sound_sfx_4046 = $4046
 sound_sfx_4048 = $4048
 sound_sfx_404c = $404c
@@ -167,11 +170,12 @@ sound_unknown_tune_404b = $404b
  
 logical_character_positions_1100 = $1100
 ; vertical coord (portrait!) never referenced directly
-player_x_250d = $250d
+
 ; decoded from current_level_bcd_1705 and printable on screen
 round_number_1034 = $1034
 ; horizontal coord (portrait!)
 player_y_16_bit_250e = $250e
+
 hammer_active_2501 = $2501
 
 ; screen positions
@@ -642,7 +646,7 @@ end_zero_io_81f6:
 ; wait until all flags are zeroed to skip to next level (including music playing)
 83D7: B6 40 52       LDA    sound_level_completed_tune_4052
 83DA: BA 10 D7       ORA    $10D7
-83DD: BA 10 D9       ORA    $10D9
+83DD: BA 10 D9       ORA    ground_crumbling_10d9
 83E0: BA 10 DF       ORA    $10DF
 83E3: BA 10 E6       ORA    $10E6
 83E6: BA 10 5E       ORA    $105E
@@ -666,7 +670,7 @@ player_killed_83ff:
 8414: BA 40 4D       ORA    sound_caught_404d
 8417: BA 10 4F       ORA    timer_104f
 841A: BA 10 D7       ORA    $10D7
-841D: BA 10 D9       ORA    $10D9
+841D: BA 10 D9       ORA    ground_crumbling_10d9
 8420: BA 10 DF       ORA    $10DF
 8423: BA 10 E6       ORA    $10E6
 8426: BA 10 5E       ORA    $105E
@@ -776,7 +780,7 @@ set_game_running_flags_8538:
 853A: B7 10 1B       STA    game_in_play_101b
 853D: B7 25 00       STA    $2500
 8540: B7 10 D6       STA    $10D6
-8543: B7 10 D2       STA    $10D2
+8543: B7 10 D2       STA    enemies_active_10d2
 8546: B7 10 D4       STA    $10D4
 8549: B7 10 E8       STA    $10E8
 854C: 39             RTS
@@ -790,7 +794,7 @@ set_game_not_running_flags_854d:
 855A: B7 10 D6       STA    $10D6
 855D: B7 25 00       STA    $2500
 8560: B7 1F 60       STA    $1F60
-8563: B7 10 D2       STA    $10D2
+8563: B7 10 D2       STA    enemies_active_10d2
 8566: B7 10 D4       STA    $10D4
 8569: 39             RTS
 
@@ -1791,12 +1795,12 @@ table_8f80:
 	.word	task_entry_03_read_joy_buttons_8fac
 	.word	task_entry_04_demo_task_909c
 	.word	task_entry_05_player_management_a08b
-	.word	task_entry_06_9f03
-	.word	task_entry_07_a232
-	.word	task_entry_08_a55b
-	.word	task_entry_09_a697
-	.word	task_entry_0a_aa6f
-	.word	task_entry_0b_aabd
+	.word	task_entry_06_player_on_edge_9f03
+	.word	task_entry_07_pump_management_a232
+	.word	task_entry_08_hammer_management_a55b
+	.word	task_entry_09_cracks_management_a697
+	.word	task_entry_0a_animate_crumbling_ground_aa6f
+	.word	task_entry_0b_enemy_management_aabd
 	.word	task_entry_0c_ab85
 	.word	task_entry_0d_a859
 	.word	task_entry_0e_8d48
@@ -1955,7 +1959,7 @@ task_entry_04_demo_task_909c:
 90E7: BD C4 DB       JSR    $C4DB
 90EA: 86 01          LDA    #$01
 90EC: B7 25 00       STA    $2500
-90EF: B7 10 D2       STA    $10D2
+90EF: B7 10 D2       STA    enemies_active_10d2
 90F2: B7 10 D6       STA    $10D6
 90F5: B7 10 D4       STA    $10D4
 90F8: B7 40 B1       STA    $40B1
@@ -2032,15 +2036,15 @@ demo_loop_9144:
 91B1: B7 10 10       STA    demo_on_1010
 91B4: B7 10 50       STA    $1050
 91B7: B7 25 00       STA    $2500
-91BA: B7 10 D2       STA    $10D2
+91BA: B7 10 D2       STA    enemies_active_10d2
 91BD: FD 10 D0       STD    goto_next_life_10d0
 91C0: B7 10 08       STA    scroll_value_1008
 91C3: FD 10 DC       STD    $10DC
 91C6: B7 10 D6       STA    $10D6
-91C9: B7 10 D9       STA    $10D9
+91C9: B7 10 D9       STA    ground_crumbling_10d9
 91CC: B7 10 D4       STA    $10D4
 91CF: B7 1F 60       STA    $1F60
-91D2: B7 10 DA       STA    $10DA
+91D2: B7 10 DA       STA    ground_collapses_10da
 91D5: B7 40 B1       STA    $40B1
 91D8: B7 1F 02       STA    $1F02
 91DB: B7 1F 1D       STA    $1F1D
@@ -2118,12 +2122,12 @@ task_entry_14_9438:
 94A3: 20 D8          BRA    $947D
 94A5: B7 10 6D       STA    $106D
 94A8: B6 10 50       LDA    $1050
-94AB: BA 10 D9       ORA    $10D9
+94AB: BA 10 D9       ORA    ground_crumbling_10d9
 94AE: BA 10 D7       ORA    $10D7
 94B1: BA 10 E6       ORA    $10E6
 94B4: BA 10 D0       ORA    goto_next_life_10d0
 94B7: BA 10 D1       ORA    level_completed_flag_10d1
-94BA: BA 10 DA       ORA    $10DA
+94BA: BA 10 DA       ORA    ground_collapses_10da
 94BD: 10 26 FF 77    LBNE   task_entry_14_9438
 94C1: 7C 10 EC       INC    $10EC
 94C4: 7C 10 EB       INC    $10EB
@@ -3114,14 +3118,14 @@ skip_level_select_9ec8:
 9ED1: F7 17 25       STB    $1725
 9ED4: 7E 9D 20       JMP    task_entry_16_level_select_and_start_9d20
 
-task_entry_06_9f03:
+task_entry_06_player_on_edge_9f03:
 9F03: BD 81 50       JSR    suspend_task_8150
-9F06: B6 10 DA       LDA    $10DA
-9F09: 27 F8          BEQ    task_entry_06_9f03
-9F0B: B7 40 48       STA    sound_sfx_4048
+9F06: B6 10 DA       LDA    ground_collapses_10da
+9F09: 27 F8          BEQ    task_entry_06_player_on_edge_9f03
+9F0B: B7 40 48       STA    sound_sfx_4048		; ground collapses
 9F0E: BD 81 50       JSR    suspend_task_8150
-9F11: B6 10 DA       LDA    $10DA
-9F14: 27 ED          BEQ    task_entry_06_9f03
+9F11: B6 10 DA       LDA    ground_collapses_10da
+9F14: 27 ED          BEQ    task_entry_06_player_on_edge_9f03
 9F16: 7A 25 14       DEC    $2514
 9F19: B6 25 14       LDA    $2514
 9F1C: 81 50          CMPA   #$50
@@ -3136,8 +3140,8 @@ task_entry_06_9f03:
 9F2F: B7 25 1A       STA    $251A
 9F32: 20 DA          BRA    $9F0E
 9F34: BD 81 50       JSR    suspend_task_8150
-9F37: B6 10 DA       LDA    $10DA
-9F3A: 27 C7          BEQ    task_entry_06_9f03
+9F37: B6 10 DA       LDA    ground_collapses_10da
+9F3A: 27 C7          BEQ    task_entry_06_player_on_edge_9f03
 9F3C: 8E 25 10       LDX    #$2510
 9F3F: 6A 04          DEC    $4,X
 9F41: 27 7D          BEQ    $9FC0
@@ -3178,8 +3182,8 @@ task_entry_06_9f03:
 9F8F: BD C0 9F       JSR    $C09F
 9F92: BD C4 80       JSR    scrolling_following_player_c480
 9F95: BD 81 50       JSR    suspend_task_8150
-9F98: B6 10 DA       LDA    $10DA
-9F9B: 10 27 FF 64    LBEQ   task_entry_06_9f03
+9F98: B6 10 DA       LDA    ground_collapses_10da
+9F9B: 10 27 FF 64    LBEQ   task_entry_06_player_on_edge_9f03
 9F9F: 8E 25 10       LDX    #$2510
 9FA2: A6 05          LDA    $5,X
 9FA4: 85 02          BITA   #$02
@@ -3277,8 +3281,8 @@ A06E: E6 C6          LDB    A,U
 A070: EB 0D          ADDB   $D,X
 A072: E7 0D          STB    $D,X
 A074: 6F 08          CLR    $8,X
-A076: 7F 10 DA       CLR    $10DA
-A079: 7E 9F 03       JMP    task_entry_06_9f03
+A076: 7F 10 DA       CLR    ground_collapses_10da
+A079: 7E 9F 03       JMP    task_entry_06_player_on_edge_9f03
 
 task_entry_05_player_management_a08b:
 A08B: BD 81 50       JSR    suspend_task_8150
@@ -3295,7 +3299,7 @@ A0A7: B6 25 00       LDA    $2500
 A0AA: 27 3F          BEQ    $A0EB
 A0AC: B6 10 D1       LDA    level_completed_flag_10d1
 A0AF: 26 1F          BNE    $A0D0
-A0B1: B6 10 DA       LDA    $10DA
+A0B1: B6 10 DA       LDA    ground_collapses_10da
 A0B4: 26 EE          BNE    $A0A4
 A0B6: B6 25 02       LDA    $2502
 A0B9: 26 E9          BNE    $A0A4
@@ -3484,48 +3488,49 @@ A22D: 8A 54          ORA    #$54
 A22F: A7 0A          STA    $A,X
 A231: 39             RTS
 
-task_entry_07_a232:
+task_entry_07_pump_management_a232:
 A232: BD 81 50       JSR    suspend_task_8150
 A235: B6 40 40       LDA    sound_level_start_tune_4040
-A238: 26 F8          BNE    task_entry_07_a232
+A238: 26 F8          BNE    task_entry_07_pump_management_a232
 A23A: FC 10 D0       LDD    goto_next_life_10d0
-A23D: 26 F3          BNE    task_entry_07_a232
+A23D: 26 F3          BNE    task_entry_07_pump_management_a232
 A23F: B6 25 00       LDA    $2500
-A242: 27 EE          BEQ    task_entry_07_a232
-A244: B6 10 DA       LDA    $10DA
-A247: 26 E9          BNE    task_entry_07_a232
+A242: 27 EE          BEQ    task_entry_07_pump_management_a232
+A244: B6 10 DA       LDA    ground_collapses_10da
+A247: 26 E9          BNE    task_entry_07_pump_management_a232
 A249: B6 25 0A       LDA    $250A
 A24C: 81 03          CMPA   #$03
-A24E: 27 E2          BEQ    task_entry_07_a232
+A24E: 27 E2          BEQ    task_entry_07_pump_management_a232
 A250: B6 10 15       LDA    pump_button_pressed_1015
 A253: 81 01          CMPA   #$01
-A255: 26 DB          BNE    task_entry_07_a232
+A255: 26 DB          BNE    task_entry_07_pump_management_a232
 A257: 8E 25 10       LDX    #$2510
-A25A: A7 12          STA    -$E,X
+A25A: A7 12          STA    -$E,X			; 2502: sets 1 if pump pressed, not cleared until move
 A25C: F6 25 01       LDB    hammer_active_2501
 A25F: 27 0B          BEQ    $A26C
-A261: 6F 11          CLR    -$F,X
+; cancel hammer
+A261: 6F 11          CLR    -$F,X		; 2501
 A263: F6 17 07       LDB    $1707
 A266: E7 03          STB    $3,X
 A268: 6F 1D          CLR    -$3,X
 A26A: 6F 08          CLR    $8,X
-A26C: B7 40 45       STA    sound_sfx_4045
+A26C: B7 40 45       STA    sound_pump_deploying_4045
 A26F: A6 05          LDA    $5,X
 A271: 8B 48          ADDA   #$48
 A273: A7 0A          STA    $A,X
 A275: 6F 88 BA       CLR    -$46,X
 A278: 8E 24 D0       LDX    #$24D0
 A27B: CE A2 E9       LDU    #table_a2e9			; [jump_table]
-A27E: A6 1A          LDA    -$6,X
+A27E: A6 1A          LDA    -$6,X			; 24CA: pump state (length)
 A280: 48             ASLA
 A281: AD D6          JSR    [A,U]	; [indirect_jump]
 A283: A6 1A          LDA    -$6,X
 A285: 2B 0F          BMI    $A296
 A287: BD 81 50       JSR    suspend_task_8150
 A28A: B6 25 02       LDA    $2502
-A28D: 27 A3          BEQ    task_entry_07_a232
+A28D: 27 A3          BEQ    task_entry_07_pump_management_a232
 A28F: FC 10 D0       LDD    goto_next_life_10d0
-A292: 26 9E          BNE    task_entry_07_a232
+A292: 26 9E          BNE    task_entry_07_pump_management_a232
 A294: 20 E2          BRA    $A278
 A296: BD A5 4F       JSR    $A54F
 A299: B6 25 15       LDA    $2515
@@ -3533,9 +3538,9 @@ A29C: 48             ASLA
 A29D: B7 25 1A       STA    $251A
 A2A0: BD 81 50       JSR    suspend_task_8150
 A2A3: FC 10 D0       LDD    goto_next_life_10d0
-A2A6: 26 8A          BNE    task_entry_07_a232
+A2A6: 26 8A          BNE    task_entry_07_pump_management_a232
 A2A8: B6 25 02       LDA    $2502
-A2AB: 27 85          BEQ    task_entry_07_a232
+A2AB: 27 85          BEQ    task_entry_07_pump_management_a232
 A2AD: 8E 25 10       LDX    #$2510
 A2B0: B6 10 15       LDA    pump_button_pressed_1015
 A2B3: 81 01          CMPA   #$01
@@ -3559,9 +3564,9 @@ A2D6: 7F 25 02       CLR    $2502
 A2D9: A6 05          LDA    $5,X
 A2DB: 48             ASLA
 A2DC: A7 0A          STA    $A,X
-A2DE: 7E A2 32       JMP    task_entry_07_a232
+A2DE: 7E A2 32       JMP    task_entry_07_pump_management_a232
 
-A2F5: A4 C1          ANDA   ,U++
+hose_starting_to_deploy_a2f7:
 A2F7: A6 88 45       LDA    $45,X
 A2FA: 84 04          ANDA   #$04
 A2FC: 48             ASLA
@@ -3587,12 +3592,13 @@ A325: 86 05          LDA    #$05
 A327: A7 0B          STA    $B,X
 A329: A6 88 45       LDA    $45,X
 A32C: 84 02          ANDA   #$02
-A32E: 8B 02          ADDA   #$02
+A32E: 8B 02          ADDA   #$02		; reached when start shooting pump hose
 A330: A7 14          STA    -$C,X
-A332: CC 00 C0       LDD    #$00C0
+A332: CC 00 C0       LDD    #$00C0		; hose deployment speed = $C0
 A335: A7 1D          STA    -$3,X
-A337: E7 03          STB    $3,X
+A337: E7 03          STB    $3,X		; $24D3 <- $C0. Smaller value: slower hose deployment
 A339: 20 49          BRA    $A384
+hose_partially_expanded_a33b:
 A33B: A6 0F          LDA    $F,X
 A33D: A7 88 2F       STA    $2F,X
 A340: A6 0D          LDA    $D,X
@@ -3603,10 +3609,13 @@ A34B: E6 C6          LDB    A,U
 A34D: E7 88 2A       STB    $2A,X
 A350: 86 05          LDA    #$05
 A352: A7 88 2B       STA    $2B,X
-A355: 20 2A          BRA    $A381
-A357: A6 88 45       LDA    $45,X
+A355: 20 2A          BRA    cont_a381
+hose_fully_expanded_a357:
+; reached when pump hose is fully deployed
+A357: A6 88 45       LDA    $45,X	; hose direction 2,4,6,0 (up)
 A35A: 85 02          BITA   #$02
 A35C: 26 13          BNE    $A371
+; vertical pump hose (facing up or down)
 A35E: C6 04          LDB    #$04
 A360: E7 88 28       STB    $28,X
 A363: 58             ASLB
@@ -3615,18 +3624,22 @@ A366: 26 01          BNE    $A369
 A368: 50             NEGB
 A369: EB 88 2F       ADDB   $2F,X
 A36C: E7 88 2F       STB    $2F,X
-A36F: 20 10          BRA    $A381
+A36F: 20 10          BRA    cont_a381
+
 A371: C6 08          LDB    #$08
 A373: E7 88 28       STB    $28,X
 A376: 85 04          BITA   #$04
 A378: 26 01          BNE    $A37B
+; horizontal pump hose (facing left or right)
 A37A: 50             NEGB
 A37B: EB 88 2D       ADDB   $2D,X
 A37E: E7 88 2D       STB    $2D,X
+cont_a381:
 A381: 6F 88 2C       CLR    $2C,X
 A384: 86 04          LDA    #$04
 A386: A7 1B          STA    -$5,X
-A388: 6C 1A          INC    -$6,X
+A388: 6C 1A          INC    -$6,X		; next pump/hose state
+hose_expanding_a38a:
 A38A: B6 10 13       LDA    player_decoded_directions_1013
 A38D: 2B 0A          BMI    $A399
 A38F: A1 88 45       CMPA   $45,X
@@ -3634,11 +3647,11 @@ A392: 27 05          BEQ    $A399
 A394: 86 FF          LDA    #$FF
 A396: A7 1A          STA    -$6,X
 A398: 39             RTS
-A399: A6 1D          LDA    -$3,X
-A39B: AB 03          ADDA   $3,X
-A39D: 25 04          BCS    $A3A3
+A399: A6 1D          LDA    -$3,X		; hose deployment timer
+A39B: AB 03          ADDA   $3,X		; add speed to hose deployment timer
+A39D: 25 04          BCS    $A3A3		; carry: change state/size
 A39F: A7 1D          STA    -$3,X
-A3A1: 20 1C          BRA    $A3BF
+A3A1: 20 1C          BRA    $A3BF		; no carry: do nothing, keep counting
 A3A3: A7 1D          STA    -$3,X
 A3A5: 6A 1B          DEC    -$5,X
 A3A7: A6 11          LDA    -$F,X
@@ -3725,7 +3738,7 @@ A450: 84 07          ANDA   #$07
 A452: A7 45          STA    $5,U
 A454: CC 06 F5       LDD    #$06F5
 A457: A7 1A          STA    -$6,X
-A459: 7F 40 45       CLR    sound_sfx_4045
+A459: 7F 40 45       CLR    sound_pump_deploying_4045
 A45C: EB 0F          ADDB   $F,X
 A45E: E7 0F          STB    $F,X
 A460: 86 6A          LDA    #$6A
@@ -3775,6 +3788,7 @@ A4B9: 86 24          LDA    #$24
 A4BB: A7 04          STA    $4,X
 A4BD: A6 1C          LDA    -$4,X
 A4BF: 26 3F          BNE    $A500
+hose_connecting_with_enemy_a4c1:
 A4C1: 6F 1C          CLR    -$4,X
 A4C3: B6 10 13       LDA    player_decoded_directions_1013
 A4C6: 2B 05          BMI    $A4CD
@@ -3787,8 +3801,8 @@ A4D1: 81 0C          CMPA   #$0C
 A4D3: 26 F3          BNE    $A4C8
 A4D5: A6 52          LDA    -$E,U
 A4D7: 27 EF          BEQ    $A4C8
-A4D9: 6A 04          DEC    $4,X
-A4DB: 27 15          BEQ    $A4F2
+A4D9: 6A 04          DEC    $4,X		; decrease captive monster timer ($24D4)
+A4DB: 27 15          BEQ    $A4F2		; monster is deflating/free at 0
 A4DD: B6 10 15       LDA    pump_button_pressed_1015
 A4E0: 26 01          BNE    $A4E3
 A4E2: 39             RTS
@@ -3836,7 +3850,7 @@ A53D: 2A 02          BPL    $A541
 A53F: 8B 0C          ADDA   #$0C
 A541: A7 4A          STA    $A,U
 A543: CC 00 FF       LDD    #$00FF
-A546: B7 40 45       STA    sound_sfx_4045
+A546: B7 40 45       STA    sound_pump_deploying_4045
 A549: B7 40 46       STA    sound_sfx_4046
 A54C: E7 1A          STB    -$6,X
 A54E: 39             RTS
@@ -3845,10 +3859,10 @@ A552: BD 87 32       JSR    $8732
 A555: 8E 24 F0       LDX    #$24F0
 A558: 7E 87 32       JMP    $8732
 
-task_entry_08_a55b:
+task_entry_08_hammer_management_a55b:
 A55B: BD 81 50       JSR    suspend_task_8150
 A55E: B6 25 01       LDA    hammer_active_2501
-A561: 27 F8          BEQ    task_entry_08_a55b
+A561: 27 F8          BEQ    task_entry_08_hammer_management_a55b
 A563: B7 40 47       STA    sound_hammer_4047
 A566: 8E 25 10       LDX    #$2510
 A569: BD A6 78       JSR    $A678
@@ -3875,7 +3889,7 @@ A593: BD C4 80       JSR    scrolling_following_player_c480
 A596: 20 24          BRA    $A5BC
 A598: BD 81 50       JSR    suspend_task_8150
 A59B: B6 25 01       LDA    hammer_active_2501
-A59E: 27 BB          BEQ    task_entry_08_a55b
+A59E: 27 BB          BEQ    task_entry_08_hammer_management_a55b
 A5A0: B7 40 47       STA    sound_hammer_4047
 A5A3: B6 10 14       LDA    hammer_button_pressed_1014
 A5A6: 10 27 00 B7    LBEQ   $A661
@@ -3915,16 +3929,17 @@ A5F5: 20 04          BRA    $A5FB
 A5F7: 85 02          BITA   #$02
 A5F9: 26 06          BNE    $A601
 A5FB: F7 10 40       STB    $1040
-A5FE: 7C 10 D5       INC    $10D5
+; hammer struck a hole: crack is going to appear
+A5FE: 7C 10 D5       INC    hole_hit_10d5
 A601: BD C0 78       JSR    $C078
 A604: BD 81 50       JSR    suspend_task_8150
 A607: B6 25 01       LDA    hammer_active_2501
-A60A: 10 27 FF 4D    LBEQ   task_entry_08_a55b
+A60A: 10 27 FF 4D    LBEQ   task_entry_08_hammer_management_a55b
 A60E: B6 10 14       LDA    hammer_button_pressed_1014
 A611: 27 4E          BEQ    $A661
 A613: B7 40 47       STA    sound_hammer_4047
 A616: 8E 25 10       LDX    #$2510
-A619: B6 10 D5       LDA    $10D5
+A619: B6 10 D5       LDA    hole_hit_10d5
 A61C: 26 E3          BNE    $A601
 A61E: FE 10 3E       LDU    $103E
 A621: E6 C9 08 00    LDB    $0800,U		; [video_address]
@@ -3934,7 +3949,7 @@ A629: 20 D6          BRA    $A601
 A62B: BD C0 78       JSR    $C078
 A62E: BD 81 50       JSR    suspend_task_8150
 A631: B6 25 01       LDA    hammer_active_2501
-A634: 10 27 FF 23    LBEQ   task_entry_08_a55b
+A634: 10 27 FF 23    LBEQ   task_entry_08_hammer_management_a55b
 A638: B6 10 14       LDA    hammer_button_pressed_1014
 A63B: 27 24          BEQ    $A661
 A63D: B7 40 47       STA    sound_hammer_4047
@@ -3961,7 +3976,7 @@ A66C: A7 03          STA    $3,X
 A66E: 6F 08          CLR    $8,X
 A670: 6F 1D          CLR    -$3,X
 A672: 7F 25 01       CLR    hammer_active_2501
-A675: 7E A5 5B       JMP    task_entry_08_a55b
+A675: 7E A5 5B       JMP    task_entry_08_hammer_management_a55b
 A678: CE A6 84       LDU    #$A684
 A67B: E6 05          LDB    $5,X
 A67D: EC C5          LDD    B,U
@@ -3969,11 +3984,11 @@ A67F: A7 0A          STA    $A,X
 A681: E7 08          STB    $8,X
 A683: 39             RTS
 
-A694: 7F 10 D5       CLR    $10D5                                       
-task_entry_09_a697:
+A694: 7F 10 D5       CLR    hole_hit_10d5                                       
+task_entry_09_cracks_management_a697:
 A697: BD 81 50       JSR    suspend_task_8150
-A69A: B6 10 D5       LDA    $10D5
-A69D: 27 F8          BEQ    task_entry_09_a697
+A69A: B6 10 D5       LDA    hole_hit_10d5
+A69D: 27 F8          BEQ    task_entry_09_cracks_management_a697
 A69F: B6 10 3F       LDA    $103F
 A6A2: 84 1C          ANDA   #$1C
 A6A4: 44             LSRA
@@ -4337,7 +4352,7 @@ AA1C: 86 04          LDA    #$04
 AA1E: 3D             MUL
 AA1F: C3 00 20       ADDD   #$0020
 AA22: ED 5E          STD    -$2,U
-AA24: 7C 10 D9       INC    $10D9
+AA24: 7C 10 D9       INC    ground_crumbling_10d9
 AA27: CC 03 10       LDD    #$0310
 AA2A: F4 10 CF       ANDB   $10CF
 AA2D: 26 01          BNE    $AA30
@@ -4352,10 +4367,10 @@ AA3F: 6F 0C          CLR    $C,X
 AA41: BE 10 36       LDX    $1036
 AA44: 39             RTS
 
-task_entry_0a_aa6f:
+task_entry_0a_animate_crumbling_ground_aa6f:
 AA6F: BD 81 50       JSR    suspend_task_8150
-AA72: B6 10 D9       LDA    $10D9
-AA75: 27 F8          BEQ    task_entry_0a_aa6f
+AA72: B6 10 D9       LDA    ground_crumbling_10d9
+AA75: 27 F8          BEQ    task_entry_0a_animate_crumbling_ground_aa6f
 AA77: 8E 20 10       LDX    #$2010
 AA7A: 7F 10 09       CLR    $1009
 AA7D: A6 10          LDA    -$10,X
@@ -4384,16 +4399,16 @@ AAAD: 30 88 20       LEAX   $20,X
 AAB0: 8C 24 D0       CMPX   #$24D0
 AAB3: 26 C8          BNE    $AA7D
 AAB5: B6 10 09       LDA    $1009
-AAB8: B7 10 D9       STA    $10D9
-AABB: 20 B2          BRA    task_entry_0a_aa6f
+AAB8: B7 10 D9       STA    ground_crumbling_10d9
+AABB: 20 B2          BRA    task_entry_0a_animate_crumbling_ground_aa6f
 
-task_entry_0b_aabd:
+task_entry_0b_enemy_management_aabd:
 AABD: BD 81 50       JSR    suspend_task_8150
-AAC0: B6 10 D2       LDA    $10D2
-AAC3: 27 F8          BEQ    task_entry_0b_aabd
+AAC0: B6 10 D2       LDA    enemies_active_10d2
+AAC3: 27 F8          BEQ    task_entry_0b_enemy_management_aabd
 AAC5: BD 81 50       JSR    suspend_task_8150
-AAC8: B6 10 D2       LDA    $10D2
-AACB: 27 F0          BEQ    task_entry_0b_aabd
+AAC8: B6 10 D2       LDA    enemies_active_10d2
+AACB: 27 F0          BEQ    task_entry_0b_enemy_management_aabd
 AACD: FC 10 D0       LDD    goto_next_life_10d0
 AAD0: 10 26 00 A6    LBNE   $AB7A
 AAD4: B6 10 50       LDA    $1050
@@ -4434,8 +4449,8 @@ AB14: C3 00 20       ADDD   #$0020
 AB17: FD 10 4D       STD    $104D
 AB1A: 20 12          BRA    $AB2E
 AB1C: BD 81 50       JSR    suspend_task_8150
-AB1F: B6 10 D2       LDA    $10D2
-AB22: 27 99          BEQ    task_entry_0b_aabd
+AB1F: B6 10 D2       LDA    enemies_active_10d2
+AB22: 27 99          BEQ    task_entry_0b_enemy_management_aabd
 AB24: FC 10 D0       LDD    goto_next_life_10d0
 AB27: 26 51          BNE    $AB7A
 AB29: B6 10 DB       LDA    $10DB
@@ -4472,20 +4487,20 @@ AB71: 26 EC          BNE    $AB5F
 AB73: B6 10 49       LDA    $1049
 AB76: 10 26 FF 4B    LBNE   $AAC5
 AB7A: BD 81 50       JSR    suspend_task_8150
-AB7D: B6 10 D2       LDA    $10D2
+AB7D: B6 10 D2       LDA    enemies_active_10d2
 AB80: 26 F8          BNE    $AB7A
-AB82: 7E AA BD       JMP    task_entry_0b_aabd
+AB82: 7E AA BD       JMP    task_entry_0b_enemy_management_aabd
 
 task_entry_0c_ab85:
 AB85: BD 81 50       JSR    suspend_task_8150
-AB88: B6 10 D2       LDA    $10D2
+AB88: B6 10 D2       LDA    enemies_active_10d2
 AB8B: 27 F8          BEQ    task_entry_0c_ab85
 AB8D: BD AC 90       JSR    $AC90
 AB90: BD 81 50       JSR    suspend_task_8150
 AB93: B6 40 40       LDA    sound_level_start_tune_4040
 AB96: 26 F8          BNE    $AB90
 AB98: BD 81 50       JSR    suspend_task_8150
-AB9B: B6 10 D2       LDA    $10D2
+AB9B: B6 10 D2       LDA    enemies_active_10d2
 AB9E: 10 27 00 AD    LBEQ   $AC4F
 ABA2: B6 10 D0       LDA    goto_next_life_10d0
 ABA5: 26 09          BNE    $ABB0
@@ -4548,7 +4563,7 @@ AC2A: BF 10 36       STX    $1036
 AC2D: BD A5 4F       JSR    $A54F
 AC30: BE 10 36       LDX    $1036
 AC33: 7F 25 01       CLR    hammer_active_2501
-AC36: 7F 10 DA       CLR    $10DA
+AC36: 7F 10 DA       CLR    ground_collapses_10da
 AC39: 30 88 20       LEAX   $20,X
 AC3C: 8C 26 70       CMPX   #$2670
 AC3F: 26 95          BNE    $ABD6
@@ -4556,7 +4571,7 @@ AC41: 7E AB 98       JMP    $AB98
 
 AC44: 7F 10 DF       CLR    $10DF
 AC47: BD 81 50       JSR    suspend_task_8150
-AC4A: B6 10 D2       LDA    $10D2
+AC4A: B6 10 D2       LDA    enemies_active_10d2
 AC4D: 26 F8          BNE    $AC47
 AC4F: 8E 25 30       LDX    #$2530
 AC52: A6 10          LDA    -$10,X
@@ -5269,7 +5284,7 @@ B31C: 27 06          BEQ    $B324
 B31E: BD A5 4F       JSR    $A54F
 B321: 7F 25 02       CLR    $2502
 B324: 7F 25 01       CLR    hammer_active_2501
-B327: 7F 10 DA       CLR    $10DA
+B327: 7F 10 DA       CLR    ground_collapses_10da
 B32A: BE 10 36       LDX    $1036
 B32D: 86 01          LDA    #$01
 B32F: B7 40 4E       STA    sound_flame_404e
@@ -7010,7 +7025,7 @@ CCBD: E7 0B          STB    $B,X
 CCBF: 30 88 20       LEAX   $20,X
 CCC2: 8C 26 70       CMPX   #$2670
 CCC5: 26 BB          BNE    $CC82
-CCC7: B6 10 DA       LDA    $10DA
+CCC7: B6 10 DA       LDA    ground_collapses_10da
 CCCA: BA 10 D0       ORA    goto_next_life_10d0
 CCCD: 27 01          BEQ    $CCD0
 CCCF: 39             RTS
@@ -7069,7 +7084,7 @@ CD4D: 27 04          BEQ    $CD53
 CD4F: 86 02          LDA    #$02
 CD51: A7 08          STA    $8,X
 CD53: CC 01 5F       LDD    #$015F
-CD56: B7 10 DA       STA    $10DA
+CD56: B7 10 DA       STA    ground_collapses_10da
 CD59: E7 04          STB    $4,X
 CD5B: 7F 25 01       CLR    hammer_active_2501
 CD5E: B6 25 02       LDA    $2502
@@ -7824,14 +7839,16 @@ table_a0f1:
 	dc.w	$0      ; $a0f9 4: bogus never reached state
 	dc.w	$a1f2	; $a0fb 5
 	dc.w	player_dying_a20a	; $a0fd 6
+	
+; pump state/size
 table_a2e9:
-	dc.w	$a2f7	; $a2e9
-	dc.w	$a38a	; $a2eb
-	dc.w	$a33b	; $a2ed
-	dc.w	$a38a	; $a2ef
-	dc.w	$a357	; $a2f1
-	dc.w	$a38a	; $a2f3
-	dc.w	$a4c1	; $a2f5
+	dc.w	hose_starting_to_deploy_a2f7	; $a2e9
+	dc.w	hose_expanding_a38a	; $a2eb
+	dc.w	hose_partially_expanded_a33b	; $a2ed
+	dc.w	hose_expanding_a38a	; $a2ef
+	dc.w	hose_fully_expanded_a357	; $a2f1
+	dc.w	hose_expanding_a38a	; $a2f3
+	dc.w	hose_connecting_with_enemy_a4c1	; $a2f5
 table_ac66:
 	dc.w	task_entry_0c_ab85	; $ac66
 	dc.w	$ad49	; $ac68

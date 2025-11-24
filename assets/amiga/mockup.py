@@ -128,6 +128,12 @@ def process(the_dump,name_filter=None,hide_named_sprite=None):
                         result.paste(im,(sx ,sy))
                         im = get_single_image(color,sprite+1,flipx,flipy)
                         result.paste(im,(sx ,sy+16))
+                elif sizex:
+                    if not flipx:
+                        sx += 16
+                        result.paste(im,(sx ,sy))
+                        im = get_single_image(color,sprite+1,flipx,flipy)
+                        result.paste(im,(sx+16 ,sy))
                 else:
                     result.paste(im,(sx ,sy))
                 nb_active += 1
