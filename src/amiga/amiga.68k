@@ -1121,14 +1121,21 @@ is_game_playing:
 skip_level:
 	movem.l	a6/a5,-(a7)
 	GET_MEMORY_START_AND_DP
-	*move.b	#1,level_completed_flag_9f(a5)					| no more lives
+	move.b	#1,level_completed_flag_10d1(a6)
+	movem.l	(a7)+,a6/a5
+	rts
+
+toggle_monsters:
+	movem.l	a6/a5,-(a7)
+	GET_MEMORY_START_AND_DP
+	eor.b	#1,enemies_active_10d2(a6)
 	movem.l	(a7)+,a6/a5
 	rts
 
 lose_all_lives:
 	movem.l	a6/a5,-(a7)
 	GET_MEMORY_START_AND_DP
-	*move.b	#1,lives_9600(a6)					| no more lives
+	move.b	#0,nb_lives_1703(a6)					| no more lives
 	*move.b	#0xf0,level_playing_flag_9000(a6)	| kill player
 	movem.l	(a7)+,a6/a5
 	rts
@@ -2847,49 +2854,7 @@ read_inputs:
 	movem.l	(a7)+,a0/d0/d1
 	rts
 	
-osd_read_system_inputs:
-	st.b	d0
 
-	movem.l	a0/d1,-(a7)
-	lea		keyboard_table(pc),a0
-	* misc control keys
-	tst.b	(6,a0)		| "6" key like in MAME
-	beq.b	0f
-	bclr	#BIT_INSERT_COIN_2,d0
-0:
-	tst.b	(5,a0)		| "5" key like in MAME
-	beq.b	0f
-	bclr	#BIT_INSERT_COIN_1,d0
-0:
-	tst.b	(1,a0)		| "1" key like in MAME
-	beq.b	0f
-	bclr	#BIT_START_1P,d0
-0:
-	tst.b	(2,a0)		| "2" key like in MAME
-	beq.b	0f
-	bclr	#BIT_START_2P,d0
-0:	
-
-	jbsr		is_game_playing
-	jne	1f
-	move.l	_joypad_1_state,d1
-	* game not playing, we can insert coin/start with joypad
-	btst	#JPB_BTN_RED,d1		| "5" key like in MAME
-	beq.b	0f
-	bclr	#BIT_INSERT_COIN_1,d0
-0:
-	btst	#JPB_BTN_UP,d1		| "1" key like in MAME
-	beq.b	0f
-	bclr	#BIT_START_1P,d0
-0:
-	btst	#JPB_BTN_DOWN,d1		| "2" key like in MAME
-	beq.b	0f
-	bclr	#BIT_START_2P,d0
-0:	
-1:	
-	movem.l	(a7)+,a0/d1
-	rts
-	
 	
 	
 osd_read_dsw_1:
@@ -3030,11 +2995,11 @@ handle_keyboard:
 	st.b	cheat_used
 	jbsr	skip_level
 0:
-	cmp.b	#0x51,d0	| F2 key
+	cmp.b	#0x51,d0	| F2 key: toggle monsters
 	bne.b	0f
 	st.b	cheat_used
 	move.w	#0x0FF,_custom+color
-	
+	jbsr	toggle_monsters
 0:
 	cmp.b	#0x52,d0	| F3 key
 	bne.b	0f

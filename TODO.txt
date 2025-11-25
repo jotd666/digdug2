@@ -1,5 +1,9 @@
 - enemy layout depends on the level: debug using that maybe (tables)
+; copy positions into $1707
+C4D9: 30 07          LEAX   $7,X
+C4DB: 86 18          LDA    #$18
 - enemy positions corrupt at some point???
+- level 6 interrupt corrupts stack?? relocate
 - 10D2: set to 0 (cheat key toggle enemies) to debug better
 - pump moves diagonally after a while
 - sometimes sprite positions are completely off: one enemy has the sprite

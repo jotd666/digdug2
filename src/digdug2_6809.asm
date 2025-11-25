@@ -75,7 +75,7 @@ sync_1000 = $1000
 random_seed_1011 = $1011
 task_stack_pointer_1002 = $1002
 nb_lives_1703 = $1703
-current_level_1704 = $1704
+current_level_from_zero_1704 = $1704
 stack_top_1900 = $1900
 watchdog_8000 = $8000
 video_stuff_5009 = $5009
@@ -129,6 +129,7 @@ ground_collapses_10da = $10da
 hole_hit_10d5 = $10d5
 ground_crumbling_10d9 = $10d9
 enemies_active_10d2 = $10d2
+a_screen_address_1041 = $1041
 
 ; shared variables with sound cpu. Each byte matches one sound or tune
 ; writing non-zero triggers the sound, zero stops it
@@ -156,6 +157,8 @@ sound_warning_4042 = $4042
 ; unused small nice tunes!
 sound_unknown_tune_4049 = $4049
 sound_unknown_tune_404b = $404b
+
+enemy_start_location_table_dd5b = $dd5b
 
 ; the absolute character positions
 ; ex: player struct is in $1100
@@ -430,20 +433,20 @@ update_sprite_logic_819e:
 81B5: A6 08          LDA    $8,X
 81B7: 85 04          BITA   #$04
 81B9: 35 02          PULS   A
-81BB: 26 03          BNE    $81C0
-81BD: C3 00 08       ADDD   #$0008
-81C0: E7 07          STB    $7,X
+81BB: 26 03          BNE    $81C0		; branch when character is hammering (main character)
+81BD: C3 00 08       ADDD   #$0008		; draw lower, most of the time
+81C0: E7 07          STB    $7,X		; store sprite X (portrait, Y on standard display)
 81C2: A7 09          STA    $9,X
-81C4: E6 0D          LDB    $D,X
+81C4: E6 0D          LDB    $D,X		; untransformed Y screen coord
 81C6: B6 10 07       LDA    $1007
 81C9: 26 01          BNE    $81CC
 81CB: 50             NEGB
-81CC: CB F1          ADDB   #$F1
+81CC: CB F1          ADDB   #$F1		; transform Y coord 251-Y or something
 81CE: A6 08          LDA    $8,X
 81D0: 85 08          BITA   #$08
 81D2: 26 02          BNE    $81D6
 81D4: CB 08          ADDB   #$08
-81D6: E7 06          STB    $6,X		; store sprite Y (portrait)
+81D6: E7 06          STB    $6,X		; store sprite Y (portrait, X on standard display)
 81D8: 39             RTS
 
 startup_task_81d9:
@@ -1691,6 +1694,7 @@ copy_character_positions_8e81:
 8EA7: 8C 27 90       CMPX   #$2790
 8EAA: 26 DB          BNE    $8E87
 8EAC: 39             RTS
+
 8EAD: 8E 25 10       LDX    #$2510
 8EB0: CC 00 00       LDD    #$0000
 8EB3: FD 10 34       STD    round_number_1034
@@ -2904,7 +2908,7 @@ task_entry_15_9cb6:
 9CBE: BD 87 06       JSR    clear_screen_8706
 9CC1: BD 8B 3D       JSR    $8B3D
 9CC4: CC 01 01       LDD    #$0101
-9CC7: FD 17 04       STD    current_level_1704
+9CC7: FD 17 04       STD    current_level_from_zero_1704
 9CCA: B7 10 1B       STA    game_in_play_101b
 9CCD: BD 87 C5       JSR    $87C5
 9CD0: BD 81 50       JSR    suspend_task_8150
@@ -2936,8 +2940,8 @@ task_entry_15_9cb6:
 9D07: 20 C4          BRA    $9CCD
 9D09: 7F 10 E1       CLR    $10E1
 9D0C: 7F 10 1B       CLR    game_in_play_101b
-9D0F: 7A 17 04       DEC    current_level_1704
-9D12: B6 17 05       LDA    current_level_bcd_1705
+9D0F: 7A 17 04       DEC    current_level_from_zero_1704	; for management
+9D12: B6 17 05       LDA    current_level_bcd_1705			; for display
 9D15: 8B 99          ADDA   #$99
 9D17: 19             DAA
 9D18: B7 17 05       STA    current_level_bcd_1705
@@ -3108,7 +3112,7 @@ task_entry_16_level_select_and_start_9d20:
 9EBC: CE 9E FB       LDU    #$9EFB
 9EBF: 48             ASLA
 9EC0: EC C6          LDD    A,U
-9EC2: FD 17 04       STD    current_level_1704
+9EC2: FD 17 04       STD    current_level_from_zero_1704
 9EC5: BD 87 32       JSR    $8732
 skip_level_select_9ec8:
 9EC8: CC 00 01       LDD    #$0001
@@ -3419,6 +3423,7 @@ A1B3: A7 1B          STA    -$5,X
 A1B5: BD C0 00       JSR    $C000
 A1B8: BD C0 9F       JSR    $C09F
 A1BB: 7E C4 80       JMP    scrolling_following_player_c480
+
 A1BE: A7 05          STA    $5,X
 A1C0: 48             ASLA
 A1C1: A7 0A          STA    $A,X
@@ -4020,7 +4025,7 @@ A6D6: 33 C6          LEAU   A,U
 A6D8: EC C1          LDD    ,U++
 A6DA: BE 10 3E       LDX    $103E
 A6DD: 3A             ABX
-A6DE: BF 10 41       STX    $1041
+A6DE: BF 10 41       STX    a_screen_address_1041
 A6E1: 1F 89          TFR    A,B
 A6E3: 84 0C          ANDA   #$0C
 A6E5: B7 10 46       STA    $1046
@@ -4032,7 +4037,7 @@ A6F2: 86 04          LDA    #$04
 A6F4: B7 10 45       STA    $1045
 A6F7: 20 06          BRA    $A6FF
 A6F9: BD 81 50       JSR    suspend_task_8150
-A6FC: BE 10 41       LDX    $1041
+A6FC: BE 10 41       LDX    a_screen_address_1041
 A6FF: 86 02          LDA    #$02
 A701: B7 10 09       STA    $1009
 A704: B6 10 46       LDA    $1046
@@ -4082,10 +4087,10 @@ A76A: 3A             ABX
 A76B: 20 9D          BRA    $A70A
 A76D: 7A 10 45       DEC    $1045
 A770: 27 0E          BEQ    $A780
-A772: BE 10 41       LDX    $1041
+A772: BE 10 41       LDX    a_screen_address_1041
 A775: B6 10 43       LDA    $1043
 A778: 30 86          LEAX   A,X
-A77A: BF 10 41       STX    $1041
+A77A: BF 10 41       STX    a_screen_address_1041
 A77D: 7E A6 F9       JMP    $A6F9
 
 A780: B6 10 C1       LDA    $10C1
@@ -4148,20 +4153,20 @@ A7FE: 58             ASLB
 A7FF: CB 02          ADDB   #$02
 A801: AA C5          ORA    B,U
 A803: 10 8E A8 54    LDY    #$A854
-A807: BE 10 41       LDX    $1041
+A807: BE 10 41       LDX    a_screen_address_1041
 A80A: E6 A0          LDB    ,Y+
 A80C: 10 27 FE 84    LBEQ   $A694
 A810: 3A             ABX
 A811: 44             LSRA
 A812: 24 F6          BCC    $A80A
-A814: E6 84          LDB    ,X
+A814: E6 84          LDB    ,X			; [video_address]
 A816: CE C4 21       LDU    #$C421
 A819: E1 C0          CMPB   ,U+
 A81B: 27 06          BEQ    $A823
 A81D: 11 83 C4 40    CMPU   #$C440
 A821: 26 F6          BNE    $A819
 A823: E6 C8 3E       LDB    $3E,U
-A826: E7 89 08 00    STB    $0800,X
+A826: E7 89 08 00    STB    $0800,X			; [video_address]
 A82A: 20 DE          BRA    $A80A
 
 task_entry_0d_a859:
@@ -5728,7 +5733,7 @@ B74A: 86 04          LDA    #$04
 B74C: 3D             MUL
 B74D: C3 00 20       ADDD   #$0020
 B750: ED 1E          STD    -$2,X
-B752: F6 17 04       LDB    current_level_1704
+B752: F6 17 04       LDB    current_level_from_zero_1704
 B755: C1 10          CMPB   #$10
 B757: 23 0C          BLS    $B765
 B759: BD 8A A0       JSR    random_8aa0
@@ -5915,7 +5920,7 @@ C0E7: 20 0C          BRA    $C0F5
 C0E9: BD C7 D8       JSR    $C7D8
 C0EC: BD C1 A2       JSR    $C1A2
 C0EF: 8E 15 80       LDX    #$1580
-C0F2: B6 17 04       LDA    current_level_1704
+C0F2: B6 17 04       LDA    current_level_from_zero_1704
 C0F5: 4A             DECA
 C0F6: 84 0F          ANDA   #$0F
 C0F8: BB 17 21       ADDA   $1721
@@ -5998,7 +6003,7 @@ C19A: 8E 16 FC       LDX    #$16FC
 C19D: B6 17 44       LDA    $1744
 C1A0: 20 06          BRA    $C1A8
 C1A2: 8E 16 3C       LDX    #$163C
-C1A5: B6 17 04       LDA    current_level_1704
+C1A5: B6 17 04       LDA    current_level_from_zero_1704
 C1A8: C6 3C          LDB    #$3C
 C1AA: 6F 82          CLR    ,-X
 C1AC: 5A             DECB
@@ -6053,6 +6058,7 @@ C219: E7 89 FF 7F    STB    -$0081,X
 C21D: 8C 15 F8       CMPX   #$15F8
 C220: 26 E8          BNE    $C20A
 C222: 8E 15 08       LDX    #$1508
+; loop
 C225: A6 80          LDA    ,X+
 C227: 2B 21          BMI    $C24A
 C229: CE C2 5A       LDU    #$C25A
@@ -6200,7 +6206,7 @@ C48C: 2C 11          BGE    $C49F
 ; scroll not 0 not maxxed
 C48E: 83 00 80       SUBD   #$0080
 C491: F7 10 08       STB    scroll_value_1008
-C494: 86 80          LDA    #$80
+C494: 86 80          LDA    #$80		; player at center !
 C496: A7 0D          STA    $D,X
 C498: 39             RTS
 ; scroll min value (hard right)
@@ -6213,6 +6219,7 @@ C4A0: E7 0D          STB    $D,X
 C4A2: 86 FF          LDA    #$FF
 C4A4: B7 10 08       STA    scroll_value_1008
 C4A7: 39             RTS
+
 C4A8: 8E 17 00       LDX    #$1700
 C4AB: 6F 88 21       CLR    $21,X
 C4AE: A6 05          LDA    $5,X
@@ -6224,8 +6231,8 @@ C4B8: C6 10          LDB    #$10
 C4BA: E7 88 21       STB    $21,X
 C4BD: 20 03          BRA    $C4C2
 C4BF: 4F             CLRA
-C4C0: A7 04          STA    $4,X
-C4C2: 8B 01          ADDA   #$01
+C4C0: A7 04          STA    $4,X		; current level minus one
+C4C2: 8B 01          ADDA   #$01		; add one to start level (BCD)
 C4C4: 19             DAA
 C4C5: A7 05          STA    $5,X
 C4C7: A6 04          LDA    $4,X
@@ -6233,10 +6240,11 @@ C4C9: 84 0F          ANDA   #$0F
 C4CB: 4C             INCA				; compute level number modulus 16 plus one (1-16)
 C4CC: 6C 04          INC    $4,X		; increase level number
 C4CE: AB 88 21       ADDA   $21,X
-C4D1: CE DD 5B       LDU    #$DD5B
-C4D4: C6 19          LDB    #$19
+C4D1: CE DD 5B       LDU    #enemy_start_location_table_dd5b
+C4D4: C6 19          LDB    #$19		; times $19 (by level)
 C4D6: 3D             MUL
-C4D7: 33 CB          LEAU   D,U
+C4D7: 33 CB          LEAU   D,U			; table offset
+; copy positions into $1707
 C4D9: 30 07          LEAX   $7,X
 C4DB: 86 18          LDA    #$18
 C4DD: E6 C0          LDB    ,U+
@@ -6531,7 +6539,7 @@ C7E6: A7 80          STA    ,X+
 C7E8: 5A             DECB
 C7E9: 26 FB          BNE    $C7E6
 C7EB: 8E E0 94       LDX    #$E094
-C7EE: F6 17 04       LDB    current_level_1704
+C7EE: F6 17 04       LDB    current_level_from_zero_1704
 C7F1: 5A             DECB
 C7F2: C4 0F          ANDB   #$0F
 C7F4: FB 17 21       ADDB   $1721
