@@ -19,6 +19,7 @@
 	.error	"\arg"     | comment out to disable errors
 	.endm
 
+OPT_FIX_RANDOM = 1
 
 NATIVE_STACK_SIZE = 0x3000
 
@@ -520,7 +521,7 @@ multiply_ab:
 	rts
 	.ifndef	RELEASE
 	* to trace at some virtual PCs, insert this macro
-	.macro	LOG_REGS_SLOW	the_pc
+	.macro	LOG_REGS	the_pc
 	move.w	sr,-(a7)
 	move.w	#0x\the_pc,-(a7)
 	move.w	#0,-(a7)
@@ -528,7 +529,7 @@ multiply_ab:
 	addq.w	#4,a7
 	move.w	(a7)+,sr
 	.endm
-	.macro	LOG_REGS	the_pc
+	.macro	LOG_REGS_QUICK	the_pc
 	move.w	sr,-(a7)
 
 	move.w	#0x\the_pc,0x100

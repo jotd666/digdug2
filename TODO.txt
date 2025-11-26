@@ -1,3 +1,5 @@
+- sign extension missing: clear_some_params_8732 CLR A,X
+  OK for LDA A,X !!
 - enemy layout depends on the level: debug using that maybe (tables)
 ; copy positions into $1707
 C4D9: 30 07          LEAX   $7,X
@@ -23,3 +25,9 @@ C4DB: 86 18          LDA    #$18
 - implement trainer invincible.infinite lives
 - start screen: bottom right dragon flipped not mirrored (mockup ok)
 - title screen hardcode the title rising clipping
+
+fix random:
+
+bpset aaf5,,{A=0;g}
+bpset 8aa0,,{A=0;PC=$8AB1;g}
+

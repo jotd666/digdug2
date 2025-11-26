@@ -202,6 +202,20 @@ with open(source_dir / "conv.s") as f:
         elif address == 0xE5CE:
             # skip ram/rom test
             line = change_instruction("jra\tend_of_memory_clear_e666   | skip ROM/RAM test & memory clear",lines,i)
+        elif address == 0xaaf5:
+            line = f"""\t.ifdef\tOPT_FIX_RANDOM
+\tmoveq\t#0,d0
+\t.else
+{line}\t.endif
+"""
+        elif address == 0x8aa0:
+            line = f"""\t.ifdef\tOPT_FIX_RANDOM
+\tmoveq\t#0,d0
+\trts
+\t.else
+{line}\t.endif
+"""
+
         elif address == 0xE67A:
             # skip ram/rom test & custom io clear
             line = "\tmoveq\t#0,d0\n"+change_instruction("jra\tcontinue_boot_e6c9   | skip ROM checksum",lines,i)

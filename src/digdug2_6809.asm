@@ -158,7 +158,7 @@ sound_warning_4042 = $4042
 sound_unknown_tune_4049 = $4049
 sound_unknown_tune_404b = $404b
 
-enemy_start_location_table_dd5b = $dd5b
+character_start_location_table_dd5b = $dd5b
 
 ; the absolute character positions
 ; ex: player struct is in $1100
@@ -971,19 +971,20 @@ fill_screen_871c:
 872F: 26 F1          BNE    $8722
 8731: 39             RTS
 
+clear_some_params_8732:
 8732: EC 84          LDD    ,X
-8734: FD 10 30       STD    $1030
+8734: FD 10 30       STD    $1030	; save offset 0 and 1
 8737: EC 06          LDD    $6,X
-8739: FD 10 32       STD    $1032
+8739: FD 10 32       STD    $1032	; save offset 6 and 7
 873C: 86 F0          LDA    #$F0
-873E: 6F 86          CLR    A,X
+873E: 6F 86          CLR    A,X		; clear from X-$10 to X
 8740: 4C             INCA
 8741: 81 10          CMPA   #$10
 8743: 26 F9          BNE    $873E
 8745: FC 10 30       LDD    $1030
-8748: ED 84          STD    ,X
+8748: ED 84          STD    ,X		; restore offset 0 and 1
 874A: FC 10 32       LDD    $1032
-874D: ED 06          STD    $6,X
+874D: ED 06          STD    $6,X	; restore offset 6 and 7
 874F: 39             RTS
 
 write_game_over_8750:
@@ -1249,7 +1250,7 @@ task_entry_11_8890:
 89EF: BD 85 A0       JSR    clear_text_85a0
 89F2: 20 E0          BRA    $89D4
 89F4: 8E 20 10       LDX    #$2010
-89F7: BD 87 32       JSR    $8732
+89F7: BD 87 32       JSR    clear_some_params_8732
 89FA: 30 88 20       LEAX   $20,X
 89FD: 8C 24 30       CMPX   #$2430
 8A00: 26 F5          BNE    $89F7
@@ -1657,9 +1658,9 @@ task_entry_0f_8dfa:
 8E57: A7 88 2B       STA    $2B,X
 8E5A: 4F             CLRA
 8E5B: 20 D5          BRA    $8E32
-8E5D: BD 87 32       JSR    $8732
+8E5D: BD 87 32       JSR    clear_some_params_8732
 8E60: 8E 1F 30       LDX    #$1F30
-8E63: BD 87 32       JSR    $8732
+8E63: BD 87 32       JSR    clear_some_params_8732
 8E66: 7A 10 5E       DEC    $105E
 8E69: 27 8F          BEQ    task_entry_0f_8dfa
 8E6B: B6 10 5E       LDA    $105E
@@ -2061,15 +2062,15 @@ demo_loop_9144:
 91EE: 8E 20 10       LDX    #$2010
 91F1: A6 10          LDA    -$10,X
 91F3: 27 03          BEQ    $91F8
-91F5: BD 87 32       JSR    $8732
+91F5: BD 87 32       JSR    clear_some_params_8732
 91F8: 30 88 20       LEAX   $20,X
 91FB: 8C 24 D0       CMPX   #$24D0
 91FE: 26 F1          BNE    $91F1
-9200: BD A5 4F       JSR    $A54F
+9200: BD A5 4F       JSR    clear_last_shot_params_a54f
 9203: 8E 27 50       LDX    #$2750
-9206: BD 87 32       JSR    $8732
+9206: BD 87 32       JSR    clear_some_params_8732
 9209: 8E 27 70       LDX    #$2770
-920C: BD 87 32       JSR    $8732
+920C: BD 87 32       JSR    clear_some_params_8732
 920F: 7E 90 9C       JMP    task_entry_04_demo_task_909c
 
 task_entry_14_9438:
@@ -2188,7 +2189,7 @@ task_entry_13_94e4:
 9544: 8E 20 10       LDX    #$2010
 9547: A6 0D          LDA    $D,X
 9549: 27 03          BEQ    $954E
-954B: BD 87 32       JSR    $8732
+954B: BD 87 32       JSR    clear_some_params_8732
 954E: 30 88 20       LEAX   $20,X
 9551: 8C 21 B0       CMPX   #$21B0
 9554: 26 F1          BNE    $9547
@@ -2279,7 +2280,7 @@ task_entry_13_94e4:
 9608: 26 AB          BNE    $95B5
 960A: 20 94          BRA    $95A0
 960C: 8E 20 10       LDX    #$2010
-960F: BD 87 32       JSR    $8732
+960F: BD 87 32       JSR    clear_some_params_8732
 9612: 30 88 20       LEAX   $20,X
 9615: 8C 20 B0       CMPX   #$20B0
 9618: 26 F5          BNE    $960F
@@ -2369,9 +2370,9 @@ task_entry_13_94e4:
 96CC: 10 8E 99 49    LDY    #$9949
 96D0: 10 AF 15       STY    -$B,X
 96D3: 8E 21 70       LDX    #$2170
-96D6: BD 87 32       JSR    $8732
+96D6: BD 87 32       JSR    clear_some_params_8732
 96D9: 8E 21 90       LDX    #$2190
-96DC: BD 87 32       JSR    $8732
+96DC: BD 87 32       JSR    clear_some_params_8732
 96DF: 8E 20 10       LDX    #$2010
 96E2: 39             RTS
 96E3: 6C 0D          INC    $D,X
@@ -2587,7 +2588,7 @@ task_entry_13_94e4:
 98ED: 39             RTS
 98EE: BF 10 36       STX    $1036
 98F1: 8E 20 90       LDX    #$2090
-98F4: BD 87 32       JSR    $8732
+98F4: BD 87 32       JSR    clear_some_params_8732
 98F7: 30 88 20       LEAX   $20,X
 98FA: 8C 21 50       CMPX   #$2150
 98FD: 26 F5          BNE    $98F4
@@ -3113,7 +3114,7 @@ task_entry_16_level_select_and_start_9d20:
 9EBF: 48             ASLA
 9EC0: EC C6          LDD    A,U
 9EC2: FD 17 04       STD    current_level_from_zero_1704
-9EC5: BD 87 32       JSR    $8732
+9EC5: BD 87 32       JSR    clear_some_params_8732
 skip_level_select_9ec8:
 9EC8: CC 00 01       LDD    #$0001
 ; clear flags
@@ -3318,7 +3319,7 @@ A0CC: AD D6          JSR    [A,U]	; [indirect_jump]
 A0CE: 20 D4          BRA    $A0A4
 A0D0: B6 25 02       LDA    $2502
 A0D3: 27 06          BEQ    $A0DB
-A0D5: BD A5 4F       JSR    $A54F
+A0D5: BD A5 4F       JSR    clear_last_shot_params_a54f
 A0D8: 7F 25 02       CLR    $2502
 A0DB: B6 25 01       LDA    hammer_active_2501
 A0DE: 27 03          BEQ    $A0E3
@@ -3327,7 +3328,7 @@ A0E3: BD 81 50       JSR    suspend_task_8150
 A0E6: B6 25 00       LDA    $2500
 A0E9: 26 F8          BNE    $A0E3
 A0EB: 8E 25 10       LDX    #$2510
-A0EE: BD 87 32       JSR    $8732
+A0EE: BD 87 32       JSR    clear_some_params_8732
 A0F1: 20 98          BRA    task_entry_05_player_management_a08b
 
 A0FF: 8E 25 10       LDX    #$2510
@@ -3519,6 +3520,7 @@ A263: F6 17 07       LDB    $1707
 A266: E7 03          STB    $3,X
 A268: 6F 1D          CLR    -$3,X
 A26A: 6F 08          CLR    $8,X
+; deploy pump
 A26C: B7 40 45       STA    sound_pump_deploying_4045
 A26F: A6 05          LDA    $5,X
 A271: 8B 48          ADDA   #$48
@@ -3537,7 +3539,8 @@ A28D: 27 A3          BEQ    task_entry_07_pump_management_a232
 A28F: FC 10 D0       LDD    goto_next_life_10d0
 A292: 26 9E          BNE    task_entry_07_pump_management_a232
 A294: 20 E2          BRA    $A278
-A296: BD A5 4F       JSR    $A54F
+; end of pump deployment: clear last shot params (X/Y speeds) and other stuff?
+A296: BD A5 4F       JSR    clear_last_shot_params_a54f
 A299: B6 25 15       LDA    $2515
 A29C: 48             ASLA
 A29D: B7 25 1A       STA    $251A
@@ -3577,11 +3580,11 @@ A2FA: 84 04          ANDA   #$04
 A2FC: 48             ASLA
 A2FD: 8B FC          ADDA   #$FC
 A2FF: E6 88 45       LDB    $45,X
-A302: C5 02          BITB   #$02
+A302: C5 02          BITB   #$02		; shot direction
 A304: 26 04          BNE    $A30A
-A306: A7 11          STA    -$F,X
+A306: A7 11          STA    -$F,X		; vertical shot: set non null 4/-4 speed in 24C1
 A308: 20 02          BRA    $A30C
-A30A: A7 12          STA    -$E,X
+A30A: A7 12          STA    -$E,X		; horizontal shot: set non null 4/-4 speed in 24C2
 A30C: A6 88 4F       LDA    $4F,X
 A30F: 8B F5          ADDA   #$F5
 A311: A7 0F          STA    $F,X
@@ -3602,6 +3605,7 @@ A330: A7 14          STA    -$C,X
 A332: CC 00 C0       LDD    #$00C0		; hose deployment speed = $C0
 A335: A7 1D          STA    -$3,X
 A337: E7 03          STB    $3,X		; $24D3 <- $C0. Smaller value: slower hose deployment
+; 24D6: hose Y (portrait), 24D7: hose X
 A339: 20 49          BRA    $A384
 hose_partially_expanded_a33b:
 A33B: A6 0F          LDA    $F,X
@@ -3782,7 +3786,7 @@ A4A0: A6 53          LDA    -$D,U
 A4A2: 27 0D          BEQ    $A4B1
 A4A4: BF 10 36       STX    $1036
 A4A7: AE 55          LDX    -$B,U
-A4A9: BD 87 32       JSR    $8732
+A4A9: BD 87 32       JSR    clear_some_params_8732
 A4AC: BE 10 36       LDX    $1036
 A4AF: 6F 53          CLR    -$D,U
 A4B1: 6F 5B          CLR    -$5,U
@@ -3859,10 +3863,12 @@ A546: B7 40 45       STA    sound_pump_deploying_4045
 A549: B7 40 46       STA    sound_sfx_4046
 A54C: E7 1A          STB    -$6,X
 A54E: 39             RTS
+
+clear_last_shot_params_a54f:
 A54F: 8E 24 D0       LDX    #$24D0
-A552: BD 87 32       JSR    $8732
+A552: BD 87 32       JSR    clear_some_params_8732
 A555: 8E 24 F0       LDX    #$24F0
-A558: 7E 87 32       JMP    $8732
+A558: 7E 87 32       JMP    clear_some_params_8732
 
 task_entry_08_hammer_management_a55b:
 A55B: BD 81 50       JSR    suspend_task_8150
@@ -4399,7 +4405,7 @@ AAA0: A7 0C          STA    $C,X
 AAA2: F7 40 43       STB    sound_hurry_4043
 AAA5: 7C 10 09       INC    $1009
 AAA8: 20 03          BRA    $AAAD
-AAAA: BD 87 32       JSR    $8732
+AAAA: BD 87 32       JSR    clear_some_params_8732
 AAAD: 30 88 20       LEAX   $20,X
 AAB0: 8C 24 D0       CMPX   #$24D0
 AAB3: 26 C8          BNE    $AA7D
@@ -4565,7 +4571,7 @@ AC22: B6 25 02       LDA    $2502
 AC25: 27 0C          BEQ    $AC33
 AC27: 7F 25 02       CLR    $2502
 AC2A: BF 10 36       STX    $1036
-AC2D: BD A5 4F       JSR    $A54F
+AC2D: BD A5 4F       JSR    clear_last_shot_params_a54f
 AC30: BE 10 36       LDX    $1036
 AC33: 7F 25 01       CLR    hammer_active_2501
 AC36: 7F 10 DA       CLR    ground_collapses_10da
@@ -4583,7 +4589,7 @@ AC52: A6 10          LDA    -$10,X
 AC54: 26 04          BNE    $AC5A
 AC56: A6 16          LDA    -$A,X
 AC58: 27 03          BEQ    $AC5D
-AC5A: BD 87 32       JSR    $8732
+AC5A: BD 87 32       JSR    clear_some_params_8732
 AC5D: 30 88 20       LEAX   $20,X
 AC60: 8C 27 90       CMPX   #$2790
 AC63: 26 ED          BNE    $AC52
@@ -4658,6 +4664,7 @@ AD32: B7 10 69       STA    $1069
 AD35: F7 10 E4       STB    $10E4
 AD38: B7 10 6D       STA    $106D
 AD3B: 39             RTS
+
 AD3C: 6A 04          DEC    $4,X
 AD3E: 10 26 13 79    LBNE   $C0BB
 AD42: 86 01          LDA    #$01
@@ -5000,21 +5007,21 @@ B076: A6 4B          LDA    $B,U
 B078: 81 01          CMPA   #$01
 B07A: 27 13          BEQ    $B08F
 B07C: B6 10 E4       LDA    $10E4
-B07F: 10 26 D6 AF    LBNE   $8732
+B07F: 10 26 D6 AF    LBNE   clear_some_params_8732
 B083: CC 01 02       LDD    #$0102
 B086: B7 10 E4       STA    $10E4
 B089: F7 10 5C       STB    $105C
-B08C: 7E 87 32       JMP    $8732
+B08C: 7E 87 32       JMP    clear_some_params_8732
 B08F: F6 10 E4       LDB    $10E4
 B092: 26 03          BNE    $B097
 B094: B7 10 E4       STA    $10E4
 B097: 86 05          LDA    #$05
 B099: B1 10 5C       CMPA   $105C
-B09C: 10 22 D6 92    LBHI   $8732
+B09C: 10 22 D6 92    LBHI   clear_some_params_8732
 B0A0: B7 10 5C       STA    $105C
-B0A3: 7E 87 32       JMP    $8732
+B0A3: 7E 87 32       JMP    clear_some_params_8732
 B0A6: 7C 10 D1       INC    level_completed_flag_10d1
-B0A9: 7E 87 32       JMP    $8732
+B0A9: 7E 87 32       JMP    clear_some_params_8732
 B0AC: A6 1B          LDA    -$5,X
 B0AE: 27 09          BEQ    $B0B9
 B0B0: BD C0 00       JSR    $C000
@@ -5286,7 +5293,7 @@ B314: 7C 40 4D       INC    sound_caught_404d
 B317: 6C 4F          INC    $F,U
 B319: B6 25 02       LDA    $2502
 B31C: 27 06          BEQ    $B324
-B31E: BD A5 4F       JSR    $A54F
+B31E: BD A5 4F       JSR    clear_last_shot_params_a54f
 B321: 7F 25 02       CLR    $2502
 B324: 7F 25 01       CLR    hammer_active_2501
 B327: 7F 10 DA       CLR    ground_collapses_10da
@@ -5354,7 +5361,7 @@ B3AC: 6F 1B          CLR    -$5,X
 B3AE: 6F 13          CLR    -$D,X
 B3B0: 7F 40 4E       CLR    sound_flame_404e
 B3B3: 1E 31          EXG    U,X
-B3B5: BD 87 32       JSR    $8732
+B3B5: BD 87 32       JSR    clear_some_params_8732
 B3B8: 1E 31          EXG    U,X
 B3BA: 7E C0 BB       JMP    $C0BB
 B3BD: A6 05          LDA    $5,X
@@ -5795,7 +5802,7 @@ B7DB: 26 0D          BNE    $B7EA
 B7DD: 8E 1F 70       LDX    #$1F70
 B7E0: 6A 04          DEC    $4,X
 B7E2: 26 E7          BNE    $B7CB
-B7E4: BD 87 32       JSR    $8732
+B7E4: BD 87 32       JSR    clear_some_params_8732
 B7E7: 7E B6 E2       JMP    task_entry_10_b6e2
 B7EA: BD 81 50       JSR    suspend_task_8150
 B7ED: 8E 1F 70       LDX    #$1F70
@@ -5805,7 +5812,7 @@ B7F5: BD C0 BB       JSR    $C0BB
 B7F8: 6F 0C          CLR    $C,X
 B7FA: 20 EE          BRA    $B7EA
 B7FC: 8E 1F 70       LDX    #$1F70
-B7FF: BD 87 32       JSR    $8732
+B7FF: BD 87 32       JSR    clear_some_params_8732
 B802: 7E B6 E2       JMP    task_entry_10_b6e2
 
 C000: E6 03          LDB    $3,X                                        
@@ -6240,7 +6247,7 @@ C4C9: 84 0F          ANDA   #$0F
 C4CB: 4C             INCA				; compute level number modulus 16 plus one (1-16)
 C4CC: 6C 04          INC    $4,X		; increase level number
 C4CE: AB 88 21       ADDA   $21,X
-C4D1: CE DD 5B       LDU    #enemy_start_location_table_dd5b
+C4D1: CE DD 5B       LDU    #character_start_location_table_dd5b
 C4D4: C6 19          LDB    #$19		; times $19 (by level)
 C4D6: 3D             MUL
 C4D7: 33 CB          LEAU   D,U			; table offset
@@ -6252,7 +6259,7 @@ C4DF: E7 80          STB    ,X+
 C4E1: 4A             DECA
 C4E2: 26 F9          BNE    $C4DD
 C4E4: A6 C4          LDA    ,U
-C4E6: A7 80          STA    ,X+
+C4E6: A7 80          STA    ,X+		; one last data byte
 C4E8: 86 03          LDA    #$03
 C4EA: A7 84          STA    ,X
 C4EC: B6 10 10       LDA    demo_on_1010
@@ -7022,7 +7029,7 @@ CCA2: A6 13          LDA    -$D,X
 CCA4: 27 0B          BEQ    $CCB1
 CCA6: BF 10 36       STX    $1036
 CCA9: AE 15          LDX    -$B,X
-CCAB: BD 87 32       JSR    $8732
+CCAB: BD 87 32       JSR    clear_some_params_8732
 CCAE: BE 10 36       LDX    $1036
 CCB1: CC 3F 0F       LDD    #$3F0F
 CCB4: A7 04          STA    $4,X
@@ -7098,7 +7105,7 @@ CD5B: 7F 25 01       CLR    hammer_active_2501
 CD5E: B6 25 02       LDA    $2502
 CD61: 26 01          BNE    $CD64
 CD63: 39             RTS
-CD64: BD A5 4F       JSR    $A54F
+CD64: BD A5 4F       JSR    clear_last_shot_params_a54f
 CD67: 7F 25 02       CLR    $2502
 CD6A: 39             RTS
 
