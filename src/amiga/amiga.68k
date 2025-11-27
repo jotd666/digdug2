@@ -109,7 +109,7 @@ TARGET_SPRITE_COLOR = 1
 TARGET_SPRITE_ATTR = 0x1000
 TARGET_SPRITE_SIZEOF = 2
 
-FLIP_Y_BIT = 2
+FLIP_Y_BIT = 0
 MIRROR_X_BIT = 1
 SIZE_X_BIT = 2
 SIZE_Y_BIT = 3
@@ -852,7 +852,7 @@ do_irq:
 	GET_MEMORY_START_AND_DP
 	* TEMP TEMP
 	clr.b	(0x4040,a6)  | start music is done
-	clr.b	(0x4051,a6)  | death sfx is done
+	clr.l	(0x4050,a6)  | death sfx is done & others
 	clr.b	(0x404D,a6)  | death sfx is done
 	
 	jra			irq_8000					| pass control to the cpu core
@@ -961,6 +961,7 @@ level3_interrupt:
 	jbsr	read_inputs
 
 3:
+	move.b 	#0,0x110
     movem.l (a7)+,d0-d7/a0-a6
  	move.l	saved_stack_level_3,a7
     rte
@@ -1548,7 +1549,7 @@ update_one_bob:
 	move.l	d4,a0
     * flip_x = D3 & 0x1
     * flip_y = D3 & 0x2
-	btst	#FLIP_Y_BIT,d3  | Y but portrait!
+	btst	#MIRROR_X_BIT,d3  | Y but portrait!
 	jeq		101f
 	* mirror (most sprites don't have that, it will just display
 	* the next frame if not generated, which can be off-putting!
@@ -1600,7 +1601,7 @@ update_one_bob:
 	move.w	d5,d2			    | width in bytes
 	moveq	#0,d5			    | Y-offset
 
-	btst	#MIRROR_X_BIT,d3  | X but portrait!
+	btst	#FLIP_Y_BIT,d3  | X but portrait!
 	jeq		101f
 	* flip
 	neg.w	d4
@@ -2320,6 +2321,7 @@ load_palette:
 	
 
 osd_enable_interrupts:
+	BREAKPOINT	"ENABLLLL"
 	move.w	#0xC038,_custom+intena
 	rts
 osd_disable_interrupts:

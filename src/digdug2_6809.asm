@@ -130,6 +130,8 @@ hole_hit_10d5 = $10d5
 ground_crumbling_10d9 = $10d9
 enemies_active_10d2 = $10d2
 a_screen_address_1041 = $1041
+characters_can_move_2500 = $2500
+fast_timer_1001 = $1001
 
 ; shared variables with sound cpu. Each byte matches one sound or tune
 ; writing non-zero triggers the sound, zero stops it
@@ -159,6 +161,7 @@ sound_unknown_tune_4049 = $4049
 sound_unknown_tune_404b = $404b
 
 character_start_location_table_dd5b = $dd5b
+periodic_60_timer_1050 = $1050
 
 ; the absolute character positions
 ; ex: player struct is in $1100
@@ -224,16 +227,16 @@ irq_8000:
 8050: 30 88 20       LEAX   $20,X
 8053: 8C 27 96       CMPX   #$2796
 8056: 26 E8          BNE    $8040
-8058: B6 25 00       LDA    $2500
+8058: B6 25 00       LDA    characters_can_move_2500
 805B: 27 03          BEQ    $8060
 805D: BD 8E 81       JSR    copy_character_positions_8e81
-8060: 7C 10 01       INC    $1001
+8060: 7C 10 01       INC    fast_timer_1001
 8063: 7C 10 00       INC    sync_1000		; let non-interrupt code run (sync)
-8066: B6 10 50       LDA    $1050
+8066: B6 10 50       LDA    periodic_60_timer_1050
 8069: 26 02          BNE    $806D
-806B: 86 3C          LDA    #$3C
+806B: 86 3C          LDA    #$3C		; reload 60
 806D: 4A             DECA
-806E: B7 10 50       STA    $1050
+806E: B7 10 50       STA    periodic_60_timer_1050
 8071: 3B             RTI
 
 init_8072:
@@ -327,7 +330,7 @@ task_loop_811e:
 8120: 30 02          LEAX   $2,X
 8122: 8C 18 30       CMPX   #stack_location_pointer_array_1800+$30
 8125: 26 F7          BNE    task_loop_811E
-8127: B6 25 00       LDA    $2500
+8127: B6 25 00       LDA    characters_can_move_2500
 812A: 27 03          BEQ    $812F
 812C: BD 8E AD       JSR    $8EAD
 ; more tasks, but they're never activated. The variable area is used, though
@@ -531,7 +534,7 @@ end_zero_io_81f6:
 82A9: 26 4A          BNE    $82F5
 82AB: C4 0F          ANDB   #$0F
 82AD: 26 46          BNE    $82F5
-82AF: B6 10 50       LDA    $1050
+82AF: B6 10 50       LDA    periodic_60_timer_1050
 82B2: 26 ED          BNE    $82A1
 82B4: 7A 10 4F       DEC    timer_104f
 82B7: 26 E8          BNE    $82A1
@@ -545,7 +548,7 @@ end_zero_io_81f6:
 82CD: 26 26          BNE    $82F5
 82CF: C4 0F          ANDB   #$0F
 82D1: 26 22          BNE    $82F5
-82D3: B6 10 50       LDA    $1050
+82D3: B6 10 50       LDA    periodic_60_timer_1050
 82D6: 26 ED          BNE    $82C5
 82D8: 7A 10 4F       DEC    timer_104f
 82DB: 26 E8          BNE    $82C5
@@ -781,7 +784,7 @@ player_killed_83ff:
 set_game_running_flags_8538:
 8538: 86 01          LDA    #$01
 853A: B7 10 1B       STA    game_in_play_101b
-853D: B7 25 00       STA    $2500
+853D: B7 25 00       STA    characters_can_move_2500
 8540: B7 10 D6       STA    $10D6
 8543: B7 10 D2       STA    enemies_active_10d2
 8546: B7 10 D4       STA    $10D4
@@ -795,7 +798,7 @@ set_game_not_running_flags_854d:
 8554: B7 10 1B       STA    game_in_play_101b
 8557: B7 10 E4       STA    $10E4
 855A: B7 10 D6       STA    $10D6
-855D: B7 25 00       STA    $2500
+855D: B7 25 00       STA    characters_can_move_2500
 8560: B7 1F 60       STA    $1F60
 8563: B7 10 D2       STA    enemies_active_10d2
 8566: B7 10 D4       STA    $10D4
@@ -910,7 +913,7 @@ write_nb_credits_8635:
 
 8657: B7 07 A4       STA    credits_tens_screen_address_07a4	; [video_address]
 865A: 39             RTS
-865B: B6 10 01       LDA    $1001
+865B: B6 10 01       LDA    fast_timer_1001
 865E: 85 08          BITA   #$08
 8660: 26 0C          BNE    $866E
 8662: 8E 02 89       LDX    #$0289
@@ -1163,7 +1166,7 @@ task_entry_11_8890:
 8907: BD 81 50       JSR    suspend_task_8150
 890A: B6 10 E2       LDA    $10E2
 890D: 10 27 00 E3    LBEQ   $89F4
-8911: B6 10 01       LDA    $1001
+8911: B6 10 01       LDA    fast_timer_1001
 8914: 85 01          BITA   #$01
 8916: 26 EF          BNE    $8907
 8918: 8E 24 10       LDX    #$2410
@@ -1239,7 +1242,7 @@ task_entry_11_8890:
 89D4: BD 81 50       JSR    suspend_task_8150
 89D7: B6 10 E2       LDA    $10E2
 89DA: 27 18          BEQ    $89F4
-89DC: B6 10 01       LDA    $1001
+89DC: B6 10 01       LDA    fast_timer_1001
 89DF: 85 08          BITA   #$08
 89E1: 26 05          BNE    $89E8
 89E3: BD 86 A9       JSR    $86A9
@@ -1599,6 +1602,7 @@ task_entry_0e_8d48:
 8DB4: 26 F5          BNE    $8DAB
 8DB6: 7A 10 E6       DEC    $10E6
 8DB9: 20 8D          BRA    task_entry_0e_8d48
+
 8DBB: 8E 12 88       LDX    #$1288
 8DBE: CC 00 00       LDD    #$0000
 8DC1: ED 81          STD    ,X++
@@ -1650,7 +1654,7 @@ task_entry_0f_8dfa:
 8E45: 8B F0          ADDA   #$F0
 8E47: 27 14          BEQ    $8E5D
 8E49: A7 88 2D       STA    $2D,X
-8E4C: B6 10 01       LDA    $1001
+8E4C: B6 10 01       LDA    fast_timer_1001
 8E4F: 84 08          ANDA   #$08
 8E51: 27 02          BEQ    $8E55
 8E53: 86 0D          LDA    #$0D
@@ -1688,7 +1692,7 @@ copy_character_positions_8e81:
 8E98: 1E 89          EXG    A,B
 8E9A: A7 0D          STA    $D,X
 8E9C: E7 0F          STB    $F,X
-8E9E: 6F C4          CLR    ,U
+8E9E: 6F C4          CLR    ,U		; display priority cleared
 8EA0: 6F 45          CLR    $5,U
 8EA2: 33 46          LEAU   $6,U
 8EA4: 30 88 20       LEAX   $20,X
@@ -1732,7 +1736,7 @@ copy_character_positions_8e81:
 8EF6: 7C 10 35       INC    $1035
 8EF9: 20 07          BRA    $8F02
 8EFB: F0 10 35       SUBB   $1035
-8EFE: E7 C4          STB    ,U
+8EFE: E7 C4          STB    ,U		; set display priority (sprite draw order)
 8F00: E6 0D          LDB    $D,X
 8F02: E7 44          STB    $4,U    ; store logical coord
 8F04: A7 45          STA    $5,U	; store logical coord
@@ -1889,7 +1893,7 @@ task_entry_01_show_current_player_902b:
 9046: B6 10 0A       LDA    $100A
 9049: 2A 01          BPL    $904C
 904B: 39             RTS
-904C: B6 10 01       LDA    $1001
+904C: B6 10 01       LDA    fast_timer_1001
 904F: 84 0F          ANDA   #$0F
 9051: 27 01          BEQ    $9054
 9053: 39             RTS
@@ -1907,7 +1911,7 @@ task_entry_01_show_current_player_902b:
 906E: 26 12          BNE    $9082
 9070: C6 02          LDB    #$02
 9072: 20 0E          BRA    $9082
-9074: B6 10 01       LDA    $1001
+9074: B6 10 01       LDA    fast_timer_1001
 9077: 44             LSRA
 9078: 44             LSRA
 9079: 44             LSRA
@@ -1963,7 +1967,7 @@ task_entry_04_demo_task_909c:
 90E4: CE 92 99       LDU    #$9299
 90E7: BD C4 DB       JSR    $C4DB
 90EA: 86 01          LDA    #$01
-90EC: B7 25 00       STA    $2500
+90EC: B7 25 00       STA    characters_can_move_2500
 90EF: B7 10 D2       STA    enemies_active_10d2
 90F2: B7 10 D6       STA    $10D6
 90F5: B7 10 D4       STA    $10D4
@@ -2039,8 +2043,8 @@ demo_loop_9144:
 91AC: 8C 14 78       CMPX   #$1478
 91AF: 26 F9          BNE    $91AA
 91B1: B7 10 10       STA    demo_on_1010
-91B4: B7 10 50       STA    $1050
-91B7: B7 25 00       STA    $2500
+91B4: B7 10 50       STA    periodic_60_timer_1050
+91B7: B7 25 00       STA    characters_can_move_2500
 91BA: B7 10 D2       STA    enemies_active_10d2
 91BD: FD 10 D0       STD    goto_next_life_10d0
 91C0: B7 10 08       STA    scroll_value_1008
@@ -2087,12 +2091,12 @@ task_entry_14_9438:
 944C: 49             ROLA
 944D: 30 8B          LEAX   D,X
 944F: BF 10 36       STX    $1036
-9452: F6 10 01       LDB    $1001
+9452: F6 10 01       LDB    fast_timer_1001
 9455: C4 1F          ANDB   #$1F
 9457: 3A             ABX
 9458: C6 1F          LDB    #$1F
 945A: F7 10 09       STB    $1009
-945D: A6 89 08 00    LDA    $0800,X		; [video_address
+945D: A6 89 08 00    LDA    $0800,X		; [video_address]
 9461: 2A 06          BPL    $9469
 9463: 84 3F          ANDA   #$3F
 9465: A7 89 08 00    STA    $0800,X		; [video_address]
@@ -2126,7 +2130,7 @@ task_entry_14_9438:
 94A0: 30 88 20       LEAX   $20,X
 94A3: 20 D8          BRA    $947D
 94A5: B7 10 6D       STA    $106D
-94A8: B6 10 50       LDA    $1050
+94A8: B6 10 50       LDA    periodic_60_timer_1050
 94AB: BA 10 D9       ORA    ground_crumbling_10d9
 94AE: BA 10 D7       ORA    $10D7
 94B1: BA 10 E6       ORA    $10E6
@@ -2229,7 +2233,7 @@ task_entry_13_94e4:
 95A0: BD 81 50       JSR    suspend_task_8150
 95A3: B6 10 E3       LDA    $10E3
 95A6: 27 64          BEQ    $960C
-95A8: B6 10 01       LDA    $1001
+95A8: B6 10 01       LDA    fast_timer_1001
 95AB: 84 04          ANDA   #$04
 95AD: 44             LSRA
 95AE: 44             LSRA
@@ -2304,7 +2308,7 @@ task_entry_13_94e4:
 963C: A7 0D          STA    $D,X
 963E: 81 B0          CMPA   #$B0
 9640: 27 0E          BEQ    $9650
-9642: B6 10 01       LDA    $1001
+9642: B6 10 01       LDA    fast_timer_1001
 9645: 84 0C          ANDA   #$0C
 9647: 44             LSRA
 9648: 44             LSRA
@@ -2341,12 +2345,12 @@ task_entry_13_94e4:
 9689: 27 20          BEQ    $96AB
 968B: 39             RTS
 968C: CC 04 02       LDD    #$0402
-968F: B4 10 01       ANDA   $1001
+968F: B4 10 01       ANDA   fast_timer_1001
 9692: 44             LSRA
 9693: 44             LSRA
 9694: 8B 4A          ADDA   #$4A
 9696: A7 89 01 4A    STA    $014A,X
-969A: F4 10 01       ANDB   $1001
+969A: F4 10 01       ANDB   fast_timer_1001
 969D: 54             LSRB
 969E: CB 06          ADDB   #$06
 96A0: E7 0B          STB    $B,X
@@ -2380,7 +2384,7 @@ task_entry_13_94e4:
 96E8: A0 0D          SUBA   $D,X
 96EA: 81 08          CMPA   #$08
 96EC: 23 16          BLS    $9704
-96EE: B6 10 01       LDA    $1001
+96EE: B6 10 01       LDA    fast_timer_1001
 96F1: 84 04          ANDA   #$04
 96F3: 44             LSRA
 96F4: 44             LSRA
@@ -2649,13 +2653,13 @@ task_entry_12_9955:
 99B5: B6 48 07       LDA    $4807
 99B8: 84 08          ANDA   #$08
 99BA: 10 26 00 FA    LBNE   $9AB8
-99BE: B6 10 50       LDA    $1050
+99BE: B6 10 50       LDA    periodic_60_timer_1050
 99C1: 26 07          BNE    $99CA
 99C3: 7A 10 4F       DEC    timer_104f
 99C6: 10 27 00 92    LBEQ   $9A5C
 99CA: B6 10 ED       LDA    $10ED
 99CD: 27 1E          BEQ    $99ED
-99CF: B6 10 01       LDA    $1001
+99CF: B6 10 01       LDA    fast_timer_1001
 99D2: 84 08          ANDA   #$08
 99D4: 26 0D          BNE    $99E3
 99D6: 8E 02 FB       LDX    #$02FB
@@ -2723,7 +2727,7 @@ task_entry_12_9955:
 9A7B: 26 3B          BNE    $9AB8
 9A7D: B6 10 ED       LDA    $10ED
 9A80: 27 1E          BEQ    $9AA0
-9A82: B6 10 01       LDA    $1001
+9A82: B6 10 01       LDA    fast_timer_1001
 9A85: 84 08          ANDA   #$08
 9A87: 26 0D          BNE    $9A96
 9A89: 8E 02 FB       LDX    #$02FB
@@ -2738,7 +2742,7 @@ task_entry_12_9955:
 9AA0: B6 40 4A       LDA    sound_highscore_tune_404a
 9AA3: 27 13          BEQ    $9AB8
 9AA5: C6 16          LDB    #$16
-9AA7: B6 10 01       LDA    $1001
+9AA7: B6 10 01       LDA    fast_timer_1001
 9AAA: 84 08          ANDA   #$08
 9AAC: 27 02          BEQ    $9AB0
 9AAE: 8B 02          ADDA   #$02
@@ -2915,7 +2919,7 @@ task_entry_15_9cb6:
 9CD0: BD 81 50       JSR    suspend_task_8150
 9CD3: B6 10 14       LDA    hammer_button_pressed_1014
 9CD6: 26 31          BNE    $9D09
-9CD8: B6 10 01       LDA    $1001
+9CD8: B6 10 01       LDA    fast_timer_1001
 9CDB: 84 07          ANDA   #$07
 9CDD: 26 F1          BNE    $9CD0
 9CDF: F6 10 13       LDB    player_decoded_directions_1013
@@ -2996,7 +3000,7 @@ task_entry_16_level_select_and_start_9d20:
 9D8F: C6 04          LDB    #$04
 9D91: BD 85 A0       JSR    clear_text_85a0
 9D94: CC 3C 06       LDD    #$3C06
-9D97: B7 10 50       STA    $1050
+9D97: B7 10 50       STA    periodic_60_timer_1050
 9D9A: F7 01 76       STB    $0176
 9D9D: 8E 0A AF       LDX    #$0AAF
 9DA0: BF 10 C9       STX    $10C9
@@ -3030,7 +3034,7 @@ task_entry_16_level_select_and_start_9d20:
 9DED: FD 07 A3       STD    credits_units_screen_address_07a3	; [video_address_word]
 9DF0: BD 81 50       JSR    suspend_task_8150
 9DF3: 8E 25 10       LDX    #$2510
-9DF6: B6 10 50       LDA    $1050
+9DF6: B6 10 50       LDA    periodic_60_timer_1050
 9DF9: 26 07          BNE    $9E02
 9DFB: 7A 01 76       DEC    $0176
 9DFE: 10 27 00 83    LBEQ   $9E85
@@ -3084,7 +3088,7 @@ task_entry_16_level_select_and_start_9d20:
 9E6E: 6F 0C          CLR    $C,X
 9E70: BD 81 50       JSR    suspend_task_8150
 9E73: 8E 25 10       LDX    #$2510
-9E76: B6 10 50       LDA    $1050
+9E76: B6 10 50       LDA    periodic_60_timer_1050
 9E79: 26 D6          BNE    $9E51
 9E7B: B6 01 76       LDA    $0176
 9E7E: 27 D1          BEQ    $9E51
@@ -3100,7 +3104,7 @@ task_entry_16_level_select_and_start_9d20:
 9E9C: BD 81 50       JSR    suspend_task_8150
 9E9F: 7A 10 4F       DEC    timer_104f
 9EA2: 27 13          BEQ    $9EB7
-9EA4: B6 10 01       LDA    $1001
+9EA4: B6 10 01       LDA    fast_timer_1001
 9EA7: 84 08          ANDA   #$08
 9EA9: 27 02          BEQ    $9EAD
 9EAB: 86 0B          LDA    #$0B
@@ -3291,16 +3295,17 @@ A079: 7E 9F 03       JMP    task_entry_06_player_on_edge_9f03
 
 task_entry_05_player_management_a08b:
 A08B: BD 81 50       JSR    suspend_task_8150
-A08E: B6 25 00       LDA    $2500
+A08E: B6 25 00       LDA    characters_can_move_2500
 A091: 27 F8          BEQ    task_entry_05_player_management_a08b
-A093: BD A0 FF       JSR    $A0FF
+A093: BD A0 FF       JSR    init_player_position_a0ff
 A096: BD 8D BB       JSR    $8DBB
 A099: BD 81 50       JSR    suspend_task_8150
 A09C: B6 40 40       LDA    sound_level_start_tune_4040
 A09F: 26 F8          BNE    $A099
+; start tune ended playing: unblock player movement
 A0A1: 7C 10 DC       INC    $10DC
 A0A4: BD 81 50       JSR    suspend_task_8150
-A0A7: B6 25 00       LDA    $2500
+A0A7: B6 25 00       LDA    characters_can_move_2500
 A0AA: 27 3F          BEQ    $A0EB
 A0AC: B6 10 D1       LDA    level_completed_flag_10d1
 A0AF: 26 1F          BNE    $A0D0
@@ -3325,12 +3330,16 @@ A0DB: B6 25 01       LDA    hammer_active_2501
 A0DE: 27 03          BEQ    $A0E3
 A0E0: 7F 25 01       CLR    hammer_active_2501
 A0E3: BD 81 50       JSR    suspend_task_8150
-A0E6: B6 25 00       LDA    $2500
+A0E6: B6 25 00       LDA    characters_can_move_2500
 A0E9: 26 F8          BNE    $A0E3
 A0EB: 8E 25 10       LDX    #$2510
 A0EE: BD 87 32       JSR    clear_some_params_8732
 A0F1: 20 98          BRA    task_entry_05_player_management_a08b
 
+; when exiting from here, 251D=$80, $251F=$70 (level 1)
+; it can be different depending on the level or if some
+; holes are present in the default restart position
+init_player_position_a0ff:
 A0FF: 8E 25 10       LDX    #$2510
 A102: CC 08 01       LDD    #$0801
 A105: ED 0A          STD    $A,X
@@ -3339,7 +3348,7 @@ A108: A7 05          STA    $5,X
 A10A: E7 1A          STB    -$6,X
 A10C: B6 17 07       LDA    $1707
 A10F: A7 03          STA    $3,X
-A111: BD C8 EA       JSR    $C8EA
+A111: BD C8 EA       JSR    init_position_player_vertically_c8ea
 A114: 7E C4 80       JMP    scrolling_following_player_c480
 
 
@@ -3500,7 +3509,7 @@ A235: B6 40 40       LDA    sound_level_start_tune_4040
 A238: 26 F8          BNE    task_entry_07_pump_management_a232
 A23A: FC 10 D0       LDD    goto_next_life_10d0
 A23D: 26 F3          BNE    task_entry_07_pump_management_a232
-A23F: B6 25 00       LDA    $2500
+A23F: B6 25 00       LDA    characters_can_move_2500
 A242: 27 EE          BEQ    task_entry_07_pump_management_a232
 A244: B6 10 DA       LDA    ground_collapses_10da
 A247: 26 E9          BNE    task_entry_07_pump_management_a232
@@ -3828,7 +3837,7 @@ A4F9: 86 0E          LDA    #$0E
 A4FB: A7 04          STA    $4,X
 A4FD: 39             RTS
 A4FE: A7 04          STA    $4,X
-A500: B6 10 01       LDA    $1001
+A500: B6 10 01       LDA    fast_timer_1001
 A503: 84 04          ANDA   #$04
 A505: 44             LSRA
 A506: 44             LSRA
@@ -3839,7 +3848,7 @@ A50F: A6 88 4A       LDA    $4A,X
 A512: 84 4E          ANDA   #$4E
 A514: BA 10 34       ORA    round_number_1034
 A517: A7 88 4A       STA    $4A,X
-A51A: B6 10 01       LDA    $1001
+A51A: B6 10 01       LDA    fast_timer_1001
 A51D: 84 02          ANDA   #$02
 A51F: 44             LSRA
 A520: 8B 06          ADDA   #$06
@@ -4182,11 +4191,11 @@ A85F: 26 F8          BNE    task_entry_0d_a859
 A861: B6 10 D6       LDA    $10D6
 A864: 27 F3          BEQ    task_entry_0d_a859
 A866: 86 3C          LDA    #$3C
-A868: B7 10 50       STA    $1050
+A868: B7 10 50       STA    periodic_60_timer_1050
 A86B: BD 81 50       JSR    suspend_task_8150
 A86E: B6 10 D6       LDA    $10D6
 A871: 27 E6          BEQ    task_entry_0d_a859
-A873: B6 10 50       LDA    $1050
+A873: B6 10 50       LDA    periodic_60_timer_1050
 A876: 10 26 00 AA    LBNE   $A924
 A87A: FC 10 D0       LDD    goto_next_life_10d0
 A87D: 10 26 00 A3    LBNE   $A924
@@ -4422,7 +4431,7 @@ AAC8: B6 10 D2       LDA    enemies_active_10d2
 AACB: 27 F0          BEQ    task_entry_0b_enemy_management_aabd
 AACD: FC 10 D0       LDD    goto_next_life_10d0
 AAD0: 10 26 00 A6    LBNE   $AB7A
-AAD4: B6 10 50       LDA    $1050
+AAD4: B6 10 50       LDA    periodic_60_timer_1050
 AAD7: 26 EC          BNE    $AAC5
 AAD9: 7A 10 4A       DEC    $104A
 AADC: 26 E7          BNE    $AAC5
@@ -4477,7 +4486,7 @@ AB3D: E7 1A          STB    -$6,X
 AB3F: 30 88 20       LEAX   $20,X
 AB42: 8C 26 70       CMPX   #$2670
 AB45: 26 EC          BNE    $AB33
-AB47: B6 10 50       LDA    $1050
+AB47: B6 10 50       LDA    periodic_60_timer_1050
 AB4A: 26 D0          BNE    $AB1C
 AB4C: 7A 10 4B       DEC    $104B
 AB4F: 26 CB          BNE    $AB1C
@@ -5039,10 +5048,10 @@ B0CC: 33 C5          LEAU   B,U
 B0CE: E6 C4          LDB    ,U
 B0D0: C1 70          CMPB   #$70
 B0D2: 24 18          BCC    $B0EC
-B0D4: E6 C9 08 00    LDB    $0800,U
+B0D4: E6 C9 08 00    LDB    $0800,U		; [video_address]
 B0D8: C1 30          CMPB   #$30
 B0DA: 26 08          BNE    $B0E4
-B0DC: E6 C4          LDB    ,U
+B0DC: E6 C4          LDB    ,U			; [video_address]
 B0DE: C4 03          ANDB   #$03
 B0E0: 26 0A          BNE    $B0EC
 B0E2: 20 E4          BRA    $B0C8
@@ -5773,7 +5782,7 @@ B796: AB 0F          ADDA   $F,X
 B798: A7 0F          STA    $F,X
 B79A: B6 10 D3       LDA    $10D3
 B79D: 26 0B          BNE    $B7AA
-B79F: B6 10 50       LDA    $1050
+B79F: B6 10 50       LDA    periodic_60_timer_1050
 B7A2: 26 CF          BNE    $B773
 B7A4: 6A 04          DEC    $4,X
 B7A6: 26 CB          BNE    $B773
@@ -5871,7 +5880,7 @@ C06B: 33 41          LEAU   $1,U
 C06D: EF 0E          STU    $E,X
 C06F: 39             RTS
 
-C078: B6 10 01       LDA    $1001
+C078: B6 10 01       LDA    fast_timer_1001
 C07B: 84 03          ANDA   #$03
 C07D: 26 1A          BNE    $C099
 C07F: CE A6 84       LDU    #$A684
@@ -5881,7 +5890,7 @@ C086: 8B 02          ADDA   #$02
 C088: 84 02          ANDA   #$02
 C08A: AA C5          ORA    B,U
 C08C: A7 0A          STA    $A,X
-C08E: B6 10 01       LDA    $1001
+C08E: B6 10 01       LDA    fast_timer_1001
 C091: 84 10          ANDA   #$10
 C093: 44             LSRA
 C094: 44             LSRA
@@ -6204,6 +6213,8 @@ C383: 8C 15 F0       CMPX   #$15F0
 C386: 10 26 FE E2    LBNE   $C26C
 C38A: 39             RTS
 
+; change horizontal player coord
+; < X=$2510
 scrolling_following_player_c480:
 C480: EC 1E          LDD    -$2,X
 C482: 10 83 00 80    CMPD   #$0080
@@ -6647,6 +6658,7 @@ C8D1: 39             RTS
 C8D2: 00 20          NEG    $20
 C8D4: 20 20          BRA    $C8F6
 
+init_position_player_vertically_c8ea:
 C8EA: B6 17 0C       LDA    $170C
 C8ED: 20 04          BRA    $C8F3
 C8EF: A6 5F          LDA    -$1,U
@@ -6685,7 +6697,7 @@ C935: 48             ASLA
 C936: 48             ASLA
 C937: 8B 10          ADDA   #$10
 C939: BB 10 69       ADDA   $1069
-C93C: A7 0F          STA    $F,X
+C93C: A7 0F          STA    $F,X		; init vertical player coord
 C93E: C4 78          ANDB   #$78
 C940: 86 04          LDA    #$04
 C942: 3D             MUL

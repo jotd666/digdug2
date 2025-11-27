@@ -2,6 +2,12 @@ import os,struct,re
 
 # log has the registers, then "DEAD" in hex then ram and rom base addresses
 
+# do not compare those, they're fake diffs
+excluded_pcs = {0X8120,0x8122,0x8125,0x811E,0x9F06,0xAB88,0xACE0,0xACC8,0x80C1,0x80C4,0x80C6,0x9CB9}
+excluded_pcs.update(range(0x8000,0x8072)) # remove irq
+excluded_pcs.update(range(0x9438,0x94BE)) # remove waves random
+excluded_pcs.remove(0x805D)
+
 with open(r"..\cpu_log","rb") as f:
     contents = f.read()
     contents = contents[:-8]
@@ -63,19 +69,21 @@ for i in range(0,len(contents),len_block):
     regs["pc"],regs["a"],regs["d"],regs["x"],regs["y"],regs["u"],end = struct.unpack_from(">HHHHHHH",chunk)
     if end==0xCCCC:
         break
-    pcs.add(regs["pc"])
+    if regs["pc"] not in excluded_pcs:
 
-    regs['b'] = regs['d'] & 0xFF
+        pcs.add(regs["pc"])
 
-    regsize = {"a":2,"b":2,"d":4,"x":4,"y":4,"u":4}
+        regs['b'] = regs['d'] & 0xFF
+
+        regsize = {"a":2,"b":2,"d":4,"x":4,"y":4,"u":4}
 
 
-    regstr = ["{}={:0{}X}".format(reg.upper(),regs[reg],regsize[reg]) for reg in regslist if reg not in avoid_regs]
-    rest = ", ".join(regstr)
+        regstr = ["{}={:0{}X}".format(reg.upper(),regs[reg],regsize[reg]) for reg in regslist if reg not in avoid_regs]
+        rest = ", ".join(regstr)
 
-    out = f"{regs['pc']:04X}: {rest}\n"
+        out = f"{regs['pc']:04X}: {rest}\n"
 
-    lst.append(out)
+        lst.append(out)
 
 if sorted_cmp:
     lst.sort()
@@ -97,7 +105,8 @@ with open(r"K:\Emulation\MAME\mame.tr","r") as f:
         if m:
             pc = line[l:l+4]
             regs = dict()
-            if int(pc,16) in pcs:
+            pcval = int(pc,16)
+            if pcval in pcs and pcval not in excluded_pcs:
                 regs["a"],regs["b"],regs["d"],regs["x"],regs["y"],regs["u"] = m.groups()
                 regstr = ["{}={}".format(reg.upper(),regs[reg]) for reg in regslist if reg not in avoid_regs]
                 rest = ", ".join(regstr)
