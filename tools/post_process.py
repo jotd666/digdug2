@@ -91,18 +91,17 @@ with open(source_dir / "conv.s") as f:
         elif address == 0x8153:
             line = """\tmove.l\ta7,d0     | get current stack
 \tsub.l\t#stack_top,d0          | convert to offset
-\tbset\t#15,d0                  | watermark for safety (TEMP)
 \tGET_REG_ADDRESS\t0,d2         | get stack pointers buffer real address
 \tmove.w\td0,(a0)               | store to stack pointers buffer ($18xx)
 \tmoveq\t#0,d0                  | so D0 MSB is 0
 * continue to unwind_stack, return to main task scheduler
 """
         elif address == 0x8f67:
-            line = change_instruction("lea\tstack_top+0x1FC,a2   | second stack buffer almost top",lines,i)
+            line = change_instruction("lea\tstack_top+2*TASK_STACK_SIZE-4,a2   | second stack buffer almost top",lines,i)
         elif address == 0x8f73:
             line = """\tmove.l\t(a3)+,d0                     | [$8f73: ldd    ,y++] get address from table
 \tmove.l\td0,(a2)                       | [$8f75: std    ,x] put start address on top of task stack
-\tadd.w\t#0x100,a2                      | [$8f77: leax   $10,x] next stack buffer
+\tadd.w\t#TASK_STACK_SIZE,a2                      | [$8f77: leax   $10,x] next stack buffer
 """
             j = i+1
             # remove existing code until loop counter check
@@ -123,7 +122,7 @@ with open(source_dir / "conv.s") as f:
         elif address == 0x80b9:
             # set startup task in stack
             line = """\tlea\tstack_top,a0
-\tmove.l\td1,(0xFC,a0)
+\tmove.l\td1,(TASK_STACK_SIZE-4,a0)
 """
             lines[i+1] = ""
         elif address == 0x8173:
@@ -131,10 +130,9 @@ with open(source_dir / "conv.s") as f:
             # real stack address then store d1 (inactive task routine) in the real stack buffer
             lines[i+1] = """\tmove.w\td4,d6
 \tsub.w\t#0x191E,d6 | remove stack buffer base (plus 0x10) to get values 0,0x10,0x20...
-\tlsl.w\t#4,d6      | 256 bytes per task instead of 16 (so we can call osd_xxx functions safely)
-\tadd.w\t#0xFC,d6   | native stack offset in stack buffer (based on stack_top)
+\tlsl.w\t#TASK_STACK_BITSHIFT-4,d6      | 256 bytes per task instead of 16 (so we can call osd_xxx functions safely)
+\tadd.w\t#TASK_STACK_SIZE-4,d6   | native stack offset in stack buffer (based on stack_top)
 \tmove.w\td6,(a0)   | store offset instead of address
-\tadd.w\t#0x8000,(a0)  | marker (temporary)
 \tmove.w\td6,a0
 \tadd.l\t#stack_top,a0  | real stack address
 \tmove.l\td1,(a0)       | store inactive task in stack
@@ -152,7 +150,6 @@ with open(source_dir / "conv.s") as f:
 \tmove.w\t(a0),d6
 \tGET_REG_ADDRESS\t0,d6
 \tmove.w\t(a0),d6
-\tbclr\t#15,d6
 \tadd.l\t#stack_top,d6
 \tmove.l\td6,a0
 \tmove.l\td1,(a0)    | set reset routine in task stack
@@ -180,7 +177,6 @@ with open(source_dir / "conv.s") as f:
             line += """* (a0) contains the encoded stack pointer
 \tmoveq\t#0,d6
 \tmove.w\t(a0),d6
-\tbclr\t#15,d6           | remove watermark
 \tadd.l\t#stack_top,d6   | convert to real pointer
 \tmove.l\td6,a7
 """

@@ -160,6 +160,12 @@ sound_warning_4042 = $4042
 sound_unknown_tune_4049 = $4049
 sound_unknown_tune_404b = $404b
 
+character_data_array_2510 = $2510
+; mostly overwritten to $80 by scrolling_following_player_c480
+; unless on the edges (when scrolling is not active)
+player_horizontal_coord_1104 = $1104
+; if changed, remains changed
+player_vertical_coord_1105 = $1105
 character_start_location_table_dd5b = $dd5b
 periodic_60_timer_1050 = $1050
 
@@ -167,7 +173,7 @@ periodic_60_timer_1050 = $1050
 ; ex: player struct is in $1100
 ; 6 bytes per character
 ;
-; 0: draw priority/order (for 3D perspective). Highest: top priority
+; 0: draw priority/order (for 3D perspective). Highest: top priority, 0 inactive
 ; 1: size/mirror flags
 ; 2: animation frame index (helps computing the sprite code)
 ; 3: color (useful for the dragon)
@@ -332,7 +338,7 @@ task_loop_811e:
 8125: 26 F7          BNE    task_loop_811E
 8127: B6 25 00       LDA    characters_can_move_2500
 812A: 27 03          BEQ    $812F
-812C: BD 8E AD       JSR    $8EAD
+812C: BD 8E AD       JSR    copy_character_data_8ead
 ; more tasks, but they're never activated. The variable area is used, though
 ; in update_sprite_logic_819e
 812F: 8E 1F 10       LDX    #stack_location_pointer_array_1F10
@@ -1678,29 +1684,31 @@ task_entry_0f_8dfa:
 
 
 copy_character_positions_8e81:
-8E81: 8E 25 10       LDX    #$2510
+8E81: 8E 25 10       LDX    #character_data_array_2510
 8E84: CE 11 00       LDU    #logical_character_positions_1100
+copy_loop_8e87:
 8E87: A6 10          LDA    -$10,X
 8E89: 27 17          BEQ    $8EA2
 8E8B: A6 41          LDA    $1,U
 8E8D: A7 08          STA    $8,X
 8E8F: EC 42          LDD    $2,U
 8E91: ED 0A          STD    $A,X
-8E93: EC 44          LDD    $4,U
+8E93: EC 44          LDD    $4,U	; load source coordinates
 8E95: 5D             TSTB
 8E96: 26 02          BNE    $8E9A
 8E98: 1E 89          EXG    A,B
 8E9A: A7 0D          STA    $D,X
 8E9C: E7 0F          STB    $F,X
 8E9E: 6F C4          CLR    ,U		; display priority cleared
-8EA0: 6F 45          CLR    $5,U
-8EA2: 33 46          LEAU   $6,U
-8EA4: 30 88 20       LEAX   $20,X
+8EA0: 6F 45          CLR    $5,U	; vertical coordinate cleared (copy or XY is in D see 8E93)
+8EA2: 33 46          LEAU   $6,U	; next source data
+8EA4: 30 88 20       LEAX   $20,X	; next dest character data
 8EA7: 8C 27 90       CMPX   #$2790
-8EAA: 26 DB          BNE    $8E87
+8EAA: 26 DB          BNE    copy_loop_8e87
 8EAC: 39             RTS
 
-8EAD: 8E 25 10       LDX    #$2510
+copy_character_data_8ead:
+8EAD: 8E 25 10       LDX    #character_data_array_2510
 8EB0: CC 00 00       LDD    #$0000
 8EB3: FD 10 34       STD    round_number_1034
 8EB6: 7C 10 34       INC    round_number_1034
@@ -1747,7 +1755,7 @@ copy_character_positions_8e81:
 8F0E: 30 88 20       LEAX   $20,X
 8F11: 8C 27 90       CMPX   #$2790
 8F14: 26 A0          BNE    $8EB6
-8F16: 8E 25 10       LDX    #$2510
+8F16: 8E 25 10       LDX    #character_data_array_2510
 8F19: CE 11 78       LDU    #$1178
 8F1C: 4F             CLRA
 8F1D: E6 10          LDB    -$10,X
@@ -1760,30 +1768,32 @@ copy_character_positions_8e81:
 8F2A: 30 88 20       LEAX   $20,X
 8F2D: 8C 27 90       CMPX   #$2790
 8F30: 26 EB          BNE    $8F1D
+; copy/transform back character_data_array_2510 into logical_character_positions_1100
 8F32: CE 11 00       LDU    #logical_character_positions_1100
+loop_8f35:
 8F35: A6 C4          LDA    ,U
-8F37: 27 25          BEQ    $8F5E
+8F37: 27 25          BEQ    $8F5E		; inactive: skip
 8F39: 8E 11 77       LDX    #$1177
 8F3C: E6 86          LDB    A,X
 8F3E: 6F 86          CLR    A,X
 8F40: 86 20          LDA    #$20
 8F42: 3D             MUL
-8F43: 8E 25 10       LDX    #$2510
+8F43: 8E 25 10       LDX    #character_data_array_2510
 8F46: 30 8B          LEAX   D,X
-8F48: EC 42          LDD    $2,U
-8F4A: ED 0A          STD    $A,X
-8F4C: EC 44          LDD    $4,U
-8F4E: A7 0D          STA    $D,X
+8F48: EC 42          LDD    $2,U		; frame & color
+8F4A: ED 0A          STD    $A,X		; copy
+8F4C: EC 44          LDD    $4,U		; coords
+8F4E: A7 0D          STA    $D,X		; store horizontal coord (unchanged)
 8F50: CB F5          ADDB   #$F5
-8F52: A6 41          LDA    $1,U
+8F52: A6 41          LDA    $1,U		; check size
 8F54: 85 04          BITA   #$04
 8F56: 27 02          BEQ    $8F5A
-8F58: CB FB          ADDB   #$FB
-8F5A: A7 08          STA    $8,X
-8F5C: E7 0F          STB    $F,X
-8F5E: 33 46          LEAU   $6,U
+8F58: CB FB          ADDB   #$FB		; sub offset in case of big size
+8F5A: A7 08          STA    $8,X		; store size
+8F5C: E7 0F          STB    $F,X		; store vertical coord (modified)
+8F5E: 33 46          LEAU   $6,U		; next source character data
 8F60: 11 83 11 78    CMPU   #$1178
-8F64: 26 CF          BNE    $8F35
+8F64: 26 CF          BNE    loop_8f35
 8F66: 39             RTS
 
 create_base_tasks_8f67:
@@ -3015,7 +3025,7 @@ task_entry_16_level_select_and_start_9d20:
 9DB9: 30 88 80       LEAX   -$80,X
 9DBC: 7A 10 09       DEC    $1009
 9DBF: 26 F1          BNE    $9DB2
-9DC1: 8E 25 10       LDX    #$2510
+9DC1: 8E 25 10       LDX    #character_data_array_2510
 9DC4: 6C 0B          INC    $B,X
 9DC6: CC 98 B2       LDD    #$98B2
 9DC9: A7 0F          STA    $F,X
@@ -3033,7 +3043,7 @@ task_entry_16_level_select_and_start_9d20:
 9DE9: E6 89 F8 00    LDB    -$0800,X		; [video_address]
 9DED: FD 07 A3       STD    credits_units_screen_address_07a3	; [video_address_word]
 9DF0: BD 81 50       JSR    suspend_task_8150
-9DF3: 8E 25 10       LDX    #$2510
+9DF3: 8E 25 10       LDX    #character_data_array_2510
 9DF6: B6 10 50       LDA    periodic_60_timer_1050
 9DF9: 26 07          BNE    $9E02
 9DFB: 7A 01 76       DEC    $0176
@@ -3087,7 +3097,7 @@ task_entry_16_level_select_and_start_9d20:
 9E6C: A7 0A          STA    $A,X
 9E6E: 6F 0C          CLR    $C,X
 9E70: BD 81 50       JSR    suspend_task_8150
-9E73: 8E 25 10       LDX    #$2510
+9E73: 8E 25 10       LDX    #character_data_array_2510
 9E76: B6 10 50       LDA    periodic_60_timer_1050
 9E79: 26 D6          BNE    $9E51
 9E7B: B6 01 76       LDA    $0176
@@ -3112,7 +3122,7 @@ task_entry_16_level_select_and_start_9d20:
 9EB0: A7 84          STA    ,X		; [video_address]
 9EB2: A7 88 E0       STA    -$20,X	; [video_address]
 9EB5: 20 E5          BRA    $9E9C
-9EB7: 8E 25 10       LDX    #$2510
+9EB7: 8E 25 10       LDX    #character_data_array_2510
 9EBA: A6 04          LDA    $4,X
 9EBC: CE 9E FB       LDU    #$9EFB
 9EBF: 48             ASLA
@@ -3151,7 +3161,7 @@ task_entry_06_player_on_edge_9f03:
 9F34: BD 81 50       JSR    suspend_task_8150
 9F37: B6 10 DA       LDA    ground_collapses_10da
 9F3A: 27 C7          BEQ    task_entry_06_player_on_edge_9f03
-9F3C: 8E 25 10       LDX    #$2510
+9F3C: 8E 25 10       LDX    #character_data_array_2510
 9F3F: 6A 04          DEC    $4,X
 9F41: 27 7D          BEQ    $9FC0
 9F43: A6 04          LDA    $4,X
@@ -3193,7 +3203,7 @@ task_entry_06_player_on_edge_9f03:
 9F95: BD 81 50       JSR    suspend_task_8150
 9F98: B6 10 DA       LDA    ground_collapses_10da
 9F9B: 10 27 FF 64    LBEQ   task_entry_06_player_on_edge_9f03
-9F9F: 8E 25 10       LDX    #$2510
+9F9F: 8E 25 10       LDX    #character_data_array_2510
 9FA2: A6 05          LDA    $5,X
 9FA4: 85 02          BITA   #$02
 9FA6: 26 08          BNE    $9FB0
@@ -3317,7 +3327,7 @@ A0BB: B6 25 01       LDA    hammer_active_2501
 A0BE: 26 E4          BNE    $A0A4
 A0C0: B6 25 0A       LDA    $250A
 A0C3: 27 DF          BEQ    $A0A4
-A0C5: 8E 25 10       LDX    #$2510
+A0C5: 8E 25 10       LDX    #character_data_array_2510
 A0C8: CE A0 F1       LDU    #table_a0f1		; [jump_table]
 A0CB: 48             ASLA
 A0CC: AD D6          JSR    [A,U]	; [indirect_jump]
@@ -3332,7 +3342,7 @@ A0E0: 7F 25 01       CLR    hammer_active_2501
 A0E3: BD 81 50       JSR    suspend_task_8150
 A0E6: B6 25 00       LDA    characters_can_move_2500
 A0E9: 26 F8          BNE    $A0E3
-A0EB: 8E 25 10       LDX    #$2510
+A0EB: 8E 25 10       LDX    #character_data_array_2510
 A0EE: BD 87 32       JSR    clear_some_params_8732
 A0F1: 20 98          BRA    task_entry_05_player_management_a08b
 
@@ -3340,7 +3350,7 @@ A0F1: 20 98          BRA    task_entry_05_player_management_a08b
 ; it can be different depending on the level or if some
 ; holes are present in the default restart position
 init_player_position_a0ff:
-A0FF: 8E 25 10       LDX    #$2510
+A0FF: 8E 25 10       LDX    #character_data_array_2510
 A102: CC 08 01       LDD    #$0801
 A105: ED 0A          STD    $A,X
 A107: 44             LSRA
@@ -3351,7 +3361,7 @@ A10F: A7 03          STA    $3,X
 A111: BD C8 EA       JSR    init_position_player_vertically_c8ea
 A114: 7E C4 80       JMP    scrolling_following_player_c480
 
-
+; < X=character_data_array_2510
 player_hammer_and_movement_a117:
 A117: B6 10 14       LDA    hammer_button_pressed_1014
 A11A: 27 04          BEQ    $A120
@@ -3362,12 +3372,14 @@ A123: 2A 01          BPL    $A126
 ; player is not moving: return
 A125: 39             RTS
 A126: A1 05          CMPA   $5,X
-A128: 27 7A          BEQ    $A1A4
+A128: 27 7A          BEQ    player_same_direction_a1a4
+; different direction than facing before
 A12A: F6 10 13       LDB    player_decoded_directions_1013
 A12D: CB 04          ADDB   #$04
 A12F: C4 06          ANDB   #$06
 A131: E1 05          CMPB   $5,X
-A133: 27 63          BEQ    $A198
+A133: 27 63          BEQ    player_opposite_direction_a198
+; different direction, not opposite. ex: vertical => horizontal
 A135: E6 1B          LDB    -$5,X
 A137: 10 27 00 83    LBEQ   $A1BE
 A13B: C1 10          CMPB   #$10
@@ -3388,7 +3400,7 @@ A15D: 27 14          BEQ    $A173
 A15F: 53             COMB
 A160: C4 0F          ANDB   #$0F
 A162: 5C             INCB
-A163: E7 1B          STB    -$5,X
+A163: E7 1B          STB    -$5,X		; change direction
 A165: F7 10 C2       STB    $10C2
 A168: E6 05          LDB    $5,X
 A16A: CB 04          ADDB   #$04
@@ -3410,11 +3422,9 @@ A186: E6 C6          LDB    A,U
 A188: E7 05          STB    $5,X
 A18A: 86 03          LDA    #$03
 A18C: A7 1A          STA    -$6,X
-A18E: 20 42          BRA    $A1D2
-A190: 01 07          NEG    $07
-A192: 01 03          NEG    $03
-A194: 03 05          COM    $05
-A196: 07 05          ASR    $05
+A18E: 20 42          BRA    player_direction_change_transition_a1d2
+
+player_opposite_direction_a198:
 A198: E6 1B          LDB    -$5,X
 A19A: 27 22          BEQ    $A1BE
 A19C: 53             COMB
@@ -3422,6 +3432,7 @@ A19D: C4 0F          ANDB   #$0F
 A19F: 5C             INCB
 A1A0: E7 1B          STB    -$5,X
 A1A2: 20 1A          BRA    $A1BE
+player_same_direction_a1a4:
 A1A4: E6 1B          LDB    -$5,X
 A1A6: 26 0D          BNE    $A1B5
 A1A8: BD C9 4C       JSR    $C94C
@@ -3447,6 +3458,8 @@ A1CB: 6A 04          DEC    $4,X
 A1CD: 26 02          BNE    $A1D1
 A1CF: 6A 1A          DEC    -$6,X
 A1D1: 39             RTS
+
+player_direction_change_transition_a1d2:
 A1D2: A6 1B          LDA    -$5,X
 A1D4: 27 09          BEQ    $A1DF
 A1D6: BD C0 00       JSR    $C000
@@ -3462,6 +3475,7 @@ A1EE: 48             ASLA
 A1EF: A7 0A          STA    $A,X
 A1F1: 39             RTS
 
+player_falling_in_water_a1f2:
 A1F2: A6 04          LDA    $4,X
 A1F4: 26 03          BNE    $A1F9
 A1F6: A7 0B          STA    $B,X
@@ -3519,7 +3533,7 @@ A24E: 27 E2          BEQ    task_entry_07_pump_management_a232
 A250: B6 10 15       LDA    pump_button_pressed_1015
 A253: 81 01          CMPA   #$01
 A255: 26 DB          BNE    task_entry_07_pump_management_a232
-A257: 8E 25 10       LDX    #$2510
+A257: 8E 25 10       LDX    #character_data_array_2510
 A25A: A7 12          STA    -$E,X			; 2502: sets 1 if pump pressed, not cleared until move
 A25C: F6 25 01       LDB    hammer_active_2501
 A25F: 27 0B          BEQ    $A26C
@@ -3558,7 +3572,7 @@ A2A3: FC 10 D0       LDD    goto_next_life_10d0
 A2A6: 26 8A          BNE    task_entry_07_pump_management_a232
 A2A8: B6 25 02       LDA    $2502
 A2AB: 27 85          BEQ    task_entry_07_pump_management_a232
-A2AD: 8E 25 10       LDX    #$2510
+A2AD: 8E 25 10       LDX    #character_data_array_2510
 A2B0: B6 10 15       LDA    pump_button_pressed_1015
 A2B3: 81 01          CMPA   #$01
 A2B5: 27 B5          BEQ    $A26C
@@ -3884,7 +3898,7 @@ A55B: BD 81 50       JSR    suspend_task_8150
 A55E: B6 25 01       LDA    hammer_active_2501
 A561: 27 F8          BEQ    task_entry_08_hammer_management_a55b
 A563: B7 40 47       STA    sound_hammer_4047
-A566: 8E 25 10       LDX    #$2510
+A566: 8E 25 10       LDX    #character_data_array_2510
 A569: BD A6 78       JSR    $A678
 A56C: 64 03          LSR    $3,X
 A56E: A6 1B          LDA    -$5,X
@@ -3913,7 +3927,7 @@ A59E: 27 BB          BEQ    task_entry_08_hammer_management_a55b
 A5A0: B7 40 47       STA    sound_hammer_4047
 A5A3: B6 10 14       LDA    hammer_button_pressed_1014
 A5A6: 10 27 00 B7    LBEQ   $A661
-A5AA: 8E 25 10       LDX    #$2510
+A5AA: 8E 25 10       LDX    #character_data_array_2510
 A5AD: A6 1B          LDA    -$5,X
 A5AF: 27 0B          BEQ    $A5BC
 A5B1: BD C0 00       JSR    $C000
@@ -3958,7 +3972,7 @@ A60A: 10 27 FF 4D    LBEQ   task_entry_08_hammer_management_a55b
 A60E: B6 10 14       LDA    hammer_button_pressed_1014
 A611: 27 4E          BEQ    $A661
 A613: B7 40 47       STA    sound_hammer_4047
-A616: 8E 25 10       LDX    #$2510
+A616: 8E 25 10       LDX    #character_data_array_2510
 A619: B6 10 D5       LDA    hole_hit_10d5
 A61C: 26 E3          BNE    $A601
 A61E: FE 10 3E       LDU    $103E
@@ -3973,7 +3987,7 @@ A634: 10 27 FF 23    LBEQ   task_entry_08_hammer_management_a55b
 A638: B6 10 14       LDA    hammer_button_pressed_1014
 A63B: 27 24          BEQ    $A661
 A63D: B7 40 47       STA    sound_hammer_4047
-A640: 8E 25 10       LDX    #$2510
+A640: 8E 25 10       LDX    #character_data_array_2510
 A643: B6 10 13       LDA    player_decoded_directions_1013
 A646: 2B E3          BMI    $A62B
 A648: A1 05          CMPA   $5,X
@@ -3987,7 +4001,7 @@ A658: 26 D1          BNE    $A62B
 A65A: 86 10          LDA    #$10
 A65C: A7 1B          STA    -$5,X
 A65E: 7E A5 B1       JMP    $A5B1
-A661: 8E 25 10       LDX    #$2510
+A661: 8E 25 10       LDX    #character_data_array_2510
 A664: A6 05          LDA    $5,X
 A666: 48             ASLA
 A667: A7 0A          STA    $A,X
@@ -4559,7 +4573,7 @@ ABEF: 81 0C          CMPA   #$0C
 ABF1: 24 46          BCC    $AC39
 ABF3: A6 0D          LDA    $D,X
 ABF5: 27 42          BEQ    $AC39
-ABF7: CE 25 10       LDU    #$2510
+ABF7: CE 25 10       LDU    #character_data_array_2510
 ABFA: BD C4 F4       JSR    $C4F4
 ABFD: B6 10 D3       LDA    $10D3
 AC00: 27 37          BEQ    $AC39	; bra => invincible
@@ -5280,7 +5294,7 @@ B2E0: A7 4D          STA    $D,U
 B2E2: 6F 4C          CLR    $C,U
 B2E4: BF 10 36       STX    $1036
 B2E7: 1F 31          TFR    U,X
-B2E9: CE 25 10       LDU    #$2510
+B2E9: CE 25 10       LDU    #character_data_array_2510
 B2EC: A6 0F          LDA    $F,X
 B2EE: 8B 0C          ADDA   #$0C
 B2F0: A7 0F          STA    $F,X
@@ -5772,7 +5786,7 @@ B77E: 27 7C          BEQ    $B7FC
 B780: FC 10 D0       LDD    goto_next_life_10d0
 B783: 26 65          BNE    $B7EA
 B785: 8E 1F 70       LDX    #$1F70
-B788: CE 25 10       LDU    #$2510
+B788: CE 25 10       LDU    #character_data_array_2510
 B78B: 86 0B          LDA    #$0B
 B78D: AB 0F          ADDA   $F,X
 B78F: A7 0F          STA    $F,X
@@ -6214,7 +6228,7 @@ C386: 10 26 FE E2    LBNE   $C26C
 C38A: 39             RTS
 
 ; change horizontal player coord
-; < X=$2510
+; < X=character_data_array_2510
 scrolling_following_player_c480:
 C480: EC 1E          LDD    -$2,X
 C482: 10 83 00 80    CMPD   #$0080
@@ -6303,11 +6317,7 @@ C523: 39             RTS
 C524: 86 01          LDA    #$01
 C526: B7 10 D3       STA    $10D3
 C529: 39             RTS
-C52A: 04 04          LSR    $04
-C52C: 0A 12          DEC    $12
-C52E: 08 04          ASL    $04
-C530: 06 06          ROR    $06
-C532: 04 08          LSR    $08
+
 C534: EC 1E          LDD    -$2,X
 C536: 83 00 18       SUBD   #$0018
 C539: C4 F8          ANDB   #$F8
@@ -6725,6 +6735,7 @@ C970: 7F 10 D8       CLR    $10D8
 C973: 39             RTS
 C974: B7 10 D8       STA    $10D8
 C977: 39             RTS
+
 C978: E6 05          LDB    $5,X
 C97A: B6 10 C4       LDA    $10C4
 C97D: 27 01          BEQ    $C980
@@ -7056,7 +7067,7 @@ CCC7: B6 10 DA       LDA    ground_collapses_10da
 CCCA: BA 10 D0       ORA    goto_next_life_10d0
 CCCD: 27 01          BEQ    $CCD0
 CCCF: 39             RTS
-CCD0: 8E 25 10       LDX    #$2510
+CCD0: 8E 25 10       LDX    #character_data_array_2510
 CCD3: 86 01          LDA    #$01
 CCD5: B7 10 C0       STA    $10C0
 CCD8: BD C5 34       JSR    $C534
@@ -7096,7 +7107,7 @@ CD2D: CC 44 06       LDD    #$4406
 CD30: 7D 10 EB       TST    $10EB
 CD33: 26 01          BNE    $CD36
 CD35: 39             RTS
-CD36: 8E 25 10       LDX    #$2510
+CD36: 8E 25 10       LDX    #character_data_array_2510
 CD39: 6F 08          CLR    $8,X
 CD3B: A7 0A          STA    $A,X
 CD3D: 81 40          CMPA   #$40
@@ -7862,9 +7873,9 @@ table_a0f1:
 	dc.w	$2098	; $a0f1 0: bogus never reached state
 	dc.w	player_hammer_and_movement_a117	; $a0f3 1
 	dc.w	player_turning_around_a1cb	; $a0f5 2
-	dc.w	$a1d2	; $a0f7 3
+	dc.w	player_direction_change_transition_a1d2	; $a0f7 3
 	dc.w	$0      ; $a0f9 4: bogus never reached state
-	dc.w	$a1f2	; $a0fb 5
+	dc.w	player_falling_in_water_a1f2	; $a0fb 5
 	dc.w	player_dying_a20a	; $a0fd 6
 	
 ; pump state/size

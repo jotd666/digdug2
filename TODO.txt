@@ -1,3 +1,10 @@
+start from A096
+=> 1104<=80 sinon erreur
+=> quand erreur noter source 251x
+=> sur MAME write 1104 noter source 251x
+possible pb de tri 
+
+
 - 8F23 read 251D 80 vs 00 (amiga) => changes sequ and 117x values
 - 8F37 read 04 vs 00 (amiga) also changes seq
  then 8F39: 8E 11 77       LDX    #$1177

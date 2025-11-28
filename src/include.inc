@@ -19,9 +19,13 @@
 	.error	"\arg"     | comment out to disable errors
 	.endm
 
-OPT_FIX_RANDOM = 1
+*OPT_FIX_RANDOM = 1
 
 NATIVE_STACK_SIZE = 0x3000
+
+* if change here change also in "ram.68k"
+TASK_STACK_BITSHIFT = 8
+TASK_STACK_SIZE = (1<<TASK_STACK_BITSHIFT)
 
 	.ifdef	RELEASE
 	.macro	BREAKPOINT comment

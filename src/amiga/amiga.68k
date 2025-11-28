@@ -2321,7 +2321,6 @@ load_palette:
 	
 
 osd_enable_interrupts:
-	BREAKPOINT	"ENABLLLL"
 	move.w	#0xC038,_custom+intena
 	rts
 osd_disable_interrupts:
