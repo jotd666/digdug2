@@ -5059,7 +5059,7 @@ B0C7: 4F             CLRA
 B0C8: E6 81          LDB    ,X++
 B0CA: 27 24          BEQ    $B0F0
 B0CC: 33 C5          LEAU   B,U
-B0CE: E6 C4          LDB    ,U
+B0CE: E6 C4          LDB    ,U		; [video_address]
 B0D0: C1 70          CMPB   #$70
 B0D2: 24 18          BCC    $B0EC
 B0D4: E6 C9 08 00    LDB    $0800,U		; [video_address]

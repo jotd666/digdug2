@@ -216,6 +216,11 @@ with open(source_dir / "conv.s") as f:
             # skip ram/rom test & custom io clear
             line = "\tmoveq\t#0,d0\n"+change_instruction("jra\tcontinue_boot_e6c9   | skip ROM checksum",lines,i)
 
+        elif address == 0x80be:
+            line = change_instruction("CLR_I_FLAG",lines,i)
+        elif address == 0x80c4:
+            line += "\tSET_I_FLAG   | block interrupts to avoid conflicts with irq & sprite position update"
+
         if "GET_ADDRESS" in line:
             val = line.split()[1]
             osd_call = input_dict.get(val)
