@@ -19,6 +19,7 @@
 	.error	"\arg"     | comment out to disable errors
 	.endm
 
+* makes random routines return 0. Can lock up the game
 *OPT_FIX_RANDOM = 1
 
 NATIVE_STACK_SIZE = 0x3000

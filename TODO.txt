@@ -1,14 +1,12 @@
 - hammer: character jumps too high (at times)
-- left disappearing sprites appear on the right: debug / mockup
 - set flag when tunes are played. Clear flags immediately
   for other sfx (hoping it works, else we'll need a "end of sample" callback
-- dragon firing missing sprites (mockup)
+- dragon firing missing sprites/sizex issue
 - credit: not showing anymore
 - set_status_bitplanes 33 v 32 "cheat": map "CREDIT" higher
   basically let right part of the bottom status bitplanes swap rows
 - when music is avail, change the clear 4040 in irq
 - optimize 0x20 write = clear
-- parasite tiles on top right
 - bottom of the screen not showing (credit, round): check set_status_bitplanes
 - report 2 last optimization phases in 6809 converter
 - implement trainer invincible.infinite lives

@@ -2218,7 +2218,7 @@ platform_init:
 	move.w	#BASE_BPLCON3_VALUE,bplcon3(a5)
  	*         VVHH
     move.w #0x99+0x28+(COPPER_Y_START<<8),diwstrt(a5)
-    move.w #0x79+0x48+(COPPER_Y_START<<8)+0x1000,diwstop(a5)
+    move.w #0x79+0x28+(COPPER_Y_START<<8)+0x1000,diwstop(a5)
     move.w #0x0038,ddfstrt(a5)
     move.w #0x00D0,ddfstop(a5)
 
@@ -2446,10 +2446,13 @@ update_bg_tile:
 	* layout is a bloody nightmare, directly fetch
 	* the decoded X,Y values from a pre-generated table
 
+
+
 	add.w	d7,d7
 	add.w	d7,d7
 	add.w	d7,a0
 	move.w	(a0)+,d0
+	jmi		2f
 	move.w	(a0),d1
 	
 
@@ -2471,7 +2474,8 @@ update_bg_tile:
 	add.w	d1,d0
 	add.w	d0,a1
 	
-
+	cmp.b	#0x20,d2
+	*jeq		12f				| optim: blank tile
 	.ifdef	NO68020
 	add.w	d2,d2
 	add.w	d2,d2	

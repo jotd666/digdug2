@@ -21,7 +21,7 @@ import collections
 # it is so crazy that I decided to generate it instead of pre-computing it in the asm code
 # as it would take maybe 1 or 2 hours to code properly in assembly for zero benefit
 
-INVALID_XY = (60,0)
+INVALID_XY = (-1,-1)
 
 address_table = [INVALID_XY] * 0x800
 
@@ -71,6 +71,11 @@ for y,line_offset in enumerate(range(0,0x40,0x20),2):
     set_value(line_offset+0x781,(12+x_offset,y))
     set_value(line_offset+0x790,(INVALID_XY))  # seems not visible
     set_value(line_offset+0x791,(INVALID_XY))
+
+# not shown H/20 in top status bar (too far to the left to show)
+set_value(0x7C1,(INVALID_XY))  # seems not visible
+set_value(0x7E0,(INVALID_XY))
+set_value(0x7E1,(INVALID_XY))
 
 # check for overlapping entries
 d = collections.defaultdict(set)

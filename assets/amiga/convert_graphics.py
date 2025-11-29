@@ -14,6 +14,7 @@ NB_SPRITES = 0x100
 NB_TILES = 0x100
 
 dsy_sprites = get_double_size_y_sprites()
+dsx_sprites = get_double_size_x_sprites()
 dsxy_sprites = get_double_size_xy_sprites()
 
 
@@ -92,6 +93,22 @@ dump=False,name_dict=None,cluts=None,tile_number=0,is_bob=False):
         # rework & dump grouped / non grouped sprites
         # rework tiles which are grouped
         for tile_number,wtile in enumerate(tileset_1):
+
+            if wtile and tile_number in dsx_sprites:
+                # change wtile, fetch code +1
+                other_tile_index = tile_number+2
+                other_tile = tileset_1[other_tile_index]
+                if not other_tile:
+                    print(f"warn: other tile index 0x{other_tile_index:02x} not found (palette ${palette_index:x})")
+                    other_tile_failure = True
+                new_tile = Image.new("RGB",(wtile.size[0]*2,wtile.size[1]))
+
+                new_tile.paste(wtile)
+                if other_tile:
+                    new_tile.paste(other_tile,(wtile.size[1],0))
+                tileset_1[tile_number] = new_tile
+                tileset_1[tile_number+2] = None  # discard
+                wtile = new_tile
 
             if wtile and tile_number in dsy_sprites:
                 # change wtile, fetch code +1

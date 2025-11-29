@@ -111,8 +111,6 @@ def process(the_dump,name_filter=None,hide_named_sprite=None):
 
 
                 name = sprite_names.get(sprite,"unknown")
-                print(f"offs:{offs:02x}, name: {name}, code:{sprite:02x}, sizex: {sizex}, sizey: {sizey}, flipx: {flipx}, flipy: {flipy}, color:{color:02x}, X:{sx}, Y:{sy}")
-
                 if sizex and sizey:
                     if not flipx:
                         sx += 32
@@ -131,16 +129,17 @@ def process(the_dump,name_filter=None,hide_named_sprite=None):
                 elif sizex:
                     if not flipx:
                         sx += 16
-                        result.paste(im,(sx ,sy))
-                        im = get_single_image(color,sprite+1,flipx,flipy)
                         result.paste(im,(sx+16 ,sy))
+                        im = get_single_image(color,sprite+2,flipx,flipy)
+                        result.paste(im,(sx ,sy))
                 else:
                     result.paste(im,(sx ,sy))
+                print(f"offs:{offs:02x}, name: {name}, code:{sprite:02x}, sizex: {sizex}, sizey: {sizey}, flipx: {flipx}, flipy: {flipy}, color:{color:02x}, X:{sx}, Y:{sy}")
                 nb_active += 1
 
     result.save(f"{the_dump.stem}.png")
     print(f"nb active: {nb_active}")
 
 
-process(r"sprite_ram_1780")
+process(r"sprites")
 
