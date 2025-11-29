@@ -186,8 +186,6 @@ with open(source_dir / "conv.s") as f:
 
         elif address in {0x8012,0x800f}:
             line = remove_instruction(lines,i)
-        elif address == 0X80C9:
-            line = change_instruction("jra\tend_of_io_stuff_80e6",lines,i)
 
         elif address == 0xE703:
             line = change_instruction("jra\tend_io_regs_clear_e710",lines,i)
@@ -216,11 +214,25 @@ with open(source_dir / "conv.s") as f:
             # skip ram/rom test & custom io clear
             line = "\tmoveq\t#0,d0\n"+change_instruction("jra\tcontinue_boot_e6c9   | skip ROM checksum",lines,i)
 
+        # block interrupts so they only are allowed in the sync loop. Reduces "character jump" bugs
         elif address == 0x80be:
             line = change_instruction("CLR_I_FLAG",lines,i)
-        elif address == 0x80c4:
-            line += "\tSET_I_FLAG   | block interrupts to avoid conflicts with irq & sprite position update"
-
+        elif address == 0x80C9:
+            line = "\tSET_I_FLAG   | block interrupts to avoid conflicts with irq & sprite position update\n"+line
+            # but it's not enough to eliminate the bugs completely so we perform the character position copy op in
+            # the loop instead of in the interrupt, and it works! at least!
+            lines[i+1] = """    GET_ADDRESS    characters_can_move_2500       | [$8058: lda    characters_can_move_2500]
+    move.b    (a0),d0
+    jeq    0f                                 | [beq    $8060]
+    jbsr    copy_character_positions_8e81         | doing the copy outside the interrupt!
+0:
+    jra end_of_io_stuff_80e6
+"""+lines[i+1]
+        elif address == 0x8058:
+            # remove the copy character from interrupt
+            line = remove_instruction(lines,i)
+            lines[i+2] = remove_instruction(lines,i+2)
+            lines[i+3] = remove_instruction(lines,i+3)
         if "GET_ADDRESS" in line:
             val = line.split()[1]
             osd_call = input_dict.get(val)

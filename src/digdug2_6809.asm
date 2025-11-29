@@ -132,6 +132,7 @@ enemies_active_10d2 = $10d2
 a_screen_address_1041 = $1041
 characters_can_move_2500 = $2500
 fast_timer_1001 = $1001
+highscore_enabled_10e5 = $10e5
 
 ; shared variables with sound cpu. Each byte matches one sound or tune
 ; writing non-zero triggers the sound, zero stops it
@@ -233,6 +234,9 @@ irq_8000:
 8050: 30 88 20       LEAX   $20,X
 8053: 8C 27 96       CMPX   #$2796
 8056: 26 E8          BNE    $8040
+; move characters (this is pretty lame as it does the inverse processing
+; in the non-interrupt loop. If sync is wrong, then the game gets nasty
+; position bugs)
 8058: B6 25 00       LDA    characters_can_move_2500
 805B: 27 03          BEQ    $8060
 805D: BD 8E 81       JSR    copy_character_positions_8e81
@@ -720,7 +724,7 @@ player_killed_83ff:
 8483: 7F 10 E3       CLR    $10E3
 8486: BD 81 50       JSR    suspend_task_8150
 8489: BD 9B 69       JSR    $9B69
-848C: B6 10 E5       LDA    $10E5
+848C: B6 10 E5       LDA    highscore_enabled_10e5
 848F: 27 05          BEQ    $8496
 8491: BD 81 50       JSR    suspend_task_8150
 8494: 20 F6          BRA    $848C
@@ -1826,7 +1830,7 @@ table_8f80:
 	.word	task_entry_0f_8dfa
 	.word	task_entry_10_b6e2
 	.word	task_entry_11_8890
-	.word	task_entry_12_9955
+	.word	task_entry_12_highscore_screen_9955
 	.word	task_entry_13_94e4
 	.word	task_entry_14_9438
 	.word	task_entry_15_9cb6
@@ -2625,10 +2629,10 @@ task_entry_13_94e4:
 994E: CC D0 1E       LDD    #$D01E
 9951: D4 D8          ANDB   $D8
 9953: DC 16          LDD    $16
-task_entry_12_9955:
+task_entry_12_highscore_screen_9955:
 9955: BD 81 50       JSR    suspend_task_8150
-9958: B6 10 E5       LDA    $10E5
-995B: 27 F8          BEQ    task_entry_12_9955
+9958: B6 10 E5       LDA    highscore_enabled_10e5
+995B: 27 F8          BEQ    task_entry_12_highscore_screen_9955
 995D: BD 9A D7       JSR    $9AD7
 9960: CC 01 2E       LDD    #$012E
 9963: B7 40 4A       STA    sound_highscore_tune_404a
@@ -2641,7 +2645,7 @@ task_entry_12_9955:
 9978: 7C 10 1B       INC    game_in_play_101b
 997B: 86 41          LDA    #$41
 997D: BE 10 C7       LDX    $10C7
-9980: A7 84          STA    ,X
+9980: A7 84          STA    ,X	; [video_address]
 9982: 30 89 09 60    LEAX   $0960,X
 9986: BF 10 C9       STX    $10C9
 9989: CC 0A 16       LDD    #$0A16
@@ -2705,7 +2709,7 @@ task_entry_12_9955:
 9A20: 8E 9C 86       LDX    #$9C86
 9A23: A6 84          LDA    ,X
 9A25: A7 9F 10 C5    STA    [$10C5]
-9A29: A7 9F 10 C7    STA    [$10C7]
+9A29: A7 9F 10 C7    STA    [$10C7]		; [video_address]
 9A2D: BF 10 57       STX    $1057
 9A30: 20 22          BRA    $9A54
 9A32: A6 9F 10 57    LDA    [$1057]
@@ -2719,14 +2723,14 @@ task_entry_12_9955:
 9A49: BE 10 C7       LDX    $10C7
 9A4C: 30 88 E0       LEAX   -$20,X
 9A4F: BF 10 C7       STX    $10C7
-9A52: A7 84          STA    ,X
+9A52: A7 84          STA    ,X		; [video_address]
 9A54: 86 08          LDA    #$08
 9A56: B7 10 5A       STA    $105A
 9A59: 7E 99 A9       JMP    $99A9
 9A5C: BE 10 C7       LDX    $10C7
 9A5F: CC 00 01       LDD    #$0001
 9A62: F7 40 4A       STB    sound_highscore_tune_404a
-9A65: A7 89 08 00    STA    $0800,X
+9A65: A7 89 08 00    STA    $0800,X		; [video_address]
 9A69: B7 10 1B       STA    game_in_play_101b
 9A6C: BD 81 50       JSR    suspend_task_8150
 9A6F: B6 48 05       LDA    joystick_button_1_4805
@@ -2760,9 +2764,9 @@ task_entry_12_9955:
 9AB3: BD 85 A0       JSR    clear_text_85a0
 9AB6: 20 B4          BRA    $9A6C
 9AB8: 7F 40 4A       CLR    sound_highscore_tune_404a
-9ABB: 7F 10 E5       CLR    $10E5
+9ABB: 7F 10 E5       CLR    highscore_enabled_10e5
 9ABE: 7F 10 ED       CLR    $10ED
-9AC1: 7E 99 55       JMP    task_entry_12_9955
+9AC1: 7E 99 55       JMP    task_entry_12_highscore_screen_9955
 9AC4: 8E 11 B0       LDX    #$11B0
 9AC7: CE 9C 17       LDU    #$9C17
 9ACA: B6 80 00       LDA    watchdog_8000
@@ -2912,7 +2916,7 @@ task_entry_12_9955:
 9C0B: 19             DAA
 9C0C: A7 84          STA    ,X
 9C0E: 86 01          LDA    #$01
-9C10: B7 10 E5       STA    $10E5
+9C10: B7 10 E5       STA    highscore_enabled_10e5
 9C13: B7 40 4A       STA    sound_highscore_tune_404a
 9C16: 39             RTS
 

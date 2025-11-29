@@ -1,32 +1,12 @@
-start from A096
-=> 1104<=80 sinon erreur
-=> quand erreur noter source 251x
-=> sur MAME write 1104 noter source 251x
-possible pb de tri 
-
-
-- 8F23 read 251D 80 vs 00 (amiga) => changes sequ and 117x values
-- 8F37 read 04 vs 00 (amiga) also changes seq
- then 8F39: 8E 11 77       LDX    #$1177
-8F3C: E6 86          LDB    A,X
-8F3E: 6F 86          CLR    A,X
-8F40: 86 20          LDA    #$20
-all is shifted: character positions are mixed up
-
-- player dies after ground destruction: repositioned in water
-- when dstroying ground, main character position changed!
-  let game lock up, memwatch on player pos
-- instrumented: positions & movement completely corrupt: also happens in non-instrumented
+- hammer: character jumps too high (at times)
 - left disappearing sprites appear on the right: debug / mockup
-- still shifted task trashing leads to address errors
 - set flag when tunes are played. Clear flags immediately
   for other sfx (hoping it works, else we'll need a "end of sample" callback
-
+- dragon firing missing sprites (mockup)
 - credit: not showing anymore
 - set_status_bitplanes 33 v 32 "cheat": map "CREDIT" higher
   basically let right part of the bottom status bitplanes swap rows
 - when music is avail, change the clear 4040 in irq
-- demo attract mode not working properly
 - optimize 0x20 write = clear
 - parasite tiles on top right
 - bottom of the screen not showing (credit, round): check set_status_bitplanes
