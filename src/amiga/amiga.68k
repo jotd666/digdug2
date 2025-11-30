@@ -964,7 +964,6 @@ level3_interrupt:
 	jbsr	read_inputs
 
 3:
-	move.b 	#0,0x110
     movem.l (a7)+,d0-d7/a0-a6
  	move.l	saved_stack_level_3,a7
     rte
@@ -1574,13 +1573,7 @@ update_one_bob:
 	move.w	(a0)+,d4		| height
 	move.w	(a0)+,d5		| width
 	move.w	(a0)+,d2		| Y-offset
-	btst	#MIRROR_X_BIT,d3  | X but portrait!
-	jeq		101f
-	* flipped: correct Y start
-	neg.w	d2
-	sub.w	d4,d2
-	add.w	#SPRITE_HEIGHT,d2
-101:
+
 	add.w	d2,d1
 
 	* A0 points on the first bitplane of the bob

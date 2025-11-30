@@ -122,16 +122,20 @@ def process(the_dump,name_filter=None,hide_named_sprite=None):
                         im = get_single_image(color,sprite+3,flipx,flipy)
                         result.paste(im,(sx-16 ,sy+16))
                 elif sizey:
-                    if not flipx:
-                        result.paste(im,(sx ,sy))
-                        im = get_single_image(color,sprite+1,flipx,flipy)
-                        result.paste(im,(sx ,sy+16))
+                    result.paste(im,(sx ,sy))
+                    im = get_single_image(color,sprite+1,flipx,flipy)
+                    result.paste(im,(sx ,sy+16))
                 elif sizex:
                     if not flipx:
                         sx += 16
                         result.paste(im,(sx+16 ,sy))
                         im = get_single_image(color,sprite+2,flipx,flipy)
                         result.paste(im,(sx ,sy))
+##                    else:
+##                        sx += 16
+##                        result.paste(get_single_image(color,sprite,flipx,flipy),(sx+16 ,sy))
+##                        im = get_single_image(color,sprite+2,flipx,flipy)
+##                        result.paste(im,(sx ,sy))
                 else:
                     result.paste(im,(sx ,sy))
                 print(f"offs:{offs:02x}, name: {name}, code:{sprite:02x}, sizex: {sizex}, sizey: {sizey}, flipx: {flipx}, flipy: {flipy}, color:{color:02x}, X:{sx}, Y:{sy}")
@@ -141,5 +145,5 @@ def process(the_dump,name_filter=None,hide_named_sprite=None):
     print(f"nb active: {nb_active}")
 
 
-process(r"sprites")
+process(r"sprites_hammer")
 
