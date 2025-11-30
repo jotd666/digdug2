@@ -103,9 +103,9 @@ dump=False,name_dict=None,cluts=None,tile_number=0,is_bob=False):
                     other_tile_failure = True
                 new_tile = Image.new("RGB",(wtile.size[0]*2,wtile.size[1]))
 
-                new_tile.paste(wtile)
+                new_tile.paste(wtile,(wtile.size[1],0))
                 if other_tile:
-                    new_tile.paste(other_tile,(wtile.size[1],0))
+                    new_tile.paste(other_tile)
                 tileset_1[tile_number] = new_tile
                 tileset_1[tile_number+2] = None  # discard
                 wtile = new_tile
@@ -194,7 +194,18 @@ try:
 except OSError:
     print("Cannot find used_sprites")
 
-
+# force points
+for i in range(0xF5,0x100):
+    add_tile(sprite_cluts,i,[0xC,0xD])
+# remove some 0 clut
+for i in range(0,0x100):
+    if i in sprite_cluts:
+        name = sprite_names.get(i,"")
+        if "player" in name or "dragon" in name or "flame" in name:
+            try:
+                sprite_cluts[i].remove(0)
+            except ValueError:
+                pass
 
 if all_tile_cluts:
     tile_cluts = None

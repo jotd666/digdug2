@@ -52,7 +52,8 @@ def get_sprite_names():
     set_names(rval,0x60,0x6a,"flame")
     set_names(rval,0xF5,0x100,"points")
     set_names(rval,0x18,0x20,"dragon")
-    set_names(rval,0x5a,0x60,"dragon")
+    set_names(rval,0x5a,0x5C,"dragon")
+    set_names(rval,0x5e,0x60,"dragon")
     set_names(rval,0x3C,0x3E,"game_over")
     set_names(rval,0x6C,0x70,"ghost")
 
@@ -67,6 +68,8 @@ def get_sprite_names():
     rval[0x51] = "tomato"
     rval[0x52] = "watermelon"
     rval[0x53] = "grapes"
+    rval[0x46] = "turnip"
+    rval[0x47] = "mushroom"
     rval[0x69] = "dragon"
     set_names(rval,0x80,0xC8,"earth_crumbling")
     set_names(rval,0x38,0x3C,"splash")
@@ -79,7 +82,7 @@ def get_sprite_names():
     set_names(rval,0x70,0x7c,"hose")
 
     set_names(rval,0x48,0x50,"player_pumping")
-    set_names(rval,0x44,0x46,"player_falling")
+    set_names(rval,0x40,0x46,"player_falling")
     set_names(rval,0x54,0x58,"player_dying")
 
 
@@ -90,7 +93,7 @@ def get_sprite_names():
 def get_double_size_y_sprites():
     return set(range(0x20,0x38,2))   # drilling hero
 def get_double_size_x_sprites():
-    return set() #{0x5A,0x61}  # fire spitting dragon, flame
+    return {0x5D,0x64,0x5A,0x61}  # fire spitting dragon, flame
 def get_double_size_xy_sprites():
     return set(range(0xC8,0xE0,4))   # inflating monsters
 

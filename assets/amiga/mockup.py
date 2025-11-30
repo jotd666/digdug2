@@ -109,7 +109,8 @@ def process(the_dump,name_filter=None,hide_named_sprite=None):
 
                 im = get_single_image(color,sprite,flipx,flipy)
 
-
+                if not sizex:
+                    continue
                 name = sprite_names.get(sprite,"unknown")
                 if sizex and sizey:
                     if not flipx:
@@ -145,5 +146,5 @@ def process(the_dump,name_filter=None,hide_named_sprite=None):
     print(f"nb active: {nb_active}")
 
 
-process(r"sprites_hammer")
+process(r"sprites")
 
