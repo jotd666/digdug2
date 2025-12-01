@@ -93,7 +93,7 @@ def get_sprite_names():
 def get_double_size_y_sprites():
     return set(range(0x20,0x38,2))   # drilling hero
 def get_double_size_x_sprites():
-    return {0x5D,0x64,0x5A,0x61}  # fire spitting dragon, flame
+    return {0X59,0x5D,0x64,0x5c,0x61,0x65,0x60}  # fire spitting dragon, flame
 def get_double_size_xy_sprites():
     return set(range(0xC8,0xE0,4))   # inflating monsters
 

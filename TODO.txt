@@ -1,12 +1,14 @@
 - sfx: assign channels & priorities to sounds. Use channel 3 mostly
-  use channel 2 only for special items
+  use channel 2 only for special items: waiting to see if music can hold on 2 channels,
+  else would have to use audiomixer
 - dragon firing missing sprites/sizex issue: debug in title page: x shift when flipped?
-  isolated in mockup.py
+  ok within game so maybe do a kludge for title page)
 - bottom of the screen not showing (credit, round): check set_status_bitplanes
 - credit: not showing anymore
 - set_status_bitplanes 33 v 32 "cheat": map "CREDIT" higher
   basically let right part of the bottom status bitplanes swap rows
 - replicate most bobs as sprites (not 2x wide)
+- highscore save
 
 - set flag when tunes are played. Clear flags immediately
   for other sfx (hoping it works, else we'll need a "end of sample" callback

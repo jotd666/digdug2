@@ -58,12 +58,7 @@ def get_single_image(color,sprite,flipx,flipy):
         im = ImageOps.mirror(im)
     return im
 
-gfx_offs=  [
-                [ 0, 1, 4, 5 ],
-                [ 2, 3, 6, 7 ],
-                [ 8, 9,12,13 ],
-                [10,11,14,15 ]
-            ]
+
 
 def process(the_dump,name_filter=None,hide_named_sprite=None):
     the_dump = pathlib.Path(the_dump)
@@ -82,6 +77,7 @@ def process(the_dump,name_filter=None,hide_named_sprite=None):
     nb_active = 0
 
 
+    mem_1780_copy = bytearray(len(mem_1780))
 
     for offs in range(0,0x80,2):
         if ((spriteram_3[offs+1] & 2) == 0):
@@ -109,8 +105,8 @@ def process(the_dump,name_filter=None,hide_named_sprite=None):
 
                 im = get_single_image(color,sprite,flipx,flipy)
 
-                if not sizex:
-                    continue
+##                if not sizex:
+##                    continue
                 name = sprite_names.get(sprite,"unknown")
                 if sizex and sizey:
                     if not flipx:
@@ -141,10 +137,17 @@ def process(the_dump,name_filter=None,hide_named_sprite=None):
                     result.paste(im,(sx ,sy))
                 print(f"offs:{offs:02x}, name: {name}, code:{sprite:02x}, sizex: {sizex}, sizey: {sizey}, flipx: {flipx}, flipy: {flipy}, color:{color:02x}, X:{sx}, Y:{sy}")
                 nb_active += 1
+                for i in [0,1]:
+                    mem_1780_copy[offs+i] = spriteram[offs+i]
+                    mem_1780_copy[offs+0x800+i] = spriteram[offs+0x800+i]
+                    mem_1780_copy[offs+0x1000+i] = spriteram[offs+0x1000+i]
 
     result.save(f"{the_dump.stem}.png")
+    with open(f"{the_dump.stem}_filtered","wb") as f:
+        f.write(mem_1780_copy)
+
     print(f"nb active: {nb_active}")
 
 
-process(r"sprites")
+process(r"sprite_ram_1780")
 

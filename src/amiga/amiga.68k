@@ -111,8 +111,8 @@ TARGET_SPRITE_SIZEOF = 2
 
 FLIP_Y_BIT = 0
 MIRROR_X_BIT = 1
-SIZE_X_BIT = 2
-SIZE_Y_BIT = 3
+SIZE_Y_BIT = 2
+SIZE_X_BIT = 3
 
 	STRUCTURE	PREVIOUS_SPRITE,0
 	UWORD	PREV_X
@@ -1139,7 +1139,6 @@ lose_all_lives:
 	movem.l	a6/a5,-(a7)
 	GET_MEMORY_START_AND_DP
 	move.b	#0,nb_lives_1703(a6)					| no more lives
-	*move.b	#0xf0,level_playing_flag_9000(a6)	| kill player
 	movem.l	(a7)+,a6/a5
 	rts
 
@@ -1384,7 +1383,6 @@ update_bobs_and_hw_sprites:
 	*********************************************
 
 
-	lea		sprite_groups(pc),a2
 	GET_MEMORY_START_AND_DP
     lea _custom,A5
 	lea		(SPRITE_START,a6),a0		| sprite start
@@ -1397,6 +1395,9 @@ update_bobs_and_hw_sprites:
 	dbf		d7,1b
 2:
 	rts
+	
+mockup:
+	.include 	"sprites_filtered.s"
 	
 *void mappy_state::mappy_draw_sprites(bitmap_ind16 &bitmap, const rectangle &cliprect, uint8_t *spriteram_base)
 *{
@@ -1547,6 +1548,7 @@ update_one_bob:
 
 	* re-load properties (for X/Y flip)
 	move.b	(TARGET_SPRITE_ATTR,a0),d3
+	
 	move.l	a0,-(a7)
 	move.l	d4,a0
     * flip_x = D3 & 0x1
@@ -1562,10 +1564,7 @@ update_one_bob:
 	move.l	(a7),a1
 	move.b	(TARGET_SPRITE_CODE,a1),d3
 	move.b	(TARGET_SPRITE_ATTR,a1),d2
-	btst.b	#6,d2
-	jeq		111f
-	bset	#8,d3		| add 256 for logging message
-111:
+
 	BREAKPOINT	"unexpected mirror bit set, tile code in d3"
 	jra		21f
 	.endif
@@ -1588,6 +1587,15 @@ update_one_bob:
 	moveq	#0,d2	| no y-clip
 	* note down that this bob will have to be erased
 
+
+*	btst	#MIRROR_X_BIT,d3  | X but portrait!
+*	jne		101f
+*	* mirror, change start if double size
+*	btst	#SIZE_X_BIT,d3
+*	jne		101f
+*	sub.w	#16,d0
+*101:
+
 	move.w	d0,(a6)+			| store current sprite attributes to previous ones
 	move.w	d1,(a6)+			| store current sprite attributes to previous ones
 	move.w	d4,(a6)+			| store height
@@ -1602,6 +1610,7 @@ update_one_bob:
 	* flip
 	neg.w	d4
 101:
+
 	move.w	#NB_BOB_PLANES,d3
 	jbsr		blit_planes_any_internal_cookie_cut
 	move.l	(a7)+,a0
@@ -1616,12 +1625,11 @@ update_one_bob:
 	.ifndef	RELEASE
 	lsr.w	#2,d2		| clut
 	lsr.w	#2,d3		| code
-	move.w	#0xF00,_custom+color
+	*move.w	#0xF00,_custom+color
 	.endif
 	jra		2b
 
-sprite_groups:
-	.include	"sprite_groups.68k"
+
 	
 	.ifdef	HW_SPRITES
 update_one_hw_sprite:
@@ -2770,26 +2778,7 @@ set_bob_bitplanes:
 	
 osd_debug_hook:
 	rts
-	
-osd_get_random:
-* > D0: pseudo random value (8 bits, all other bits zeroed)
-	movem.l	a0,-(a7)
-	lea	seed(pc),a0
-	move.l	(a0),d0
-	* thanks meynaf
-	mulu #0xa57b,d0
-	addi.l #0xbb40e62d,d0
-	rol.l #6,d0	
-	move.l	d0,(a0) 
-	movem.l	(a7)+,a0
-	add.b	_custom+vposr,d0
-	and.l	#0xFF,d0
-	rts
-seed:
-	dc.l	0x12345678
 
-	
-	
 	
 read_inputs:
 	movem.l	a0/d0/d1,-(a7)
@@ -3032,12 +3021,7 @@ handle_keyboard:
 	jbsr	osd_dump_logs
 0:
 	.endif
-	cmp.b	#19,d0
-	bne		0f
-	* 'R': reset start level at 1
-	move.w	#0x0FF,_custom+color
-	clr.b	start_level
-0:
+
 	
 *	cmp.b	#0x56,d0	| F7 key: lose all l
 *	bne.b	0f

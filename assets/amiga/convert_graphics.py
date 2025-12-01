@@ -95,7 +95,7 @@ dump=False,name_dict=None,cluts=None,tile_number=0,is_bob=False):
         for tile_number,wtile in enumerate(tileset_1):
 
             if wtile and tile_number in dsx_sprites:
-                # change wtile, fetch code +1
+                # change wtile, fetch code +2
                 other_tile_index = tile_number+2
                 other_tile = tileset_1[other_tile_index]
                 if not other_tile:
@@ -107,7 +107,7 @@ dump=False,name_dict=None,cluts=None,tile_number=0,is_bob=False):
                 if other_tile:
                     new_tile.paste(other_tile)
                 tileset_1[tile_number] = new_tile
-                tileset_1[tile_number+2] = None  # discard
+                tileset_1[other_tile_index] = None  # discard
                 wtile = new_tile
 
             if wtile and tile_number in dsy_sprites:
@@ -123,7 +123,7 @@ dump=False,name_dict=None,cluts=None,tile_number=0,is_bob=False):
                 if other_tile:
                     new_tile.paste(other_tile,(0,wtile.size[1]))
                 tileset_1[tile_number] = new_tile
-                tileset_1[tile_number+1] = None  # discard
+                tileset_1[other_tile_index] = None  # discard
                 wtile = new_tile
             if wtile and tile_number in dsxy_sprites:
                 # change wtile, fetch code +1
@@ -202,10 +202,11 @@ for i in range(0,0x100):
     if i in sprite_cluts:
         name = sprite_names.get(i,"")
         if "player" in name or "dragon" in name or "flame" in name:
-            try:
-                sprite_cluts[i].remove(0)
-            except ValueError:
-                pass
+            for j in [0,6,7]:
+                try:
+                    sprite_cluts[i].remove(j)
+                except ValueError:
+                    pass
 
 if all_tile_cluts:
     tile_cluts = None
