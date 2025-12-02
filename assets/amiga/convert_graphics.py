@@ -52,7 +52,7 @@ dump=False,name_dict=None,cluts=None,tile_number=0,is_bob=False):
 
 
     tileset_1 = []
-
+    tileset_xsize = []
     if dump:
         dump_subdir = os.path.join(dumpdir,tileset_name)
         if palette_index == 0 and tile_number == 0:
@@ -66,6 +66,7 @@ dump=False,name_dict=None,cluts=None,tile_number=0,is_bob=False):
             img = Image.new("RGB",(width,height))
             img.paste(tiles_1,(-i*width,-j*height))
             tileset_1.append(img)
+            tileset_xsize.append(None)
 
     other_tile_failure = False
     # now we can rework it
@@ -92,22 +93,40 @@ dump=False,name_dict=None,cluts=None,tile_number=0,is_bob=False):
     else:
         # rework & dump grouped / non grouped sprites
         # rework tiles which are grouped
+        #
+        # special case for horiz grouped tiles
+        # do not display grouped unless
+
         for tile_number,wtile in enumerate(tileset_1):
 
+            # special case for X-grouped:
+            # 1) some tiles can be displayed X-grouped or not
+            # (not the case with Y-grouped or XY-grouped) so we have to
+            # create another tileset array for those
             if wtile and tile_number in dsx_sprites:
-                # change wtile, fetch code +2
-                other_tile_index = tile_number+2
-                other_tile = tileset_1[other_tile_index]
-                if not other_tile:
-                    print(f"warn: other tile index 0x{other_tile_index:02x} not found (palette ${palette_index:x})")
-                    other_tile_failure = True
                 new_tile = Image.new("RGB",(wtile.size[0]*2,wtile.size[1]))
+                from_game = dsx_sprites[tile_number]
+                if from_game:
+                    # change wtile, fetch code +2
+                    other_tile_index = tile_number+2
+                else:
+                    # extra grouping, helps faster display too
+                    other_tile_index = tile_number+1
 
-                new_tile.paste(wtile,(wtile.size[1],0))
-                if other_tile:
+                other_tile = tileset_1[other_tile_index]
+
+                if from_game:
+                    new_tile.paste(wtile,(wtile.size[1],0))
                     new_tile.paste(other_tile)
-                tileset_1[tile_number] = new_tile
-                tileset_1[other_tile_index] = None  # discard
+
+                    tileset_xsize[tile_number] = new_tile
+                else:
+                    # normal grouping with next tile (artificial, not coded by graphic driver)
+                    new_tile.paste(wtile)
+                    new_tile.paste(other_tile,(wtile.size[1],0))
+
+                    tileset_1[tile_number] = new_tile
+                    tileset_1[other_tile_index] = None  # discard
                 wtile = new_tile
 
             if wtile and tile_number in dsy_sprites:
@@ -158,7 +177,7 @@ dump=False,name_dict=None,cluts=None,tile_number=0,is_bob=False):
                 img.save(os.path.join(dump_subdir,f"{name}_{tile_number:02x}_{palette_index:02x}.png"))
 
 
-    return sorted(set(palette)),tileset_1,other_tile_failure
+    return sorted(set(palette)),tileset_1,tileset_xsize
 
 all_tile_cluts = False
 
@@ -276,6 +295,7 @@ tile_palette += (16-len(tile_palette)) * [(0x10,0x20,0x30)]
 
 sprite_palette = set()
 sprite_set_list = [[] for _ in range(NB_SPRITE_CLUTS)]
+sprite_set_list_x_size = [[] for _ in range(NB_SPRITE_CLUTS)]
 hw_sprite_set_list = []
 
 sprite_dump_dir = dump_dir / "sprites"
@@ -286,18 +306,15 @@ sprite_dump_dir.mkdir(exist_ok=True)
 
 cluts = sprite_cluts
 
-global_other_tile_failure = False
 for clut_index,tsd in sprite_sheet_dict.items():
     # BOBs
 
-    sp,sprite_set,other_tile_failure = load_tileset(tsd,clut_index,16,16,"sprites",dump_dir,dump=dump_it,
+    sp,sprite_set,sprite_set_x_size = load_tileset(tsd,clut_index,16,16,"sprites",dump_dir,dump=dump_it,
     name_dict=sprite_names,cluts=sprite_cluts,is_bob=True)
     sprite_set_list[clut_index] = sprite_set
+    sprite_set_list_x_size[clut_index] = sprite_set_x_size
     sprite_palette.update(sp)
-    global_other_tile_failure |= other_tile_failure
 
-if global_other_tile_failure:
-    raise Exception("Some associated tiles weren't found")
 
 sprite_palette = sorted(sprite_palette)
 magi = sprite_palette.index(magenta)
@@ -318,14 +335,13 @@ sprite_palette += (16-len(sprite_palette)) * [(0x10,0x20,0x30)]
 
 full_palette = tile_palette+sprite_palette
 
+nb_total = len(set(full_palette))
+# shit, 20 colors, this is going to be a pain for ECS :) well from 20 to 16
+# it will probably be okay. We're lucky that no layer has more than 16 colors, which
+# makes a perfect port for AGA color-wise
+print(f"Number of unique total colors (tiles+sprites) {nb_total}")
 
-
-#full_palette_rgb4 = {(x>>4,y>>4,z>>4) for x,y,z in full_palette}
-#actually_used_colors_rgb4 = {(x>>4,y>>4,z>>4) for x,y,z in actually_used_colors}
-#unused_colors = full_palette_rgb4 - actually_used_colors_rgb4
-#print([(hex(x<<4),hex(y<<4),hex(z<<4)) for x,y,z in unused_colors])
-
-# pad just in case we don't have 16+16 colors (but we have)
+# pad just in case we don't have 16+16 colors
 full_palette += (nb_colors-len(full_palette)) * [(0x10,0x20,0x30)]
 
 
@@ -336,8 +352,7 @@ plane_orientations = [("standard",lambda x:x),
 ("flip_mirror",lambda x:ImageOps.flip(ImageOps.mirror(x)))]
 
 
-def read_tileset(img_set_list,palette,plane_orientation_flags,cache,is_bob):
-    next_cache_id = 1
+def read_tileset(img_set_list,palette,plane_orientation_flags,cache,is_bob,next_cache_id=1):
     tile_table = []
     for n,img_set in enumerate(img_set_list):
         tile_entry = []
@@ -401,15 +416,16 @@ def read_tileset(img_set_list,palette,plane_orientation_flags,cache,is_bob):
         for j,v in enumerate(u):
             new_tile_table[j][i] = v
 
-    return new_tile_table
+    return new_tile_table,next_cache_id
 
 tile_plane_cache = {}
-tile_table = read_tileset(tile_set_list,full_palette[:16],[True,False,False,False],cache=tile_plane_cache, is_bob=False)
+tile_table,_ = read_tileset(tile_set_list,full_palette[:16],[True,False,False,False],cache=tile_plane_cache, is_bob=False)
 
 bob_plane_cache = {}
 
 
-sprite_table = read_tileset(sprite_set_list,full_palette[16:],[True,False,True,False],cache=bob_plane_cache, is_bob=True)
+sprite_table,next_cache_id = read_tileset(sprite_set_list,full_palette[16:],[True,False,True,False],cache=bob_plane_cache, is_bob=True)
+sprite_table_x_size,_ = read_tileset(sprite_set_list_x_size,full_palette[16:],[True,False,True,False],cache=bob_plane_cache, is_bob=True,next_cache_id=next_cache_id)
 
 # now that the sprites were decoded, put black as first color too (else for some priority reason
 # the background is magenta or whatever the color is)
@@ -423,6 +439,7 @@ with open(os.path.join(src_dir,"palette.68k"),"w") as f:
 with open(os.path.join(src_dir,"graphics.68k"),"w") as f:
     f.write("\t.global\tcharacter_table\n")
     f.write("\t.global\tbob_table\n")
+    f.write("\t.global\tbob_table_x_size\n")
 
     f.write("character_table:\n")
 
@@ -477,68 +494,72 @@ with open(os.path.join(src_dir,"graphics.68k"),"w") as f:
         f.write(f"tile_plane_{v:02d}:")
         dump_asm_bytes(k,f)
 
-    f.write("bob_table:\n")
-    for i,tile_entry in enumerate(sprite_table):
-        f.write("\t.long\t")
-        if any(tile_entry):
-            prefix = sprite_names.get(i,"bob")
-            f.write(f"{prefix}_{i:02x}")
-        else:
-            f.write("0")
-        f.write("\n")
-
-    for i,tile_entry in enumerate(sprite_table):
-        if any(tile_entry):
-            prefix = sprite_names.get(i,"bob")
-            f.write(f"{prefix}_{i:02x}:\n")
-            for j,t in enumerate(tile_entry):
-                f.write("\t.long\t")
-                if t:
-                    f.write(f"{prefix}_{i:02x}_{j:02x}")
-                else:
-                    f.write("0")
-                f.write("\n")
+    sprite_table_no_size = sprite_table
+    for sprite_table,suffix in [(sprite_table_no_size,""),(sprite_table_x_size,"_x_size")]:
+        f.write(f"bob_table{suffix}:\n")
+        for i,tile_entry in enumerate(sprite_table):
+            f.write("\t.long\t")
+            if any(tile_entry):
+                prefix = sprite_names.get(i,"bob")
+                f.write(f"{prefix}_{i:02x}{suffix}")
+            else:
+                f.write("0")
+            f.write("\n")
 
 
-    for i,tile_entry in enumerate(sprite_table):
-        if tile_entry:
-            prefix = sprite_names.get(i,"bob")
-            for j,t in enumerate(tile_entry):
-                if t:
-                    name = f"{prefix}_{i:02x}_{j:02x}"
-
-                    f.write(f"{name}:\n")
-                    height = 0
-
-                    offset = 0
-                    for orientation,_ in plane_orientations:
-                        if orientation in t:
-                            width = t[orientation]["width"]
-                            height = t[orientation]["height"]
-                            offset = t[orientation]["y_start"]
-                            break
+        for i,tile_entry in enumerate(sprite_table):
+            if any(tile_entry):
+                prefix = sprite_names.get(i,"bob")
+                f.write(f"{prefix}_{i:02x}{suffix}:\n")
+                for j,t in enumerate(tile_entry):
+                    f.write("\t.long\t")
+                    if t:
+                        f.write(f"{prefix}_{i:02x}_{j:02x}{suffix}")
                     else:
-                        raise Exception(f"height not found for {name}!!")
-                    for orientation,_ in plane_orientations:
-                        if orientation in t:
-                            f.write("* orientation={}\n".format(orientation))
-                            active_planes = 0
-                            bitplanes = t[orientation]["bitplanes"]
+                        f.write("0")
+                    f.write("\n")
 
-                            for j,bitplane_id in enumerate(bitplanes):
-                                if bitplane_id:
-                                    active_planes |= 1<<j
 
-                            f.write(f"\t.word\t{height},{width},{offset},0x{active_planes:x}\n")
-                            for bitplane_id in bitplanes:
-                                f.write("\t.long\t")
-                                if bitplane_id:
-                                    f.write(f"bob_plane_{bitplane_id:02d}")
-                                else:
-                                    f.write("0")
-                                f.write("\n")
-                        elif orientation == "mirror":
-                            f.write(f"\t.word\t-1  | no mirror declared\n")
+
+        for i,tile_entry in enumerate(sprite_table):
+            if tile_entry:
+                prefix = sprite_names.get(i,"bob")
+                for j,t in enumerate(tile_entry):
+                    if t:
+                        name = f"{prefix}_{i:02x}_{j:02x}{suffix}"
+
+                        f.write(f"{name}:\n")
+                        height = 0
+
+                        offset = 0
+                        for orientation,_ in plane_orientations:
+                            if orientation in t:
+                                width = t[orientation]["width"]
+                                height = t[orientation]["height"]
+                                offset = t[orientation]["y_start"]
+                                break
+                        else:
+                            raise Exception(f"height not found for {name}!!")
+                        for orientation,_ in plane_orientations:
+                            if orientation in t:
+                                f.write("* orientation={}\n".format(orientation))
+                                active_planes = 0
+                                bitplanes = t[orientation]["bitplanes"]
+
+                                for j,bitplane_id in enumerate(bitplanes):
+                                    if bitplane_id:
+                                        active_planes |= 1<<j
+
+                                f.write(f"\t.word\t{height},{width},{offset},0x{active_planes:x}\n")
+                                for bitplane_id in bitplanes:
+                                    f.write("\t.long\t")
+                                    if bitplane_id:
+                                        f.write(f"bob_plane_{bitplane_id:02d}")
+                                    else:
+                                        f.write("0")
+                                    f.write("\n")
+                            elif orientation == "mirror":
+                                f.write(f"\t.word\t-1  | no mirror declared\n")
 
     f.write("\t.section\t.datachip\n")
 

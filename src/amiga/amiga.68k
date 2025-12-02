@@ -1386,7 +1386,6 @@ update_bobs_and_hw_sprites:
 	GET_MEMORY_START_AND_DP
     lea _custom,A5
 	lea		(SPRITE_START,a6),a0		| sprite start
-	lea		bob_table,a4
 	move.w	#NB_TARGET_SPRITES-1,d7
 	move.l	bob_previous_drawn_sprites(pc),a6
 1:
@@ -1396,8 +1395,6 @@ update_bobs_and_hw_sprites:
 2:
 	rts
 	
-mockup:
-	.include 	"sprites_filtered.s"
 	
 *void mappy_state::mappy_draw_sprites(bitmap_ind16 &bitmap, const rectangle &cliprect, uint8_t *spriteram_base)
 *{
@@ -1495,6 +1492,19 @@ update_one_bob:
 	moveq	#0,d3
 	move.b	(TARGET_SPRITE_CODE,a0),d3
 
+	* load properties (for X size mostly, used for dragons and flames,
+	* where sprite tiles can be used with or without X size, which makes it
+	* more complicated to display as opposed to X&Y size (big inflated monsters)
+	* and Y size (player hammering), that are only displayed grouped
+	lea		bob_table,a4
+	move.b	(TARGET_SPRITE_ATTR,a0),d4
+	btst	#SIZE_X_BIT,d4
+	jeq		0f
+	btst	#SIZE_Y_BIT,d4
+	jne		0f			| XY are with normal sprites
+	* draw from alternate table
+	lea		bob_table_x_size,a4
+0:
 	and.b	#0xF,d2		| CLUT
 	
 	* check if it is a grouped sprite in the table with 0x100 pre-computed entries
