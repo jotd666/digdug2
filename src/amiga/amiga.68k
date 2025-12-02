@@ -37,6 +37,8 @@ COPPER_Y_START = 0x24
 BASE_BPLCON3_VALUE = (1<<12)+(BORDERBLANK<<5)  | dpf second playfield palette starts at color 16!
 BASE_BPLCON2_VALUE = 0x0024		| sprites above all playfields
 
+HW_SPRITE_X_CORRECTION = 0
+HW_SPRITE_Y_CORRECTION = 0
 SPRITE_X_CORRECTION = 0
 SPRITE_Y_CORRECTION = 16		| X (portrait)
 SPRITE_HEIGHT = 16
@@ -763,7 +765,6 @@ alloc_sprite:
 	* if we reach that point there's a big problem, break if dev mode
 	* hopefully if we save buffer in A1 we can reproduce the issue at will!
 	.ifndef	RELEASE
-	lea			sprite_buffer(pc),a1
 	lea			sprite_allocation_error,a0
 	jbsr	osd_break
 	.endif
@@ -1341,9 +1342,137 @@ really_update_tiles:
 * 1   -------x  X position MSB
 * */
 
+really_update_hw_sprites:
+	************************************************
+	* draw current sprites from 6809 sprite memory *
+	************************************************
+	GET_MEMORY_START_AND_DP
+	* clear "sprite drawn" table
+	lea		sprite_drawn(pc),a0
+	move.w	#NB_TARGET_SPRITES/4-1,d7
+0:
+	clr.l	(a0)+
+	dbf		d7,0b
+	
+	* now update in the reverted order // the bobs
+	lea		(FIRST_SPRITE,a6),a0		| sprite start
+	lea		hws_table,a4
+	lea		game_sprites+2,a2				| copperlist part
+	lea		game_sprites_end+2,a6
+	move.w	#NB_TARGET_SPRITES,d6
+	moveq	#0,d7
+	lea		HW_SpriteYTable_16,a1		| all sprites have same size 16 high
+1:
+	jbsr	update_one_hw_sprite
+	addq.w	#TARGET_SPRITE_SIZEOF,a0
+	cmp.l	a2,a6
+	jeq		2f			| all sprites are used already: bail out
+	addq	#1,d7
+	cmp.w	d6,d7		| we have to increase d7 (priority inverted vs bobs)
+	jne		1b
+	* blank the rest of the unused sprites
+	move.l	#blank_sprite,d0
+1:
+	move.w	d0,(4,a2)
+	swap	d0
+	move.w	d0,(a2)
+	swap	d0
+	addq	#8,a2
+	cmp.l	a2,a6
+	jne		1b
+2:	
+	rts
+
+* < A0: target sprite memory
+* < A1: hw sprite y table
+* < A2: part copperlist where the sprites are
+* < D7: loop counter (used for flag index)
+update_one_hw_sprite:
+	moveq	#0,d0
+	moveq	#0,d1
+	move.b	(TARGET_SPRITE_Y,a0),d1  | sprite Y
+	move.b	(TARGET_SPRITE_X,a0),d0
+
+	* filter out if X=0 AND Y=0
+	tst.b	d1
+	jne		0f
+	tst.b	d0
+	jeq	2f
+0:
+
+	* get code immediately. we want to know if it's a
+	* hardware sprite right away
+	moveq	#0,d3
+	move.b	(TARGET_SPRITE_CODE,a0),d3
+	moveq	#0,d2
+	move.b	(TARGET_SPRITE_ATTR,a0),d2
+	btst.b	#5,d2
+	jeq		111f
+	bset	#8,d3		| add 256
+111:
+	.ifdef	NO68020
+	add.w	d3,d3
+	add.w	d3,d3
+	move.l	(a4,d3.w),d3
+	.else
+	move.l	(a4,d3.w*4),d3
+	.endif
+	jeq		2f		| not defined or no HW sprite, pass to BOBs
+	move.l	d3,a5	| clut table
+	
+	* we're taking from here, mark the sprite as empty
+	* so BOB pass isn't going to consider it
+	lea		sprite_drawn(pc),a3
+	st.b	(a3,d7.w)
+	
+	* now change coordinates
+
+	neg.w	d1
+	add.w	#241+HW_SPRITE_Y_CORRECTION,d1
+	jmi		2f		| negative after correction => skip
+
+
+	.ifne	HW_SPRITE_X_CORRECTION
+	add.w	#HW_SPRITE_X_CORRECTION,d0
+	.endif
+
+	and.b	#0xF,d2		| CLUT
+	
+	* it is a HW sprite all right
+	lsl.w	#3,d2	| 2 pointers for each sprite
+
+	lea		(a5,d2.w),a5	| pointer on first sprite
+
+	* D0 and D1 are already set
+	* so is A1 with sprite Y pos table
+	
+	jbsr		store_sprite_pos
+
+	
+	* first sprite of couple
+	move.l	(a5)+,a3
+	move.l	d0,(a3)
+	move.l	a3,d1
+	* store sprite pointer in copperlist
+	move.w	d1,(4,a2)
+	swap	d1
+	move.w	d1,(a2)
+	* second sprite of couple
+	BSET	#7,d0		| attach bit set
+	move.l	(a5),a3
+	move.l	d0,(a3)
+	move.l	a3,d1
+	* store sprite pointer in copperlist
+	move.w	d1,(4+8,a2)
+	swap	d1
+	move.w	d1,(8,a2)
+	add.w	#0x10,a2	| advance in sprite copperlist part
+2:
+	
+	rts
 
 really_update_sprites:
-update_bobs_and_hw_sprites:
+
 	
 	***********************
 	* erase previous BOBs *
@@ -2044,10 +2173,9 @@ clear_planes_any_blitter_internal:
 	move.w  d4,bltsize(a5)	|rectangle size, starts blit
     rts
 
-	
-sprite_buffer:
-	.skip	NB_TARGET_SPRITES*SPRITE_SIZEOF
-	
+sprite_drawn:
+	.skip	NB_TARGET_SPRITES
+
 bob_previous_positions_1:
 	ds.b	NB_TARGET_SPRITES*PREVIOUS_SPRITE_SIZEOF
 bob_previous_drawn_sprites:
@@ -3408,6 +3536,10 @@ tiles_bitplanes:
 bobs_bitplanes:
 	DECL_EVEN_BITPLANES	0,4
 
+	.ifdef	OCS_VERSION
+sprite_colors:
+	DECL_COLORS	16,16
+	.endif
 
 game_sprites:
 	DECL_SPRITES
