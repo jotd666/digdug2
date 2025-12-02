@@ -157,7 +157,9 @@ BIT_LEFT = 3
 	move.l		ram_start_0000,a6
 	
 	* adjust offset to avoid subbing at run-time
+	.ifne	RAM_START
 	sub.w	#RAM_START,a6
+	.endif
 	.endif
 	.endm
 	
@@ -818,9 +820,7 @@ demo_game:
 0:
 	move.l	(a0)+,(a1)+
 	dbf		d0,0b
-	
 
-*	.endif
 
 	
 	GET_MEMORY_START_AND_DP

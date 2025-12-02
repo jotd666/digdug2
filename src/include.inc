@@ -492,29 +492,6 @@ get_address:
 	.endif
 
 
-	* those macros encode & decode 32 bit addresses into 16 bit addresses
-	* so the data can be stored in the original RAM with game pointers
-	* which allows to replicate the game task switching logic more easily
-	
-	.macro	DECODE_NATIVE_ADDRESS	reg
-	add.l	\reg,\reg
-	add.l	#irq_8000,\reg
-	.endm
-	
-	.macro	ENCODE_NATIVE_ADDRESS	reg
-	sub.l	#irq_8000,\reg
-	* the executable code address is even. "compress" them by dividing by 2
-	* so it's sure that it fits in 16 bits after subbing code start
-	lsr.l	#1,\reg
-	.ifndef	RELEASE
-	cmp.l	#0x10000,\reg
-	jcs		okay\@
-	* we cannot encode this address it doesn't fit in 16 bits
-	BREAKPOINT	"address is too large!"
-	ILLEGAL
-okay\@:
-	.endif
-	.endm
 
 multiply_ab:
 	and.w	#0xFF,d0
