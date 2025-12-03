@@ -14,6 +14,9 @@
 ##* $79D: 32,34 => $792: 43,34
 ##* row 35: same with $20 added to all addresses
 
+# this is a portrait game with 288 pixel vertical resolution, which is a little too much
+# for amiga
+
 import shared
 import bitplanelib
 import collections
@@ -55,9 +58,12 @@ for y,line_offset in enumerate(range(0,32),2):
 
 x_offset = 32
 # bottom status
-for y,line_offset in enumerate(range(0,0x40,0x20),2):
+for y,line_offset in enumerate([0,0x20],2):
     y += 32
-    start = 0x78F+line_offset
+    # kludge on bottom right so ROUND and CREDIT are displayed higher so amiga
+    # can display it (else it's cut at Y=285)
+    # non-amiga version could retain the 0x78F+line_offset formula for this part
+    start = 0x78F+(0x20-line_offset)
     x = 14+x_offset
     for i in range(start,start-14,-1):
         set_value(i,(x,y))

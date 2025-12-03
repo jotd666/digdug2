@@ -862,8 +862,6 @@ mt_TimerAInt:
 	.else
 	* Now it should be a TA interrupt.
 	* Other level 6 interrupt sources have to be handled elsewhere.
-	move.l	a7,prev_level6_stack
-	lea		level6_stack_top,a7
 	movem.l	d0-d7/a0-a6,-(sp)
 	lea	_custom,a6
 	.ifdef	SDATA
@@ -883,17 +881,15 @@ mt_TimerAInt:
 	beq	1f
 	.endif
 
-	jbsr	mt_music		| music with sfx inserted
+	bsr	mt_music		| music with sfx inserted
 1:	movem.l	(sp)+,d0-d7/a0-a6
 	nop
-	move.l	prev_level6_stack,a7
 	rte
 
 	.ifeq	MINIMAL
-2:	jbsr	mt_sfxonly		| no music, only sfx
+2:	bsr	mt_sfxonly		| no music, only sfx
 	movem.l	(sp)+,d0-d7/a0-a6
 	nop
-	move.l	prev_level6_stack,a7
 	rte
 	.endif
 	.endif	| !VBLANK_MUSIC
@@ -4003,12 +3999,6 @@ mt_MusicChannels = n_sizeof+n_sizeof+n_sizeof+n_sizeof+124+4+4+4+4+4+2+2+2+1+1+1
 mt_SongEnd = n_sizeof+n_sizeof+n_sizeof+n_sizeof+124+4+4+4+4+4+2+2+2+1+1+1+1+1+1+1+1+4+1+1+1		| exported as _mt_SongEnd
 
 	.align	2
-prev_level6_stack:
-	.long	0
-
-	.skip	0x400
-level6_stack_top:
-
 mt_data:
 	ds.b	mt_Enable
 	.global	_mt_Enable

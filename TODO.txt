@@ -1,13 +1,7 @@
-- add bob plane erase (transparency bitplane issue)
 - release mode is completely buggy
 - sfx: assign channels & priorities to sounds. Use channel 3 mostly
   use channel 2 only for special items: waiting to see if music can hold on 2 channels,
   else would have to use audiomixer
-- mega crash at times when stack is clobbered: PC=$2366bc60 => HALT1
-- bottom of the screen not showing (credit, round): check set_status_bitplanes
-- credit: not showing anymore
-- set_status_bitplanes 33 v 32 "cheat": map "CREDIT" higher
-  basically let right part of the bottom status bitplanes swap rows
 - replicate most bobs as sprites (not 2x wide)
 - ECS version
 - highscore save
