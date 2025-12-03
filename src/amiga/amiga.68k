@@ -270,6 +270,15 @@ _user:
 	lea	(_tag,pc),a0
 	jsr	(resload_Control,a2)
 	
+	
+	* set user stack different from supervisor stack
+	* this is important as the game uses a task system with stacks
+	* and it's working strangely
+	lea	user_stack_top,a0
+	move.l	a0,usp
+	* set user mode
+	move.w	#0,SR
+	
     bra		.no_forbid
 .standard:
 	
@@ -1383,22 +1392,37 @@ really_update_hw_sprites:
 2:	
 	rts
 
+	* shared code between bobs & hw sprites
+	* jumps to 2f if not active
+	* returns d0 and d1 decoded
+	.macro		COMPUTE_SPRITE_COORDS
+	moveq	#0,d0
+	move.b	(TARGET_SPRITE_X_2,a0),d0
+	bclr	#2,d0
+	jne		2f	| if ((spriteram_3[offs+1] & 2) == 0)
+	moveq	#0,d2
+	move.b	(TARGET_SPRITE_COLOR,a0),d2
+	jeq		2f			| all sprites are black when color = 0
+	
+	* compute sx
+	moveq	#0,d1
+	and.w	#0x1,d0
+	lsl.w	#8,d0		| times 0x100
+	sub.w	#40,d0
+	move.b	(TARGET_SPRITE_X_1,a0),d1
+	add.w	d1,d0		| sx = spriteram_2[offs+1] + 0x100 * (spriteram_3[offs+1] & 1) - 40
+	* compute sy
+	move.b	(TARGET_SPRITE_Y,a0),d1  | sprite Y
+	subq.w	#1,d1	| sy = spriteram_2[offs]-1  (MAME mirrors sy but we don't!)	
+	.endm
+	
+	
 * < A0: target sprite memory
 * < A1: hw sprite y table
 * < A2: part copperlist where the sprites are
 * < D7: loop counter (used for flag index)
 update_one_hw_sprite:
-	moveq	#0,d0
-	moveq	#0,d1
-	move.b	(TARGET_SPRITE_Y,a0),d1  | sprite Y
-	move.b	(TARGET_SPRITE_X,a0),d0
-
-	* filter out if X=0 AND Y=0
-	tst.b	d1
-	jne		0f
-	tst.b	d0
-	jeq	2f
-0:
+	COMPUTE_SPRITE_COORDS
 
 	* get code immediately. we want to know if it's a
 	* hardware sprite right away
@@ -1588,24 +1612,7 @@ really_update_sprites:
 * must preserve all of those, plus D7
 
 update_one_bob:
-	moveq	#0,d0
-	move.b	(TARGET_SPRITE_X_2,a0),d0
-	bclr	#2,d0
-	jne		2f	| if ((spriteram_3[offs+1] & 2) == 0)
-	moveq	#0,d2
-	move.b	(TARGET_SPRITE_COLOR,a0),d2
-	jeq		2f			| all sprites are black when color = 0
-	
-	* compute sx
-	moveq	#0,d1
-	and.w	#0x1,d0
-	lsl.w	#8,d0		| times 0x100
-	sub.w	#40,d0
-	move.b	(TARGET_SPRITE_X_1,a0),d1
-	add.w	d1,d0		| sx = spriteram_2[offs+1] + 0x100 * (spriteram_3[offs+1] & 1) - 40
-	* compute sy
-	move.b	(TARGET_SPRITE_Y,a0),d1  | sprite Y
-	subq.w	#1,d1	| sy = spriteram_2[offs]-1  (MAME mirrors sy but we don't!)
+	COMPUTE_SPRITE_COORDS
 	
 	.ifne	SPRITE_Y_CORRECTION
 	add.w	#SPRITE_Y_CORRECTION,d1
