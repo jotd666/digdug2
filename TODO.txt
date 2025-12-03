@@ -1,4 +1,3 @@
-- release mode is completely buggy
 - sfx: assign channels & priorities to sounds. Use channel 3 mostly
   use channel 2 only for special items: waiting to see if music can hold on 2 channels,
   else would have to use audiomixer

@@ -49,15 +49,15 @@ $(AMIGASRC)/sounds.68k: $(ASSETS)/convert_sounds.py
 $(MAIN): $(OBJS)
 	$(GCC_BIN)/m68k-amigaos-ld $(OPT_RELEASE_LINK) -o $(MAIN) $(OBJS)
 
-ram.o: ram.68k
+ram.o: ram.68k options.inc
 	$(ASM) ram.68k -o ram.o
 rom.o: rom.68k
 	$(ASM) rom.68k -o rom.o
-$(PROGNAME).o: $(PROGNAME).68k include.inc sounds.inc data.inc
+$(PROGNAME).o: $(PROGNAME).68k options.inc include.inc sounds.inc data.inc
 	$(ASM) $(PROGNAME).68k -o $(PROGNAME).o
-amiga.o: $(AMIGASRC)/amiga.68k include.inc data.inc $(AMIGASRC)/ReadJoyPad.i $(AMIGASRC)/palette.68k $(AMIGASRC)/sound_entries.68k
+amiga.o: $(AMIGASRC)/amiga.68k options.inc include.inc data.inc $(AMIGASRC)/ReadJoyPad.i $(AMIGASRC)/palette.68k $(AMIGASRC)/sound_entries.68k
 	$(ASM) -I$(AMIGASRC) -I$(AMIGASRC)/mit_includes $(AMIGASRC)/amiga.68k -o amiga.o
-amiga_shared.o: $(AMIGASRC)/amiga_shared.68k data.inc $(AMIGASRC)/sound_entries.68k $(AMIGASRC)/ReadJoyPad.i
+amiga_shared.o: $(AMIGASRC)/amiga_shared.68k options.inc  data.inc $(AMIGASRC)/sound_entries.68k $(AMIGASRC)/ReadJoyPad.i
 	$(ASM) -I$(AMIGASRC) -I$(AMIGASRC)/mit_includes $(AMIGASRC)/amiga_shared.68k -o amiga_shared.o
 vbr.o: $(AMIGASRC)/vbr.68k
 	$(ASM_020) -Iamiga $(AMIGASRC)/vbr.68k -o vbr.o

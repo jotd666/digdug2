@@ -8,6 +8,7 @@
 	jra		start
 
 	.include "../src/include.inc"
+	.include "../src/options.inc"
 
 	.include "hardware/custom.i"
 	.include "exec/types2.i"
@@ -54,31 +55,17 @@ TILE_CLUT_POW2 = 6
 NB_TILE_CLUTS = (1<<TILE_CLUT_POW2)
 TILE_CLUT_MASK = NB_TILE_CLUTS-1
 
-RAM_START = 0x0000
-ROM_START = 0x8000
 SPRITE_START = 0x1780
 
 LAST_SPRITE = SPRITE_START+0x3E
 FIRST_SPRITE = SPRITE_START
 
 
-	.ifdef	RELEASE
-OPT_ENABLE_LOGGING = 0           | DO NOT CHANGE THIS
-OPT_ALIGNED_MEMORY = 0
-	.else
-OPT_ENABLE_LOGGING = 1
-OPT_ALIGNED_MEMORY = 1
-	.endif
-
 * to save bandwidth, do not clear cookie cut blit
 * if no bitplane data: there will be some color artefacts
 * but not noticeable unless 2 sprites cross each other paths
 OPT_IGNORE_ZERO_BITPLANE = 0
-
-
 OPT_ENABLE_DOUBLE_BUFFERING = 1
-
-
 OPT_ENABLE_MULTIPLEXED_SPRITES = 0
 
 NB_TILE_PLANES = 4
@@ -152,21 +139,9 @@ BIT_LEFT = 3
 
 
 
-.macro	GET_MEMORY_START_AND_DP
-	move.l	m6809_direct_page_pointer,a5
-	.ifeq	OPT_ALIGNED_MEMORY
-	lea		ram_buffer-RAM_START,a6
-	.else
-	move.l		ram_start_0000,a6
+
 	
-	* adjust offset to avoid subbing at run-time
-	.ifne	RAM_START
-	sub.w	#RAM_START,a6
-	.endif
-	.endif
-	.endm
-	
-.macro	WAIT_BLIT
+	.macro	WAIT_BLIT
 	.ifndef	RELEASE
 	* always check that custom is set (in dev mode)
 	* saves a lot of time!
@@ -240,7 +215,7 @@ start:
 
 		
 		* read/write on memory
-		.ifndef	RELEASE
+		.ifne	OPT_ENABLE_LOGGING
 		.global	osd_log_cpu
 		.global osd_get_last_known_pc
 		.global	osd_read_file
@@ -391,7 +366,7 @@ _user:
 
 .no_forbid:
 	
-	.ifndef	RELEASE
+	.ifndef	OPT_ENABLE_LOGGING
 	move.l	#log_buffer,log_ptr
 	lea	log_buffer_end,a0
 	move.l	#0xCAFECAFE,d0
@@ -514,7 +489,7 @@ _user:
 	
 	jsr	 _detect_controller_types 
 
-	.ifndef	RELEASE
+	.ifne	OPT_ENABLE_LOGGING
 	* install dump and quit handler
 	pea		dump_and_quit
 	lea		2.W,a0
@@ -524,7 +499,7 @@ _user:
 
 	jra		demo_game
 
-	.ifndef	RELEASE
+	.ifne	OPT_ENABLE_LOGGING
 dump_and_quit:	
 	jbsr	osd_dump_logs
 	illegal
@@ -980,7 +955,7 @@ osd_read_4802:
 	move.b	#0xF0,d0	| this value seems not to change except at bootup
 	rts
 
-	.ifndef	RELEASE
+	.ifne	OPT_ENABLE_LOGGING
 
 	.macro	CHECK_ZERO_MSW	reg
 	swap	\reg
@@ -3149,7 +3124,6 @@ handle_keyboard:
 *0:
 *
 10:
-	.ifndef	RELEASE
 
 	.ifne	OPT_ENABLE_LOGGING
 	cmp.b	#34,d0
@@ -3159,6 +3133,7 @@ handle_keyboard:
 0:
 	.endif
 
+	.ifndef	RELEASE
 	
 *	cmp.b	#0x56,d0	| F7 key: lose all l
 *	bne.b	0f
@@ -3413,8 +3388,6 @@ scroll_table:
 	* on amiga, this file is included in mpatrol.68k file
 	* so the assembler can optimize by using PC-relative addressing
 	* whenever possible (and it does)
-	.ifndef	RELEASE
-	* easier to debug game to have memory aligned on 0x10000
 
 	.ifne	OPT_ENABLE_LOGGING
 	.section	.bsspublic
@@ -3427,7 +3400,7 @@ character_log_table:
 	* 64 cluts, 256 tiles
 	* a lot of combinations aren't used (fortunately!)
 	.skip	NB_TILE_CLUTS*NB_POSSIBLE_TILES
-	.endif
+
 	
 
 log_ptr:

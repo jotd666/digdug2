@@ -19,35 +19,15 @@
 	.error	"\arg"     | comment out to disable errors
 	.endm
 
-* makes random routines return 0. Can lock up the game
-*OPT_FIX_RANDOM = 1
-
+	.include	"options.inc"
+	
 NATIVE_STACK_SIZE = 0x3000
 
 * if change here change also in "ram.68k"
 TASK_STACK_BITSHIFT = 8
 TASK_STACK_SIZE = (1<<TASK_STACK_BITSHIFT)
 
-	.ifdef	RELEASE
-	.macro	BREAKPOINT comment
-	.endm
 
-	.else
-	
-LOG_BUFFER_SIZE = 0x80000
-	* amiga specific
-	.macro	BREAKPOINT comment
-	move.l	a0,-(a7)
-	lea		comment\@(pc),a0
-	jbsr	osd_break
-	move.l	(a7)+,a0
-	jra		next\@
-comment\@:
-	.asciz	"\comment"
-	.align	2
-next\@:
-	.endm
-	.endif
 	
 	.macro	CHECK_MAX	reg,arg
 	.ifndef	RELEASE
@@ -467,7 +447,9 @@ get_address:
 0:
 	cmp.w	#0x1000,a0
 	jcc		0f
+	.ifne	OPT_ENABLE_LOGGING
 	jbsr	osd_get_last_known_pc
+	.endif
 	BREAKPOINT	"video address range 0x0000-0x0FFF, PC in D6"
 	jra		10f
 0:
@@ -482,7 +464,9 @@ get_address:
 	
 	cmp.l	#0x8000,a0
 	jcc		10f				| ROM: OK
+	.ifne	OPT_ENABLE_LOGGING
 	jbsr	osd_get_last_known_pc
+	.endif
 9:
 	BREAKPOINT	"illegal range 0x4400-0x8000, PC in D6"
 10:

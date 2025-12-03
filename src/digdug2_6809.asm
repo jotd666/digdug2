@@ -1802,7 +1802,7 @@ loop_8f35:
 
 create_base_tasks_8f67:
 8F67: 8E 19 1E       LDX    #stack_pointer_191e
-8F6A: 10 8E 8F 80    LDY    #table_8f80
+8F6A: 10 8E 8F 80    LDY    #jump_table_8f80
 8F6E: 86 16          LDA    #$16
 8F70: B7 10 09       STA    $1009
 8F73: EC A1          LDD    ,Y++	; get routine address
@@ -1812,7 +1812,7 @@ create_base_tasks_8f67:
 8F7D: 26 F4          BNE    $8F73
 8F7F: 39             RTS
 
-table_8f80:
+jump_table_8f80:
 	.word	task_entry_01_show_current_player_902b
 	.word	task_entry_02_read_joy_directions_8ff3
 	.word	task_entry_03_read_joy_buttons_8fac
@@ -2196,7 +2196,7 @@ task_entry_13_94e4:
 952A: B6 10 E3       LDA    $10E3
 952D: 27 15          BEQ    $9544
 952F: 8E 20 10       LDX    #$2010
-9532: CE 96 1D       LDU    #table_961D		; [jump_table]
+9532: CE 96 1D       LDU    #jump_table_961D		; [jump_table]
 9535: A6 1A          LDA    -$6,X
 9537: 48             ASLA
 9538: AD D6          JSR    [A,U]   ; [indirect_jump]
@@ -3332,7 +3332,7 @@ A0BE: 26 E4          BNE    $A0A4
 A0C0: B6 25 0A       LDA    $250A
 A0C3: 27 DF          BEQ    $A0A4
 A0C5: 8E 25 10       LDX    #character_data_array_2510
-A0C8: CE A0 F1       LDU    #table_a0f1		; [jump_table]
+A0C8: CE A0 F1       LDU    #jump_table_a0f1		; [jump_table]
 A0CB: 48             ASLA
 A0CC: AD D6          JSR    [A,U]	; [indirect_jump]
 A0CE: 20 D4          BRA    $A0A4
@@ -3554,7 +3554,7 @@ A271: 8B 48          ADDA   #$48
 A273: A7 0A          STA    $A,X
 A275: 6F 88 BA       CLR    -$46,X
 A278: 8E 24 D0       LDX    #$24D0
-A27B: CE A2 E9       LDU    #table_a2e9			; [jump_table]
+A27B: CE A2 E9       LDU    #jump_table_a2e9			; [jump_table]
 A27E: A6 1A          LDA    -$6,X			; 24CA: pump state (length)
 A280: 48             ASLA
 A281: AD D6          JSR    [A,U]	; [indirect_jump]
@@ -4561,7 +4561,7 @@ ABCB: 30 88 20       LEAX   $20,X
 ABCE: 8C 26 70       CMPX   #$2670
 ABD1: 26 E5          BNE    $ABB8
 ABD3: 8E 25 30       LDX    #$2530
-ABD6: CE AC 66       LDU    #table_ac66				; [jump_table]
+ABD6: CE AC 66       LDU    #jump_table_ac66				; [jump_table]
 ABD9: A6 10          LDA    -$10,X
 ABDB: 27 5C          BEQ    $AC39
 ABDD: A6 1A          LDA    -$6,X
@@ -7857,7 +7857,7 @@ EC11: 39             RTS
 EC12: B7 10 6B       STA    $106B
 EC15: 39             RTS
 
-table_961d:
+jump_table_961d:
 	dc.w	$9639	; $961d
 	dc.w	$967f	; $961f
 	dc.w	$968c	; $9621
@@ -7873,7 +7873,7 @@ table_961d:
 	dc.w	$9884	; $9635
 	dc.w	$98e9	; $9637
 
-table_a0f1:
+jump_table_a0f1:
 	dc.w	$2098	; $a0f1 0: bogus never reached state
 	dc.w	player_hammer_and_movement_a117	; $a0f3 1
 	dc.w	player_turning_around_a1cb	; $a0f5 2
@@ -7883,7 +7883,7 @@ table_a0f1:
 	dc.w	player_dying_a20a	; $a0fd 6
 	
 ; pump state/size
-table_a2e9:
+jump_table_a2e9:
 	dc.w	hose_starting_to_deploy_a2f7	; $a2e9
 	dc.w	hose_expanding_a38a	; $a2eb
 	dc.w	hose_partially_expanded_a33b	; $a2ed
@@ -7891,7 +7891,7 @@ table_a2e9:
 	dc.w	hose_fully_expanded_a357	; $a2f1
 	dc.w	hose_expanding_a38a	; $a2f3
 	dc.w	hose_connecting_with_enemy_a4c1	; $a2f5
-table_ac66:
+jump_table_ac66:
 	dc.w	task_entry_0c_ab85	; $ac66
 	dc.w	$ad49	; $ac68
 	dc.w	$b5ed	; $ac6a

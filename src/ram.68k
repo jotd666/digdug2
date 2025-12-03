@@ -1,4 +1,7 @@
+	.include	"options.inc"
+
 	.global infinite_lives_flag
+
 	.global invincible_flag
 	.global start_level
 	.global vb_ticks_count
@@ -13,7 +16,7 @@
 	.global	stack_top
 	.global	user_stack_top
 
-	.ifdef	RELEASE
+	.ifeq	OPT_ALIGNED_MEMORY
 	.global	ram_buffer
 	.global	rom_buffer
 	.else
@@ -23,8 +26,6 @@
 	
 	.ifdef   __amiga__
 	.ascii	"RAM_STRT"
-	.ifndef	RELEASE
-	.endif
 	.else
 	* Neogeo: needs different writable section from ROM code
     .bss
@@ -39,7 +40,7 @@ stack_top:
 	.skip	0x100*32		| 256 bytes for each task natively (originally 16 bytes only)
 	
 ram_buffer:
-	.ifdef	RELEASE
+	.ifeq	OPT_ALIGNED_MEMORY
 	.skip	0x8000
 rom_buffer:
 	.skip	0x10000-0x8000
@@ -73,7 +74,7 @@ infinite_time_flag:
 music_off_flag:
 	.byte 	0
 
-	.ifndef	RELEASE
+	.ifndef	OPT_ENABLE_LOGGING
 log_ptr:
 	.long	0x100
 	.endif

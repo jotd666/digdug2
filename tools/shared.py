@@ -2,7 +2,7 @@ import re,pathlib
 import os,struct
 
 # post-conversion automatic patches, allowing not to change the asm file by hand
-tablere = re.compile("move.w\t#(\w*table_....),d(.)")
+tablere = re.compile("move.w\t#(\w*jump_table_....),d(.)")
 jmpre = re.compile("(j..)\s+\[([ab]),(.)\]")
 
 def remove_instruction(lines,i):
