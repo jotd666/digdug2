@@ -28,12 +28,22 @@ NB_POSSIBLE_SPRITES = 0x100
 NB_POSSIBLE_TILES = 0x100
 
 
-* 3 & 3: most performant
+	.ifdef	OCS_VERSION
+NO68020 = 1
+BITPLANE_FMODE = 0			| works with 1, albeit slower
+SPRITE_FMODE = 0			| required!!
+FMODE_OFFSET = 0
+SCROLL_WIDTH = 0x10
+	.else
+* 3: most performant
+FMODE_OFFSET = -8
 BITPLANE_FMODE = 3			| works with 1, albeit slower
-SPRITE_FMODE = 3			| required!!
-
+SPRITE_FMODE = 0			| no need to break compat AGA/ECS
+SCROLL_WIDTH = 0x40
+	.endif
+	
 BORDERBLANK = 1
-
+	
 COPPER_Y_START = 0x24
 BASE_BPLCON3_VALUE = (1<<12)+(BORDERBLANK<<5)  | dpf second playfield palette starts at color 16!
 BASE_BPLCON2_VALUE = 0x0024		| sprites above all playfields
@@ -928,7 +938,7 @@ level3_interrupt:
 	jbsr		do_irq
 	* now D5 can be destroyed
 	jbsr	really_update_scroll
-	*jbsr	really_update_hw_sprites
+	jbsr	really_update_hw_sprites
 	
 	tst.b	frameskip
 	jeq		0f
@@ -1340,7 +1350,7 @@ really_update_hw_sprites:
 	lea		(FIRST_SPRITE,a6),a0		| sprite start
 	lea		hws_table,a4
 	lea		game_sprites+2,a2				| copperlist part
-	lea		game_sprites_end+2,a6
+	lea		game_sprites_end+2,a6			| end
 	move.w	#NB_TARGET_SPRITES,d6
 	moveq	#0,d7
 	lea		HW_SpriteYTable_16,a1		| all sprites have same size 16 high
@@ -1369,13 +1379,13 @@ really_update_hw_sprites:
 	* jumps to 2f if not active
 	* returns d0 and d1 decoded
 	.macro		COMPUTE_SPRITE_COORDS
+	moveq	#0,d2
+	move.b	(TARGET_SPRITE_COLOR,a0),d2
+	jeq		2f			| all sprites are black when color = 0
 	moveq	#0,d0
 	move.b	(TARGET_SPRITE_X_2,a0),d0
 	bclr	#2,d0
 	jne		2f	| if ((spriteram_3[offs+1] & 2) == 0)
-	moveq	#0,d2
-	move.b	(TARGET_SPRITE_COLOR,a0),d2
-	jeq		2f			| all sprites are black when color = 0
 	
 	* compute sx
 	moveq	#0,d1
@@ -1393,20 +1403,15 @@ really_update_hw_sprites:
 * < A0: target sprite memory
 * < A1: hw sprite y table
 * < A2: part copperlist where the sprites are
+* < A4: hardware sprite table (0 if not hw sprite)
 * < D7: loop counter (used for flag index)
 update_one_hw_sprite:
-	COMPUTE_SPRITE_COORDS
 
 	* get code immediately. we want to know if it's a
 	* hardware sprite right away
 	moveq	#0,d3
 	move.b	(TARGET_SPRITE_CODE,a0),d3
-	moveq	#0,d2
-	move.b	(TARGET_SPRITE_ATTR,a0),d2
-	btst.b	#5,d2
-	jeq		111f
-	bset	#8,d3		| add 256
-111:
+
 	.ifdef	NO68020
 	add.w	d3,d3
 	add.w	d3,d3
@@ -1415,6 +1420,18 @@ update_one_hw_sprite:
 	move.l	(a4,d3.w*4),d3
 	.endif
 	jeq		2f		| not defined or no HW sprite, pass to BOBs
+
+
+	COMPUTE_SPRITE_COORDS
+
+
+	* D2 has the color
+	*move.b	(TARGET_SPRITE_ATTR,a0),d4
+    * flip_x = D4 & 0x1
+	*btst	#MIRROR_X_BIT,d4  | Y but portrait!
+
+	
+	
 	move.l	d3,a5	| clut table
 	
 	* we're taking from here, mark the sprite as empty
@@ -1422,17 +1439,17 @@ update_one_hw_sprite:
 	lea		sprite_drawn(pc),a3
 	st.b	(a3,d7.w)
 	
-	* now change coordinates
-
-	neg.w	d1
-	add.w	#241+HW_SPRITE_Y_CORRECTION,d1
-	jmi		2f		| negative after correction => skip
 
 
 	.ifne	HW_SPRITE_X_CORRECTION
 	add.w	#HW_SPRITE_X_CORRECTION,d0
 	.endif
+	.ifne	HW_SPRITE_Y_CORRECTION
+	add.w	#HW_SPRITE_Y_CORRECTION,d0
+	.endif
 
+	exg		d0,d1
+	
 	and.b	#0xF,d2		| CLUT
 	
 	* it is a HW sprite all right
@@ -1445,10 +1462,9 @@ update_one_hw_sprite:
 	
 	jbsr		store_sprite_pos
 
-	
 	* first sprite of couple
-	move.l	(a5)+,a3
-	move.l	d0,(a3)
+	move.l	(a5)+,a3	| pointer on sprite data
+	move.l	d0,(a3)		| control word of sprite 1
 	move.l	a3,d1
 	* store sprite pointer in copperlist
 	move.w	d1,(4,a2)
@@ -1456,8 +1472,8 @@ update_one_hw_sprite:
 	move.w	d1,(a2)
 	* second sprite of couple
 	BSET	#7,d0		| attach bit set
-	move.l	(a5),a3
-	move.l	d0,(a3)
+	move.l	(a5),a3		| pointer on sprite data
+	move.l	d0,(a3)		| control word of sprite 2
 	move.l	a3,d1
 	* store sprite pointer in copperlist
 	move.w	d1,(4+8,a2)
@@ -1514,7 +1530,10 @@ really_update_sprites:
 	lea		(SPRITE_START,a6),a0		| sprite start
 	move.w	#NB_TARGET_SPRITES-1,d7
 	move.l	bob_previous_drawn_sprites(pc),a6
+	lea		sprite_drawn(pc),a3
 1:
+	tst.b	(a3,d7.w)
+	jne		2f
 	jbsr	update_one_bob
 	addq.w	#TARGET_SPRITE_SIZEOF,a0
 	dbf		d7,1b
@@ -1750,78 +1769,7 @@ update_one_bob:
 
 
 	
-	.ifdef	HW_SPRITES
-update_one_hw_sprite:
-	* code = 0 and clut = 0 => disabled ?? to check
-	moveq	#0,d2
-	move.b	(TARGET_SPRITE_CODE,a0),d2
-	jeq	2f
 
-	move.b	(TARGET_SPRITE_X,a0),d0
-	add.w	d2,d2
-	add.w	d2,d2
-	btst    #2,(TARGET_SPRITE_ATTR,a0)
-	jeq		0f
-	addq	#2,d2
-0:
-	cmp.b	#1,(a6,d2.w)
-	jne		2f		| not a hw sprite: zap
-	* get the actual sprite index for our engine
-	move.b	(1,a6,d2.w),d2
-	and.w	#0xFF,d2
-	* it is a HW sprite all right
-	lsl.w	#4,d2	| 4 pointers for each sprite
-	move.b  (TARGET_SPRITE_CODE,a0),d3
-	btst	#0,d3
-	jeq		10f
-	addq	#8,d2			| mirror sprite couple
-10:
-	lea		(a4,d2.w),a5	| pointer on first sprite
-
-	moveq	#0,d0
-	moveq	#0,d1
-	move.b	(TARGET_SPRITE_Y,a0),d1  | sprite Y
-	beq.b	2f			| Y set to 0: not shown
-	not.b	d1
-
-	move.b	(TARGET_SPRITE_X,a0),d0  | sprite X
-	
-	.ifne	SPRITE_Y_CORRECTION
-	add.b	#SPRITE_Y_CORRECTION,d1
-	.endif
-	.ifne	SPRITE_X_CORRECTION
-	add.b	#SPRITE_X_CORRECTION,d0
-	.endif
-
-	* D0 and D1 are already set
-
-	sub.w	#16,d0	| move each sprite 16 bits to the left
-	bmi.b	2f			| X < 0 after correction: can't show
-	bsr		store_sprite_pos
-
-	
-	* first sprite of couple
-	move.l	(a5)+,a3
-	move.l	d0,(a3)
-	move.l	a3,d1
-	* store sprite pointer in copperlist
-	move.w	d1,(4,a2)
-	swap	d1
-	move.w	d1,(a2)
-	* second sprite of couple
-	BSET	#7,d0		| attach bit set
-	move.l	(a5),a3
-	move.l	d0,(a3)
-	move.l	a3,d1
-	* store sprite pointer in copperlist
-	move.w	d1,(4+8,a2)
-	swap	d1
-	move.w	d1,(8,a2)
-	add.w	#0x10,a2	| advance in sprite copperlist part
-2:
-	
-	rts
-	.endif
 	
 
 	.ifne	OPT_ENABLE_LOGGING
@@ -2337,21 +2285,25 @@ platform_init:
 	move.w	#BASE_BPLCON2_VALUE,bplcon2(a5)
 	move.w	#BASE_BPLCON3_VALUE,bplcon3(a5)
  	*         VVHH
-    move.w #0x99+0x28+(COPPER_Y_START<<8),diwstrt(a5)
-    move.w #0x79+0x28+(COPPER_Y_START<<8)+0x1000,diwstop(a5)
+    move.w #0x99-0X18+SCROLL_WIDTH+(COPPER_Y_START<<8),diwstrt(a5)
+    move.w #0x79-0X18+SCROLL_WIDTH+(COPPER_Y_START<<8)+0x1000,diwstop(a5)
     move.w #0x0038,ddfstrt(a5)
     move.w #0x00D0,ddfstop(a5)
 
 	* restrict borders: we don't see bobs on the borders!
 	* try to hide color 0 on the border (except on OCS)
 
+	.ifdef	OCS_VERSION
+	.else
     move.w #(SPRITE_FMODE<<2)+BITPLANE_FMODE,fmode(a5)	| 32 bit bitplane fetch, 64 bit wide sprites
+	move.w	#0,bplcon4(a5)			| use the same colors as bobs playfield
+	.endif
 
 	move.w	#0,bplcon1(a5)
 
-	move.w	#-8+BG_NB_BYTES_PER_ROW-40,d0
+	move.w	#FMODE_OFFSET+BG_NB_BYTES_PER_ROW-40,d0
     move.w d0,bpl2mod(a5)
-	move.w	#-8+FG_NB_BYTES_PER_ROW-40,d0
+	move.w	#FMODE_OFFSET+FG_NB_BYTES_PER_ROW-40,d0
     move.w d0,bpl1mod(a5)
 
 	lea		game_copperlist,a0
@@ -3382,8 +3334,11 @@ palette:
 
 
 scroll_table:
+	.ifdef	OCS_VERSION
+	.include	"scroll_table_16.68k"
+	.else
 	.include	"scroll_table_64.68k"
-
+	.endif
 	
 	* on amiga, this file is included in mpatrol.68k file
 	* so the assembler can optimize by using PC-relative addressing

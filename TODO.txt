@@ -1,3 +1,9 @@
+- hw sprites: garbled graphics at start
+- hw sprites: we don't have more than 1 copy of the sprite in memory, so if it's assigned at some point
+  memorize it in a table or in a list so if it appears again we can't assign that one
+  (mirrors could be allowed)
+  hw_sprites: mirror shit
+  hw sprites: case of 32 bit height
 - sfx: assign channels & priorities to sounds. Use channel 3 mostly
   use channel 2 only for special items: waiting to see if music can hold on 2 channels,
   else would have to use audiomixer
