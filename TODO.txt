@@ -8,10 +8,11 @@
 - set flag when tunes are played. Clear flags immediately
   for other sfx (hoping it works, else we'll need a "end of sample" callback
 - when music is avail, change the clear 4040 in irq
-- optimize 0x20 write = clear
 - report 2 last optimization phases in 6809 converter
 - implement trainer invincible.infinite lives
-- title screen hardcode the title rising clipping
+- title screen forget about tiles except the left top one, and display from one
+  big bob instead to save blitting, thus we can implement clipping that way by
+  blitting with variable height!
 
 fix random:
 

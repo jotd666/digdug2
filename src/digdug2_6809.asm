@@ -6899,7 +6899,7 @@ CAEB: C6 36          LDB    #$36
 CAED: E7 C9 08 00    STB    $0800,U					; [video_address]
 CAF1: 20 C1          BRA    $CAB4
 CAF3: C6 09          LDB    #$09
-CAF5: E7 C9 08 00    STB    $0800,U
+CAF5: E7 C9 08 00    STB    $0800,U			; [video_address]
 CAF9: 20 B9          BRA    $CAB4
 CAFB: C4 0F          ANDB   #$0F
 CAFD: 84 03          ANDA   #$03

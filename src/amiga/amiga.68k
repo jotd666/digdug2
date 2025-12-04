@@ -2577,7 +2577,6 @@ update_bg_tile:
 	
 
 	
-	lea		character_table,a0
 	
 	* updating bitplanes
 	move.l	#BG_SCREEN_PLANE_SIZE,d5
@@ -2595,7 +2594,8 @@ update_bg_tile:
 	add.w	d0,a1
 	
 	cmp.b	#0x20,d2
-	*jeq		12f				| optim: blank tile
+	jeq		11f				| optim: blank tile
+	lea		character_table,a0
 	.ifdef	NO68020
 	add.w	d2,d2
 	add.w	d2,d2	
