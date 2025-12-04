@@ -3443,6 +3443,11 @@ tiles_colors:
 bobs_colors:
 	DECL_COLORS	0,TOTAL_NB_COLORS
 
+
+game_sprites:
+	DECL_SPRITES
+game_sprites_end:
+
 	* enable sprite colors now
 	.word	0x01+((COPPER_Y_START)*256),0xFFFE
 
@@ -3463,9 +3468,6 @@ sprite_colors:
 	DECL_COLORS	16,16
 	.endif
 
-game_sprites:
-	DECL_SPRITES
-game_sprites_end:
 	* let the 2 rows from status pass
 	.word	0x01+((COPPER_Y_START+16)*256),0xFFFE
 	
