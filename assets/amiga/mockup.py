@@ -103,6 +103,7 @@ def process(the_dump,name_filter=None,hide_named_sprite=None):
                 sx,sy = sy,sx
 
 
+
                 im = get_single_image(color,sprite,flipx,flipy)
 
 ##                if not sizex:
@@ -142,6 +143,7 @@ def process(the_dump,name_filter=None,hide_named_sprite=None):
                     mem_1780_copy[offs+0x800+i] = spriteram[offs+0x800+i]
                     mem_1780_copy[offs+0x1000+i] = spriteram[offs+0x1000+i]
 
+    #result = result.crop((18,40,18+156,40+48))
     result.save(f"{the_dump.stem}.png")
     with open(f"{the_dump.stem}_filtered","wb") as f:
         f.write(mem_1780_copy)
@@ -149,5 +151,5 @@ def process(the_dump,name_filter=None,hide_named_sprite=None):
     print(f"nb active: {nb_active}")
 
 
-process(r"sprite_ram_1780")
+process(r"sprites")
 

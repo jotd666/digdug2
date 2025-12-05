@@ -136,8 +136,7 @@ SIZE_X_BIT = 3
 * system bits
 BIT_INSERT_COIN_1 = 0
 BIT_INSERT_COIN_2 = 1
-BIT_START_1P = 3
-BIT_START_2P = 4
+
 
 
 
@@ -938,7 +937,9 @@ level3_interrupt:
 	jbsr		do_irq
 	* now D5 can be destroyed
 	jbsr	really_update_scroll
+	.ifdef	HW_SPRITES
 	jbsr	really_update_hw_sprites
+	.endif
 	
 	tst.b	frameskip
 	jeq		0f
@@ -1103,15 +1104,11 @@ osd_is_vblank_interrupt_enabled:
 * Z: set if not playing
 is_game_playing:
 
-	move.l	a5,-(a7)
-	move.l	m6809_direct_page_pointer,a5
-*	*GET_MEMORY_START_AND_DP
-*	cmp.b	#1,global_state_00(a5)
-*	jeq		0f
-*	cmp.b	#4,global_state_00(a5)
-*0:
-	cmp.l	#0,a5
-	move.l	(a7)+,a5
+	movem.l	a5/a6,-(a7)
+	GET_MEMORY_START_AND_DP
+	tst.b	game_in_play_101b(a6)
+
+	movem.l	(a7)+,a5/a6
 	rts
 	
 skip_level:
@@ -1313,6 +1310,30 @@ really_update_tiles:
 * }
 * 
 * 
+	* shared code between bobs & hw sprites
+	* jumps to 2f if not active
+	* returns d0 and d1 decoded
+	.macro		COMPUTE_SPRITE_COORDS
+	moveq	#0,d2
+	move.b	(TARGET_SPRITE_COLOR,a0),d2
+	jeq		2f			| all sprites are black when color = 0
+	moveq	#0,d0
+	move.b	(TARGET_SPRITE_X_2,a0),d0
+	bclr	#2,d0
+	jne		2f	| if ((spriteram_3[offs+1] & 2) == 0)
+	
+	* compute sx
+	moveq	#0,d1
+	and.w	#0x1,d0
+	lsl.w	#8,d0		| times 0x100
+	sub.w	#40,d0
+	move.b	(TARGET_SPRITE_X_1,a0),d1
+	add.w	d1,d0		| sx = spriteram_2[offs+1] + 0x100 * (spriteram_3[offs+1] & 1) - 40
+	* compute sy
+	move.b	(TARGET_SPRITE_Y,a0),d1  | sprite Y
+	subq.w	#1,d1	| sy = spriteram_2[offs]-1  (MAME mirrors sy but we don't!)	
+	.endm
+	
 * /*
 * sprite format:
 * 
@@ -1333,7 +1354,7 @@ really_update_tiles:
 * 1   ------x-  disable
 * 1   -------x  X position MSB
 * */
-
+	.ifdef	HW_SPRITES
 really_update_hw_sprites:
 	************************************************
 	* draw current sprites from 6809 sprite memory *
@@ -1375,29 +1396,7 @@ really_update_hw_sprites:
 2:	
 	rts
 
-	* shared code between bobs & hw sprites
-	* jumps to 2f if not active
-	* returns d0 and d1 decoded
-	.macro		COMPUTE_SPRITE_COORDS
-	moveq	#0,d2
-	move.b	(TARGET_SPRITE_COLOR,a0),d2
-	jeq		2f			| all sprites are black when color = 0
-	moveq	#0,d0
-	move.b	(TARGET_SPRITE_X_2,a0),d0
-	bclr	#2,d0
-	jne		2f	| if ((spriteram_3[offs+1] & 2) == 0)
-	
-	* compute sx
-	moveq	#0,d1
-	and.w	#0x1,d0
-	lsl.w	#8,d0		| times 0x100
-	sub.w	#40,d0
-	move.b	(TARGET_SPRITE_X_1,a0),d1
-	add.w	d1,d0		| sx = spriteram_2[offs+1] + 0x100 * (spriteram_3[offs+1] & 1) - 40
-	* compute sy
-	move.b	(TARGET_SPRITE_Y,a0),d1  | sprite Y
-	subq.w	#1,d1	| sy = spriteram_2[offs]-1  (MAME mirrors sy but we don't!)	
-	.endm
+
 	
 	
 * < A0: target sprite memory
@@ -1483,7 +1482,8 @@ update_one_hw_sprite:
 2:
 	
 	rts
-
+	.endif
+	
 really_update_sprites:
 
 	
@@ -1500,6 +1500,8 @@ really_update_sprites:
 	jeq		11f		| x=y=0: inactive, skip
 	move.l	d1,d0
 	swap	d0		| get X
+	move.w	D0,0x110
+	move.w	D1,0x112
 	* clear area where the sprite was
 	clr.l	(a4)+			| ack deletion
 	move.w	(a4)+,d4		| height
@@ -1530,10 +1532,14 @@ really_update_sprites:
 	lea		(SPRITE_START,a6),a0		| sprite start
 	move.w	#NB_TARGET_SPRITES-1,d7
 	move.l	bob_previous_drawn_sprites(pc),a6
+	.ifdef	HW_SPRITES
 	lea		sprite_drawn(pc),a3
+	.endif
 1:
+	.ifdef	HW_SPRITES
 	tst.b	(a3,d7.w)
 	jne		2f
+	.endif
 	jbsr	update_one_bob
 	addq.w	#TARGET_SPRITE_SIZEOF,a0
 	dbf		d7,1b
@@ -1606,6 +1612,9 @@ really_update_sprites:
 update_one_bob:
 	COMPUTE_SPRITE_COORDS
 	
+	
+	moveq	#0,d3
+	move.b	(TARGET_SPRITE_CODE,a0),d3
 	.ifne	SPRITE_Y_CORRECTION
 	add.w	#SPRITE_Y_CORRECTION,d1
 	.endif
@@ -1615,10 +1624,19 @@ update_one_bob:
 	
 	exg	d0,d1		| portrait
 	
-	* get code immediately. A lot of sprites won't be displayed
-	* as they are grouped with others
-	moveq	#0,d3
-	move.b	(TARGET_SPRITE_CODE,a0),d3
+	cmp.b	#0xE0,d3
+	jcs		0f
+	jne		1f
+	* left top title sprite: draw entire title
+	move.l	a0,-(a7)
+	lea		title_pic,a0
+	jra		101f    | bypass sprite clut/mirror shit stuff, proceed to blit
+1:
+	cmp.b	#0xF5,d3
+	jcc		0f
+	* don't draw title sprites
+	rts
+0:
 
 	* load properties (for X size mostly, used for dragons and flames,
 	* where sprite tiles can be used with or without X size, which makes it
@@ -1743,11 +1761,11 @@ update_one_bob:
 	move.w	d5,d2			    | width in bytes
 	moveq	#0,d5			    | Y-offset
 
-	btst	#FLIP_Y_BIT,d3  | X but portrait!
-	jeq		101f
-	* flip
-	neg.w	d4
-101:
+*	btst	#FLIP_Y_BIT,d3  | X but portrait! not used in this game
+*	jeq		101f
+*	* flip
+*	neg.w	d4
+*101:
 
 	move.w	#NB_BOB_PLANES,d3
 	jbsr		blit_planes_any_internal_cookie_cut
@@ -2165,7 +2183,7 @@ store_system:
 1:
 	move.w	AttnFlags(a6),d0
 	btst	#AFB_68020,d0
-	beq.b	0f				| no 68020: disable stars & switch to 25FPS
+	bne.b	1f				| 68020: ok 50 fps
 	
 	* check fastmem
 	pea		2f(pc)	
@@ -2407,6 +2425,8 @@ osd_disable_interrupts:
 * should preserve all registers
 
 osd_video_word_dirty:
+	move.l	a7,saved_stack
+	lea		osd_stack,a7
 	movem.l	d0/d1/d7/a0/a1,-(a7)
 	jbsr	video_byte_dirty
 	tst.b	d7
@@ -2414,14 +2434,18 @@ osd_video_word_dirty:
 	move.b	d7,(1,a0)		| next byte too
 0:
 	movem.l	(a7)+,d0/d1/d7/a0/a1
+	move.l	saved_stack,a7
 	rts	
 
 
 	
 osd_video_byte_dirty:
+	move.l	a7,saved_stack
+	lea		osd_stack,a7
 	movem.l	d0/d1/d7/a0/a1,-(a7)
 	jbsr	video_byte_dirty
 	movem.l	(a7)+,d0/d1/d7/a0/a1
+	move.l	saved_stack,a7
 	rts	
 
 video_byte_dirty:
@@ -2912,6 +2936,23 @@ read_inputs:
 0:
 	move.b	d1,(joystick_directions_4804,a6)
 
+	jbsr	is_game_playing
+	jne		10f
+	* game not in play: can insert/start game using joystick
+	btst	#JPB_BTN_RED,d0
+	jeq		0f
+	jbsr	add_one_credit
+0:
+	btst	#JPB_BTN_UP,d0
+	jeq		0f
+	jbsr	start_1p_game
+0:
+	btst	#JPB_BTN_DOWN,d0
+	jeq		0f
+	jbsr	start_2p_game
+0:
+
+10:
 	movem.l	(a7)+,a0/d0/d1
 	rts
 	
@@ -3258,6 +3299,10 @@ pause_flag:
 frameskip:
 	.word	0
 
+	.skip	0x100
+osd_stack:
+saved_stack:
+	.long	0
 
 tiles_row_flags:
 	.skip	0x20
