@@ -1613,8 +1613,6 @@ update_one_bob:
 	COMPUTE_SPRITE_COORDS
 	
 	
-	moveq	#0,d3
-	move.b	(TARGET_SPRITE_CODE,a0),d3
 	.ifne	SPRITE_Y_CORRECTION
 	add.w	#SPRITE_Y_CORRECTION,d1
 	.endif
@@ -1623,7 +1621,12 @@ update_one_bob:
 	.endif
 	
 	exg	d0,d1		| portrait
-	
+
+	moveq	#0,d3
+	move.b	(TARGET_SPRITE_CODE,a0),d3
+
+	cmp.b	#0x42,d0
+	jne		0f
 	cmp.b	#0xE0,d3
 	jcs		0f
 	jne		1f
