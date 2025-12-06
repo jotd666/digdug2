@@ -10,7 +10,7 @@ CHIPSIZE = $100000
 
 _base	SLAVE_HEADER					; ws_security + ws_id
 	dc.w	17					; ws_version (was 10)
-	dc.w	WHDLF_NoError
+	dc.w	WHDLF_NoError|WHDLF_ReqAGA
     IFD CHIP_ONLY
 	dc.l	CHIPSIZE+EXPMEM					; ws_basememsize
 	ELSE
@@ -64,7 +64,7 @@ DECL_VERSION:MACRO
 	ENDC
 	ENDM
 _data   dc.b    0
-_name	dc.b	"Dig Dug 2",0
+_name	dc.b	"Dig Dug 2 (AGA)",0
 _copy	dc.b	'2025 JOTD',0
 _info
     ;dc.b    "Music by no9",0
@@ -129,5 +129,5 @@ _resload:
 progstart
     dc.l    0
 exe
-	dc.b	"digdug2",0
+	dc.b	"digdug2_aga",0
 	

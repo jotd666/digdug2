@@ -27,16 +27,6 @@ if dump_it:
             f.write("*")
 
 
-def dump_asm_bytes(*args,**kwargs):
-    bitplanelib.dump_asm_bytes(*args,**kwargs,mit_format=True)
-
-
-def ensure_empty(d):
-    if os.path.exists(d):
-        for f in os.listdir(d):
-            os.remove(os.path.join(d,f))
-    else:
-        os.makedirs(d)
 
 def load_tileset(image_name,palette_index,width,height,tileset_name,dumpdir,
 dump=False,name_dict=None,cluts=None,tile_number=0,is_bob=False):
@@ -179,24 +169,6 @@ dump=False,name_dict=None,cluts=None,tile_number=0,is_bob=False):
 
     return sorted(set(palette)),tileset_1,tileset_xsize
 
-def split_bitplane_data(bitplane_data,actual_nb_planes,cache,width,height,y_start,next_cache_id):
-    plane_size = len(bitplane_data) // actual_nb_planes
-    bitplane_plane_ids = []
-    for j in range(actual_nb_planes):
-        offset = j*plane_size
-        bitplane = bitplane_data[offset:offset+plane_size]
-
-        cache_id = cache.get(bitplane)
-        if cache_id is not None:
-            bitplane_plane_ids.append(cache_id)
-        else:
-            if any(bitplane):
-                cache[bitplane] = next_cache_id
-                bitplane_plane_ids.append(next_cache_id)
-                next_cache_id += 1
-            else:
-                bitplane_plane_ids.append(0)  # blank
-    return {"width":width,"height":height,"y_start":y_start,"bitplanes":bitplane_plane_ids},next_cache_id
 
 
 all_tile_cluts = False
@@ -284,6 +256,13 @@ if dump_it:
             tile_cluts_dict = {hex(k):[hex(x) for x in v] for k,v in tile_cluts.items() if v}
             json.dump(tile_cluts_dict,f,indent=2)
 
+
+def replace_colors(set_list,rep_dict):
+    for ts in set_list:
+        for i,t in enumerate(ts):
+            if t:
+                bitplanelib.replace_color_from_dict(ts[i],rep_dict)
+
 def add_hw_sprite(index,name,cluts=[0]):
     if isinstance(index,range):
         pass
@@ -308,11 +287,20 @@ for i,tsd in tile_sheet_dict.items():
     tile_set_list.append(tile_set)
     tile_palette.update(tp)
 
-# pad
-tile_palette = sorted(tile_palette)
-print(f"Used tile colors: {len(tile_palette)}")
+# 4 tile colors aren't found in sprite colors, but there are very close
+# colors, so we can replace them without anyone noticing and it means that the
+# game can be 16 colors not 32!
+tile_color_rep_dict = {(0,0,255):(33,71,255),
+(16,32,48):(0,0,0),
+(104,0,81):(151,33,174),
+(222,0,0):(255,0,0)}
 
-tile_palette += (16-len(tile_palette)) * [(0x10,0x20,0x30)]
+replace_colors(tile_set_list,tile_color_rep_dict)
+# pad
+#tile_palette = sorted(tile_color_rep_dict.get(x,x) for x in tile_palette)
+
+# 16 max (not necessary)
+#tile_palette += (16-len(tile_palette)) * [(0x10,0x20,0x30)]
 
 sprite_palette = set()
 sprite_set_list = [[] for _ in range(NB_SPRITE_CLUTS)]
@@ -357,12 +345,10 @@ sprite_palette += (16-len(sprite_palette)) * [(0x10,0x20,0x30)]
 ##    hw_sprite_set_list.append(hw_sprite_set)
 
 
-full_palette = tile_palette+sprite_palette
+full_palette = sprite_palette
 
 nb_total = len(set(full_palette))
-# shit, 20 colors, this is going to be a pain for ECS :) well from 20 to 16
-# it will probably be okay. We're lucky that no layer has more than 16 colors, which
-# makes a perfect port for AGA color-wise
+
 print(f"Number of unique total colors (tiles+sprites) {nb_total}")
 
 # pad just in case we don't have 16+16 colors
@@ -439,11 +425,10 @@ def read_tileset(img_set_list,palette,plane_orientation_flags,cache,is_bob,next_
     return new_tile_table,next_cache_id
 
 tile_plane_cache = {}
-tile_table,_ = read_tileset(tile_set_list,full_palette[:16],[True,False,False,False],cache=tile_plane_cache, is_bob=False)
+tile_table,_ = read_tileset(tile_set_list,sprite_palette,[True,False,False,False],cache=tile_plane_cache, is_bob=False)
 
 bob_plane_cache = {}
 
-sprite_palette = full_palette[16:]
 sprite_table,next_cache_id = read_tileset(sprite_set_list,sprite_palette,[True,False,True,False],cache=bob_plane_cache, is_bob=True)
 sprite_table_x_size,next_cache_id = read_tileset(sprite_set_list_x_size,sprite_palette,[True,False,True,False],cache=bob_plane_cache, is_bob=True,next_cache_id=next_cache_id)
 
@@ -458,12 +443,21 @@ full_title,next_cache_id = split_bitplane_data(title_bitplane_data,nb_planes+1,b
 # the background is magenta or whatever the color is)
 full_palette[16] = (0,0,0)
 
-with open(os.path.join(src_dir,"palette.68k"),"w") as f:
+bitplanelib.palette_dump(tile_palette,dump_dir / "tile_palette.png",pformat=bitplanelib.PALETTE_FORMAT_PNG)
+bitplanelib.palette_dump(sprite_palette,dump_dir / "sprite_palette.png",pformat=bitplanelib.PALETTE_FORMAT_PNG)
+
+mixed_palette = sorted(set(tile_palette) | set(sprite_palette))
+bitplanelib.palette_dump(sprite_palette,dump_dir / "mixed_palette.png",pformat=bitplanelib.PALETTE_FORMAT_PNG)
+
+specific_tile_colors = sorted(set(tile_palette) - set(sprite_palette))
+bitplanelib.palette_dump(specific_tile_colors,dump_dir / "tiles_only_palette.png",pformat=bitplanelib.PALETTE_FORMAT_PNG)
+
+with open(os.path.join(ocs_src_dir,"palette.68k"),"w") as f:
     bitplanelib.palette_dump(full_palette,f,bitplanelib.PALETTE_FORMAT_ASMGNU)
 
 
 
-with open(os.path.join(src_dir,"graphics.68k"),"w") as f:
+with open(os.path.join(ocs_src_dir,"graphics.68k"),"w") as f:
     f.write("\t.global\tcharacter_table\n")
     f.write("\t.global\ttitle_pic\n")
     f.write("\t.global\thws_table\n")
