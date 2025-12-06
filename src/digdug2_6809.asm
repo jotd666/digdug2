@@ -133,6 +133,12 @@ a_screen_address_1041 = $1041
 characters_can_move_2500 = $2500
 fast_timer_1001 = $1001
 highscore_enabled_10e5 = $10e5
+high_score_table_11b0 = $11b0
+high_score_table_last_score_11f0 = $11f0
+default_high_score_table_9c17 = $9c17
+player_1_score_1700 = $1700
+player_2_score_1740 = $1740
+high_score_100b = $100b
 
 ; shared variables with sound cpu. Each byte matches one sound or tune
 ; writing non-zero triggers the sound, zero stops it
@@ -732,7 +738,7 @@ player_killed_83ff:
 8499: 26 C2          BNE    $845D
 849B: B6 10 05       LDA    current_player_1005
 849E: 10 27 FD C3    LBEQ   $8265
-84A2: 8E 17 00       LDX    #$1700
+84A2: 8E 17 00       LDX    #player_1_score_1700
 84A5: EC 84          LDD    ,X
 84A7: EE 88 40       LDU    $40,X
 84AA: ED 88 40       STD    $40,X
@@ -752,7 +758,7 @@ player_killed_83ff:
 84D1: BD 8B DF       JSR    write_highscore_text_8bdf
 84D4: 39             RTS
 84D5: CC 00 00       LDD    #$0000
-84D8: 8E 17 00       LDX    #$1700
+84D8: 8E 17 00       LDX    #player_1_score_1700
 84DB: ED 81          STD    ,X++
 84DD: 8C 17 80       CMPX   #$1780
 84E0: 26 F9          BNE    $84DB
@@ -763,12 +769,12 @@ player_killed_83ff:
 84EC: 8C 15 78       CMPX   #$1578
 84EF: 26 F5          BNE    $84E6
 84F1: 39             RTS
-84F2: 8E 17 00       LDX    #$1700
+84F2: 8E 17 00       LDX    #player_1_score_1700
 84F5: EC 84          LDD    ,X
 84F7: EE 88 40       LDU    $40,X
 84FA: EF 81          STU    ,X++
 84FC: ED 88 3E       STD    $3E,X
-84FF: 8C 17 40       CMPX   #$1740
+84FF: 8C 17 40       CMPX   #player_2_score_1740
 8502: 26 F1          BNE    $84F5
 8504: 7F 10 E8       CLR    $10E8
 8507: 8E 15 80       LDX    #$1580
@@ -1312,10 +1318,10 @@ random_8aa0:
 8AF2: B9 17 01       ADCA   $1701
 8AF5: 19             DAA
 8AF6: B7 17 01       STA    $1701
-8AF9: B6 17 00       LDA    $1700
+8AF9: B6 17 00       LDA    player_1_score_1700
 8AFC: 89 00          ADCA   #$00
 8AFE: 19             DAA
-8AFF: B7 17 00       STA    $1700
+8AFF: B7 17 00       STA    player_1_score_1700
 8B02: 84 F0          ANDA   #$F0
 8B04: 27 22          BEQ    $8B28
 8B06: B7 17 26       STA    $1726
@@ -1332,7 +1338,7 @@ random_8aa0:
 8B23: 7C 40 55       INC    sound_sfx_4055
 8B26: 20 15          BRA    $8B3D
 8B28: BD 8C 17       JSR    $8C17
-8B2B: 8E 17 00       LDX    #$1700
+8B2B: 8E 17 00       LDX    #player_1_score_1700
 8B2E: A6 06          LDA    $6,X
 8B30: 2B 0B          BMI    $8B3D
 8B32: A6 88 27       LDA    $27,X
@@ -1341,16 +1347,17 @@ random_8aa0:
 8B3A: BD 8C 31       JSR    $8C31
 8B3D: 34 10          PSHS   X
 8B3F: BD 8B BE       JSR    $8BBE
-8B42: 8E 10 0B       LDX    #$100B
+8B42: 8E 10 0B       LDX    #high_score_100b
 8B45: CE 07 F3       LDU    #$07F3
 8B48: 8D 29          BSR    $8B73
 8B4A: 8D 09          BSR    $8B55
 8B4C: FC 07 F0       LDD    $07F0
-8B4F: FD 07 E0       STD    $07E0
+8B4F: FD 07 E0       STD    $07E0	; start highscore
 8B52: 35 10          PULS   X
 8B54: 39             RTS
-8B55: 8E 17 00       LDX    #$1700
-8B58: CE 17 40       LDU    #$1740
+
+8B55: 8E 17 00       LDX    #player_1_score_1700
+8B58: CE 17 40       LDU    #player_2_score_1740
 8B5B: 7D 10 05       TST    current_player_1005
 8B5E: 27 02          BEQ    $8B62
 8B60: 1E 13          EXG    X,U
@@ -1376,7 +1383,7 @@ random_8aa0:
 
 8B89: C6 FF          LDB    #$FF
 8B8B: 20 02          BRA    $8B8F
-8B8D: C6 E0          LDB    #$E0
+8B8D: C6 E0          LDB    #$E0		; unreached?
 8B8F: 10 BF 10 0E    STY    $100E
 8B93: A6 84          LDA    ,X
 8B95: 44             LSRA
@@ -1384,14 +1391,16 @@ random_8aa0:
 8B97: 44             LSRA
 8B98: 44             LSRA
 8B99: 84 0F          ANDA   #$0F
-8B9B: 8D 0C          BSR    $8BA9
+8B9B: 8D 0C          BSR    write_char_on_top_status_8ba9
 8B9D: A6 80          LDA    ,X+
 8B9F: 84 0F          ANDA   #$0F
-8BA1: 8D 06          BSR    $8BA9
+8BA1: 8D 06          BSR    write_char_on_top_status_8ba9
 8BA3: 7A 10 0F       DEC    $100F
 8BA6: 26 EB          BNE    $8B93
 8BA8: 39             RTS
 
+; used to set scores to screen
+write_char_on_top_status_8ba9:
 8BA9: 81 00          CMPA   #$00
 8BAB: 26 09          BNE    $8BB6
 8BAD: 7A 10 0E       DEC    $100E
@@ -1403,8 +1412,8 @@ random_8aa0:
 8BBB: 33 C5          LEAU   B,U
 8BBD: 39             RTS
 
-8BBE: 8E 17 00       LDX    #$1700
-8BC1: CE 10 0B       LDU    #$100B
+8BBE: 8E 17 00       LDX    #player_1_score_1700
+8BC1: CE 10 0B       LDU    #high_score_100b
 8BC4: C6 03          LDB    #$03
 8BC6: A6 84          LDA    ,X
 8BC8: A1 C4          CMPA   ,U
@@ -1446,7 +1455,7 @@ write_highscore_text_8bdf:
 
 8C17: B6 17 06       LDA  $1706            
 8C1A: 2B 64          BMI    $8C80            
-8C1C: 8E 17 00       LDX    #$1700           
+8C1C: 8E 17 00       LDX    #player_1_score_1700           
 8C1F: EC 84          LDD    ,X               
 8C21: 44             LSRA                                             
 8C22: 56             RORB
@@ -1494,7 +1503,7 @@ write_highscore_text_8bdf:
 8C7B: A7 06          STA    $6,X
 8C7D: BD 88 24       JSR    display_nb_lives_8824
 8C80: 39             RTS
-8C81: 8E 17 00       LDX    #$1700
+8C81: 8E 17 00       LDX    #player_1_score_1700
 8C84: CE 8D 19       LDU    #$8D19
 8C87: B6 10 70       LDA    $1070
 8C8A: 44             LSRA
@@ -2663,10 +2672,10 @@ task_entry_12_highscore_screen_9955:
 99A9: BD 81 50       JSR    suspend_task_8150
 99AC: B6 48 05       LDA    joystick_button_1_4805
 99AF: 84 08          ANDA   #$08
-99B1: 10 26 01 03    LBNE   $9AB8
+99B1: 10 26 01 03    LBNE   high_score_entry_end_9ab8
 99B5: B6 48 07       LDA    $4807
 99B8: 84 08          ANDA   #$08
-99BA: 10 26 00 FA    LBNE   $9AB8
+99BA: 10 26 00 FA    LBNE   high_score_entry_end_9ab8
 99BE: B6 10 50       LDA    periodic_60_timer_1050
 99C1: 26 07          BNE    $99CA
 99C3: 7A 10 4F       DEC    timer_104f
@@ -2735,10 +2744,10 @@ task_entry_12_highscore_screen_9955:
 9A6C: BD 81 50       JSR    suspend_task_8150
 9A6F: B6 48 05       LDA    joystick_button_1_4805
 9A72: 84 08          ANDA   #$08
-9A74: 26 42          BNE    $9AB8
+9A74: 26 42          BNE    high_score_entry_end_9ab8
 9A76: B6 48 07       LDA    $4807
 9A79: 84 08          ANDA   #$08
-9A7B: 26 3B          BNE    $9AB8
+9A7B: 26 3B          BNE    high_score_entry_end_9ab8
 9A7D: B6 10 ED       LDA    $10ED
 9A80: 27 1E          BEQ    $9AA0
 9A82: B6 10 01       LDA    fast_timer_1001
@@ -2754,7 +2763,7 @@ task_entry_12_highscore_screen_9955:
 9A9B: C6 14          LDB    #$14
 9A9D: BD 85 A0       JSR    clear_text_85a0
 9AA0: B6 40 4A       LDA    sound_highscore_tune_404a
-9AA3: 27 13          BEQ    $9AB8
+9AA3: 27 13          BEQ    high_score_entry_end_9ab8
 9AA5: C6 16          LDB    #$16
 9AA7: B6 10 01       LDA    fast_timer_1001
 9AAA: 84 08          ANDA   #$08
@@ -2763,12 +2772,15 @@ task_entry_12_highscore_screen_9955:
 9AB0: BE 10 C9       LDX    $10C9
 9AB3: BD 85 A0       JSR    clear_text_85a0
 9AB6: 20 B4          BRA    $9A6C
+; end of highscores
+high_score_entry_end_9ab8:
 9AB8: 7F 40 4A       CLR    sound_highscore_tune_404a
 9ABB: 7F 10 E5       CLR    highscore_enabled_10e5
 9ABE: 7F 10 ED       CLR    $10ED
 9AC1: 7E 99 55       JMP    task_entry_12_highscore_screen_9955
-9AC4: 8E 11 B0       LDX    #$11B0
-9AC7: CE 9C 17       LDU    #$9C17
+; install the high score table from ROM
+9AC4: 8E 11 B0       LDX    #high_score_table_11b0
+9AC7: CE 9C 17       LDU    #default_high_score_table_9c17
 9ACA: B6 80 00       LDA    watchdog_8000
 9ACD: EC C1          LDD    ,U++
 9ACF: ED 81          STD    ,X++
@@ -2798,11 +2810,11 @@ task_entry_12_highscore_screen_9955:
 9B0B: 6F 89 FF 00    CLR    -$0100,X	; [video_address]
 9B0F: 4A             DECA
 9B10: 26 F7          BNE    $9B09
-
+; display highscores
 9B12: 8E 02 CE       LDX    #$02CE
-9B15: CE 11 B0       LDU    #$11B0
+9B15: CE 11 B0       LDU    #high_score_table_11b0
 9B18: 86 05          LDA    #$05
-9B1A: B7 10 CE       STA    $10CE
+9B1A: B7 10 CE       STA    $10CE			; 5 scores to display
 9B1D: CC 20 06       LDD    #$2006
 9B20: B7 10 CF       STA    $10CF
 9B23: A6 C0          LDA    ,U+
@@ -2841,7 +2853,7 @@ task_entry_12_highscore_screen_9955:
 9B69: 86 03          LDA    #$03
 9B6B: B7 10 09       STA    $1009
 9B6E: 8E 10 51       LDX    #$1051
-9B71: CE 17 00       LDU    #$1700
+9B71: CE 17 00       LDU    #player_1_score_1700
 9B74: A6 C0          LDA    ,U+
 9B76: 1F 89          TFR    A,B
 9B78: 84 F0          ANDA   #$F0
@@ -2855,7 +2867,8 @@ task_entry_12_highscore_screen_9955:
 9B84: 7A 10 09       DEC    $1009
 9B87: 26 EB          BNE    $9B74
 9B89: CE 10 51       LDU    #$1051
-9B8C: 8E 11 F0       LDX    #$11F0
+; check where to insert the player score in table
+9B8C: 8E 11 F0       LDX    #high_score_table_last_score_11f0
 9B8F: EC C4          LDD    ,U
 9B91: 10 A3 84       CMPD   ,X
 9B94: 22 12          BHI    $9BA8
@@ -2885,12 +2898,12 @@ task_entry_12_highscore_screen_9955:
 9BC7: 8E 01 AE       LDX    #$01AE
 9BCA: 3A             ABX
 9BCB: BF 10 C7       STX    $10C7
-9BCE: 8E 11 F0       LDX    #$11F0
+9BCE: 8E 11 F0       LDX    #high_score_table_last_score_11f0
 9BD1: 4A             DECA
 9BD2: 27 0F          BEQ    $9BE3
 9BD4: C6 08          LDB    #$08
 9BD6: EE 10          LDU    -$10,X
-9BD8: EF 81          STU    ,X++
+9BD8: EF 81          STU    ,X++		; store highscore
 9BDA: 5A             DECB
 9BDB: 26 F9          BNE    $9BD6
 9BDD: 30 88 E0       LEAX   -$20,X
@@ -2915,6 +2928,7 @@ task_entry_12_highscore_screen_9955:
 9C09: 8B 99          ADDA   #$99
 9C0B: 19             DAA
 9C0C: A7 84          STA    ,X
+; now that highscore is stored, run highscore screen
 9C0E: 86 01          LDA    #$01
 9C10: B7 10 E5       STA    highscore_enabled_10e5
 9C13: B7 40 4A       STA    sound_highscore_tune_404a
@@ -2940,7 +2954,7 @@ task_entry_15_9cb6:
 9CE2: 2B EC          BMI    $9CD0
 9CE4: C5 02          BITB   #$02
 9CE6: 26 E8          BNE    $9CD0
-9CE8: 8E 17 00       LDX    #$1700
+9CE8: 8E 17 00       LDX    #player_1_score_1700
 9CEB: A6 05          LDA    $5,X
 9CED: C5 04          BITB   #$04
 9CEF: 26 0B          BNE    $9CFC
@@ -6256,7 +6270,7 @@ C4A2: 86 FF          LDA    #$FF
 C4A4: B7 10 08       STA    scroll_value_1008
 C4A7: 39             RTS
 
-C4A8: 8E 17 00       LDX    #$1700
+C4A8: 8E 17 00       LDX    #player_1_score_1700
 C4AB: 6F 88 21       CLR    $21,X
 C4AE: A6 05          LDA    $5,X
 C4B0: 81 15          CMPA   #$15

@@ -164,6 +164,13 @@ with open(source_dir / "conv.s") as f:
         elif address == 0x81DF:
             # skip zero of namco io buffers
             line = change_instruction("jra\tend_zero_io_81f6",lines,i)
+        elif address == 0x9AD6:
+            # insert highscore read
+            line = "\tjbsr\tosd_read_high_scores\n"+line
+        elif address == 0x9AB8:
+            # insert highscore read
+            line = "\tjbsr\tosd_write_high_scores\n"+line
+
         elif address == 0x8169:
             # end of zero_and_init_stack_zone_815b. Setting return address in the buffer is not useful
             # and would waste a lot of native stack so skip it. Just add 0x10 to U and that's it
