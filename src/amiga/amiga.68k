@@ -1493,6 +1493,28 @@ really_update_sprites:
 	move.l	bob_previous_drawn_sprites(pc),a4
 	lea		_custom,a5
 	* clear previous positions
+	
+	.ifdef	OCS_VERSION
+	lea	background_restore_buffer,a0
+	move.l	playfield_drawed_screen_ptr(pc),a1
+	move.w	#NB_TARGET_SPRITES-1,d7
+	WAIT_BLIT
+	move.l	#-1,bltalwm(a5)		| needed for blit_background
+1:
+	move.w	(a4),d0
+	bmi.b	11f		| x=0: inactive
+	move.w	(2,a4),d1
+	cmp.w	#NB_LINES,d1
+	jcc		11f				| too low: discard
+	and.w	#0x1F0,d0		| align on 16 lower bound
+	* clear area where the sprite was
+	clr.l	(a4)+			| ack deletion by setting -1 in X & Y
+	move.w	(a4)+,d4			| height
+	move.w	(a4)+,d2		| width
+	addq	#2,a4			
+	bsr		blit_background
+
+	.else
 	move.l	playfield_drawn_screen_ptr(pc),a1
 	move.w	#NB_TARGET_SPRITES-1,d7
 1:
@@ -1500,19 +1522,18 @@ really_update_sprites:
 	jeq		11f		| x=y=0: inactive, skip
 	move.l	d1,d0
 	swap	d0		| get X
-	move.w	D0,0x110
-	move.w	D1,0x112
+
 	* clear area where the sprite was
 	clr.l	(a4)+			| ack deletion
 	move.w	(a4)+,d4		| height
 	move.w	(a4)+,d2		| width/clut index (if star)
-	move.b	(a4)+,d3		| ignored
-	move.b	(a4)+,d5		| ignored
+	addq	#2,a4			| ignore that info	
 
 	and.w	#0x1F0,d0		| align on 16 lower bound
 	move.w	#NB_TILE_PLANES,d3
 	move.l		playfield_drawn_screen_ptr(pc),a1
 	jbsr		clear_planes_any_blitter_internal
+	.endif
 
 	dbf		d7,1b	
 	bra.b	12f
@@ -1520,7 +1541,7 @@ really_update_sprites:
 	lea	(PREVIOUS_SPRITE_SIZEOF,a4),a4
 	dbf		d7,1b
 12:	
-
+	
 	
 	*********************************************
 	* draw current BOBs from 6809 sprite memory *
@@ -1546,6 +1567,78 @@ really_update_sprites:
 2:
 	rts
 	
+	.ifdef	OCS_VERSION
+
+* what: blits data on bg plane, no horizontal shifting (erase)
+* args:
+* < A0: pristine background
+* < A1: dest buffer
+* < D0: X (rounded to smaller 8-multiple)
+* < D1: Y
+* < D2: width in bytes
+* < D4: height
+
+* trashes: D0-D1
+
+blit_background:
+	movem.l	d2-d6/a0-a5,-(a7)
+	lea		_custom,a5
+	* adjust offset X: X//8
+	lsr.w	#3,d0
+	lea		mulNB_BYTES_PER_ROW_table(pc),a4
+	add.w	d1,d1
+	* add Y offset: Y*NB_BYTES_PER_ROW
+	add.w	(a4,d1.w),d0
+	* same offset for source and destination
+	add.w	d0,a1
+	add.w	d0,a0
+	
+
+    move.l  #0x09f00000,d3    | A->D copy, ascending mode	
+	move.w	#NB_BYTES_PER_ROW,d1		| blit modulo
+
+    sub.w   d2,d1       | blit modulo
+    lsl.w   #6,d4
+    lsr.w   #1,d2		| blit width
+    add.w   d2,d4       | blit height
+	
+    * always the same settings
+
+    * now just wait for blitter ready to write all registers
+	WAIT_BLIT
+    
+    * blitter registers set
+
+	move.l d3,bltcon0(a5)	| sets con0 and con1
+
+    move.w  d1,bltamod(a5)	|A modulo
+    move.w  d1,bltdmod(a5)	|D modulo
+							
+	move.l a0,bltapt(a5)	|source graphic top left corner
+	move.l a1,bltdpt(a5)	|destination top (bottom) left corner
+	move.w  d4,bltsize(a5)	|rectangle size, starts blit
+	
+	.rept	NB_PLAYFIELD_PLANES-1
+	.if	SCREEN_PLANE_SIZE>0x7FFF
+	add.l	#SCREEN_PLANE_SIZE,a0
+	add.l	#SCREEN_PLANE_SIZE,a1
+	.else
+	add.w	#SCREEN_PLANE_SIZE,a0
+	add.w	#SCREEN_PLANE_SIZE,a1
+	.endif
+	WAIT_BLIT
+	* second bitplane
+	move.l a0,bltapt(a5)	|source graphic top left corner
+	move.l a1,bltdpt(a5)	|destination top (bottom) left corner
+	move.w  d4,bltsize(a5)	|rectangle size, starts blit
+	.endr
+	
+	movem.l	(a7)+,d2-d6/a0-a5
+	rts
+
+	
+	
+	.endif
 	
 *void mappy_state::mappy_draw_sprites(bitmap_ind16 &bitmap, const rectangle &cliprect, uint8_t *spriteram_base)
 *{
