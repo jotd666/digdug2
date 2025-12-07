@@ -2,7 +2,7 @@
   use channel 2 only for special items: waiting to see if music can hold on 2 channels,
   else would have to use audiomixer
 - ECS version: only 16 colors, no dual playfield, update_bg_tile also writes in back buffer
-
+- fire to insert credits: retain previous pressed state!
 - set flag when tunes are played. Clear flags immediately
   for other sfx (hoping it works, else we'll need a "end of sample" callback
 - when music is avail, change the clear 4040 in irq

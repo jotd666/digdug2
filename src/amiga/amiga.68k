@@ -26,7 +26,11 @@ AFB_68030 = 2
 
 NB_POSSIBLE_SPRITES = 0x100
 NB_POSSIBLE_TILES = 0x100
+BORDERBLANK = 0
 
+*******
+* OCS *
+*******
 
 	.ifdef	OCS_VERSION
 NO68020 = 1
@@ -34,15 +38,24 @@ BITPLANE_FMODE = 0			| works with 1, albeit slower
 SPRITE_FMODE = 0			| required!!
 FMODE_OFFSET = 0
 SCROLL_WIDTH = 0x10
+BASE_BPLCON0_VALUE = 0x4200+BORDERBLANK
 	.else
+*******
+* AGA *
+*******
 * 3: most performant
+
 FMODE_OFFSET = -8
 BITPLANE_FMODE = 3			| works with 1, albeit slower
 SPRITE_FMODE = 0			| no need to break compat AGA/ECS
 SCROLL_WIDTH = 0x40
+BASE_BPLCON0_VALUE = 0x0610+BORDERBLANK
 	.endif
-	
-BORDERBLANK = 1
+
+**********
+* shared *
+**********
+
 	
 COPPER_Y_START = 0x24
 BASE_BPLCON3_VALUE = (1<<12)+(BORDERBLANK<<5)  | dpf second playfield palette starts at color 16!
@@ -54,6 +67,8 @@ SPRITE_X_CORRECTION = 0
 SPRITE_Y_CORRECTION = 16		| X (portrait)
 SPRITE_HEIGHT = 16
 SPRITE_WIDTH = 16
+
+NB_LINES = 288
 
 Y_MAX = 280
 
@@ -418,9 +433,16 @@ _user:
 	
 	bsr		set_bob_bitplanes
 	
-	move.w	#TOTAL_NB_COLORS*2,d0
 	lea		palette,a0
+	.ifdef	OCS_VERSION
+	* ECS: load 16 common colors
+	move.w	#TOTAL_NB_COLORS,d0
+	lea		bobs_colors,a1	
+	.else
+	* AGA: load 32 colors (16+16 DPF)
+	move.w	#TOTAL_NB_COLORS*2,d0
 	lea		tiles_colors,a1
+	.endif
 	bsr		load_palette
 	
 
@@ -1216,7 +1238,9 @@ really_update_scroll:
 
 really_update_tiles:
 	*lea		_custom,a5
-	*WAIT_BLIT  | no need in AGA: dual playfield
+	.ifdef OCS_VERSION
+	WAIT_BLIT  | no need in AGA: dual playfield
+	.endif
 	GET_MEMORY_START_AND_DP
 	lea		(VIDEO_ADDRESS,a6),a6
 	lea		(VIDEO_ADDRESS+0x800,a6),a5
@@ -1618,13 +1642,13 @@ blit_background:
 	move.l a1,bltdpt(a5)	|destination top (bottom) left corner
 	move.w  d4,bltsize(a5)	|rectangle size, starts blit
 	
-	.rept	NB_PLAYFIELD_PLANES-1
-	.if	SCREEN_PLANE_SIZE>0x7FFF
-	add.l	#SCREEN_PLANE_SIZE,a0
-	add.l	#SCREEN_PLANE_SIZE,a1
+	.rept	NB_BOB_PLANES-1
+	.if	BG_SCREEN_PLANE_SIZE>0x7FFF
+	add.l	#BG_SCREEN_PLANE_SIZE,a0
+	add.l	#BG_SCREEN_PLANE_SIZE,a1
 	.else
-	add.w	#SCREEN_PLANE_SIZE,a0
-	add.w	#SCREEN_PLANE_SIZE,a1
+	add.w	#BG_SCREEN_PLANE_SIZE,a0
+	add.w	#BG_SCREEN_PLANE_SIZE,a1
 	.endif
 	WAIT_BLIT
 	* second bitplane
@@ -2395,7 +2419,7 @@ platform_init:
 	* disable extra mid-screen interrupt, as it would be too fast (NTSC)
 	move.w	#0x1FE,intreq_block_game
 0:
-     move.w #0x0610+BORDERBLANK,bplcon0(a5) | 8 bitplanes, dual playfield, borderblank
+	move.w #BASE_BPLCON0_VALUE,bplcon0(a5) | 8 bitplanes, dual playfield, borderblank
 	move.w	#BASE_BPLCON2_VALUE,bplcon2(a5)
 	move.w	#BASE_BPLCON3_VALUE,bplcon3(a5)
  	*         VVHH
@@ -2688,7 +2712,7 @@ update_bg_tile:
 	move.l	d0,a2
 	move.b	d3,d1
 	and.w	#TILE_CLUT_MASK,d3
-	.ifdef	N068020
+	.ifdef	NO68020
 	add.w	d3,d3
 	add.w	d3,d3
 	move.l	(a2,d3.w),d0			| pointer on tile bitplanes for that CLUT
@@ -3516,7 +3540,7 @@ cpu_log_enable:
 
 	.section	.datachip
 
-* title
+
 	.macro	DECL_BITPLANES	bpoff_start,nb_planes
 	.set	bpoff,\bpoff_start
 	.rept	\nb_planes
@@ -3535,7 +3559,7 @@ cpu_log_enable:
 	.endr
 	.endm
 	
-* game	
+
 	.macro	DECL_EVEN_BITPLANES	bpoff_start,nb_planes
 	.set	bpoff,\bpoff_start
 	.rept	\nb_planes
@@ -3579,8 +3603,10 @@ game_copperlist:
 	
 	* black color background plane
 
+	.ifndef	OCS_VERSION
 tiles_colors:
 	DECL_COLORS	16,TOTAL_NB_COLORS
+	.endif
 bobs_colors:
 	DECL_COLORS	0,TOTAL_NB_COLORS
 
@@ -3588,6 +3614,7 @@ bobs_colors:
 game_sprites:
 	DECL_SPRITES
 game_sprites_end:
+
 
 	* enable sprite colors now
 	.word	0x01+((COPPER_Y_START)*256),0xFFFE
@@ -3597,16 +3624,17 @@ game_sprites_end:
 reset_bplcon1_1:
 	.word 	0
 	
+	.ifdef	OCS_VERSION
+tiles_bitplanes:
+bobs_bitplanes:
+	DECL_BITPLANES	0,4	
+	.else
 tiles_bitplanes:
 	DECL_EVEN_BITPLANES	4,4
 	* sync to start of line again
 	.word	0x01+((COPPER_Y_START+1)*256),0xFFFE
 bobs_bitplanes:
 	DECL_EVEN_BITPLANES	0,4
-
-	.ifdef	OCS_VERSION
-sprite_colors:
-	DECL_COLORS	16,16
 	.endif
 
 	* let the 2 rows from status pass
@@ -3615,8 +3643,11 @@ sprite_colors:
 	.word	bplcon1
 scrolling_bitplanes:
 	.word	0
+	.ifdef	OCS_VERSION
+	DECL_BITPLANES	0,4	
+	.else
 	DECL_EVEN_BITPLANES	4,4
-
+	.endif
 	* not sure if it's really half screen but it doesn't matter
 intreq_block_game:
 	.word	 intreq,0x8014  | call copper interrupt in the middle of a frame, also flag so copper interrupt knows that we're going to call copper int
@@ -3641,7 +3672,11 @@ intreq_block_game:
 reset_bplcon1_2:
 	.word	0			| reset scrolling
 tiles_bitplanes_end:
+	.ifdef	OCS_VERSION
+	DECL_BITPLANES	0,4	
+	.else
 	DECL_EVEN_BITPLANES	4,4
+	.endif
 
 	| no bobs from now on, get a LOT of drawing time
 	.word	 intreq,0x8010

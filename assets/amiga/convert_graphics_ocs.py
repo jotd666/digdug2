@@ -176,7 +176,7 @@ all_tile_cluts = False
 
 nb_planes = 4
 
-nb_colors = 32
+nb_colors = 16
 
 NB_SPRITE_CLUTS = 16
 NB_TILE_CLUTS = 64
@@ -297,10 +297,6 @@ tile_color_rep_dict = {(0,0,255):(33,71,255),
 
 replace_colors(tile_set_list,tile_color_rep_dict)
 # pad
-#tile_palette = sorted(tile_color_rep_dict.get(x,x) for x in tile_palette)
-
-# 16 max (not necessary)
-#tile_palette += (16-len(tile_palette)) * [(0x10,0x20,0x30)]
 
 sprite_palette = set()
 sprite_set_list = [[] for _ in range(NB_SPRITE_CLUTS)]
@@ -351,7 +347,7 @@ nb_total = len(set(full_palette))
 
 print(f"Number of unique total colors (tiles+sprites) {nb_total}")
 
-# pad just in case we don't have 16+16 colors
+# pad just in case we don't have 16 colors
 full_palette += (nb_colors-len(full_palette)) * [(0x10,0x20,0x30)]
 
 # most sprites are eligible to hw sprites except X-sized (>16)
@@ -439,9 +435,6 @@ full_title,next_cache_id = split_bitplane_data(title_bitplane_data,nb_planes+1,b
 
 
 
-# now that the sprites were decoded, put black as first color too (else for some priority reason
-# the background is magenta or whatever the color is)
-full_palette[16] = (0,0,0)
 
 bitplanelib.palette_dump(tile_palette,dump_dir / "tile_palette.png",pformat=bitplanelib.PALETTE_FORMAT_PNG)
 bitplanelib.palette_dump(sprite_palette,dump_dir / "sprite_palette.png",pformat=bitplanelib.PALETTE_FORMAT_PNG)
@@ -453,7 +446,8 @@ specific_tile_colors = sorted(set(tile_palette) - set(sprite_palette))
 bitplanelib.palette_dump(specific_tile_colors,dump_dir / "tiles_only_palette.png",pformat=bitplanelib.PALETTE_FORMAT_PNG)
 
 with open(os.path.join(ocs_src_dir,"palette.68k"),"w") as f:
-    bitplanelib.palette_dump(full_palette,f,bitplanelib.PALETTE_FORMAT_ASMGNU)
+    full_palette_black = [(0,0,0)]+full_palette[1:]
+    bitplanelib.palette_dump(full_palette_black,f,bitplanelib.PALETTE_FORMAT_ASMGNU)
 
 
 
