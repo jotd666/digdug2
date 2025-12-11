@@ -252,7 +252,7 @@ okay\@:
 	move.w	sr,-(sp)
 	.endm
 	.macro POP_SR
-	move.w	(sp)+,sr
+	move.w	(sp)+,ccr
 	.endm
 
 	.macro	MOVE_W_TO_REG    src,dest

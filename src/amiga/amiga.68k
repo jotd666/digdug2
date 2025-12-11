@@ -405,10 +405,24 @@ _user:
 	lea		debug_copperlist,a0
 	move.l	a0,cop1lc(a5)
 	
-	lea		background_buffer,a0
+	lea		bg_screen_buffer_1,a0
 	jbsr	align_for_fmode
 	move.l	a0,background_ptr
 	
+	.ifdef	OCS_VERSION
+	* OCS version, double buffering occurs on back buffer if enabled
+	move.l	#mulBG_NB_BYTES_PER_ROW_table,bob_row_multiplication_table
+	move.w	#BG_NB_BYTES_PER_ROW,bob_row_size
+	move.w	#BG_SCREEN_PLANE_SIZE,bob_plane_size
+
+
+
+	.else
+	* AGA version, dual playfield
+
+	move.l	#mulFG_NB_BYTES_PER_ROW_table,bob_row_multiplication_table
+	move.w	#FG_NB_BYTES_PER_ROW,bob_row_size
+	move.w	#FG_SCREEN_PLANE_SIZE,bob_plane_size
 	
 	lea		fg_screen_buffer_1,a0
 	jbsr	align_for_fmode
@@ -424,14 +438,20 @@ _user:
 	move.l	a0,fg_screen_data_2
 	move.l	a0,playfield_displayed_screen_ptr
 	.endif
-		
+	
+	.endif
+
+	
 	jbsr		set_status_bitplanes
 	* set them even if reset by game afterwards
 	* avoiding ugly stripe bitplane effect at startup
 
 	jbsr		really_update_scroll
 	
-	bsr		set_bob_bitplanes
+	.ifndef	OCS_VERSION
+	* in AGA version, BOB bitplanes are on 2nd playfield
+	jbsr		set_bob_bitplanes
+	.endif
 	
 	lea		palette,a0
 	.ifdef	OCS_VERSION
@@ -1167,20 +1187,6 @@ add_10000_points:
 	rts
 
 
-	
-	move.l	background_ptr,a4
-
-	add.w	#128*4,a2
-	
-	*add.w	#BG_NB_BYTES_PER_ROW*16,a4		| skip 2 first tile rows
-	move.w	(a2)+,(a0)	| set bplcon value
-	add.w	(a2),a4	| bytes offset
-	
-	move.l	a4,d0
-	jbsr	set_static_bitplanes
-	
-	*move.w	d0,
-	move.w	d0,reset_bplcon1_2
 
 set_status_bitplanes:
 	lea		scroll_table,a2
@@ -1192,7 +1198,7 @@ set_status_bitplanes:
 	add.w	(2,a2),a4	| bytes offset
 	lea		tiles_bitplanes+2,a0				| pointer on first bitplane
 	move.l	a4,d0				| base address			
-	jbsr	set_static_bitplanes
+	jbsr	set_background_bitplanes
 	
 	move.l		background_ptr,a4
 	lea		reset_bplcon1_2,a0	| pointer on first bitplane
@@ -1201,7 +1207,7 @@ set_status_bitplanes:
 	move.l	a4,d0				| base address	
 	lea		tiles_bitplanes_end+2,a0				| pointer on first bitplane	
 	add.l	#BG_NB_BYTES_PER_ROW*34*8,d0
-	jbsr	set_static_bitplanes
+	jbsr	set_background_bitplanes
 	
 	rts
 	
@@ -1214,6 +1220,9 @@ really_update_scroll:
 	moveq	#0,d5
 	move.b	(scroll_value_1008,a6),d5	| scroll value 0=>0xFF
 	not.b	d5
+	.ifdef	OCS_VERSION
+	move.b	d5,sprite_x_offset
+	.endif
 	add.w	d5,d5
 	add.w	d5,d5
 	add.w	d5,a2
@@ -1225,7 +1234,7 @@ really_update_scroll:
 	
 	move.l	a4,d0
 	addq	#4,a0				| pointer on first bitplane
-	jbsr	set_static_bitplanes
+	jbsr	set_background_bitplanes
 	
 	rts
 	
@@ -1237,8 +1246,8 @@ really_update_scroll:
 * instead of 0x800 each frame.
 
 really_update_tiles:
-	*lea		_custom,a5
 	.ifdef OCS_VERSION
+	lea		_custom,a5
 	WAIT_BLIT  | no need in AGA: dual playfield
 	.endif
 	GET_MEMORY_START_AND_DP
@@ -1520,7 +1529,7 @@ really_update_sprites:
 	
 	.ifdef	OCS_VERSION
 	lea	background_restore_buffer,a0
-	move.l	playfield_drawed_screen_ptr(pc),a1
+	move.l	playfield_drawn_screen_ptr(pc),a1
 	move.w	#NB_TARGET_SPRITES-1,d7
 	WAIT_BLIT
 	move.l	#-1,bltalwm(a5)		| needed for blit_background
@@ -1536,7 +1545,7 @@ really_update_sprites:
 	move.w	(a4)+,d4			| height
 	move.w	(a4)+,d2		| width
 	addq	#2,a4			
-	bsr		blit_background
+	jbsr		blit_background
 
 	.else
 	move.l	playfield_drawn_screen_ptr(pc),a1
@@ -1576,6 +1585,8 @@ really_update_sprites:
     lea _custom,A5
 	lea		(SPRITE_START,a6),a0		| sprite start
 	move.w	#NB_TARGET_SPRITES-1,d7
+
+
 	move.l	bob_previous_drawn_sprites(pc),a6
 	.ifdef	HW_SPRITES
 	lea		sprite_drawn(pc),a3
@@ -1609,9 +1620,9 @@ blit_background:
 	lea		_custom,a5
 	* adjust offset X: X//8
 	lsr.w	#3,d0
-	lea		mulNB_BYTES_PER_ROW_table(pc),a4
+	lea		mulBG_NB_BYTES_PER_ROW_table(pc),a4
 	add.w	d1,d1
-	* add Y offset: Y*NB_BYTES_PER_ROW
+	* add Y offset: Y*BG_NB_BYTES_PER_ROW
 	add.w	(a4,d1.w),d0
 	* same offset for source and destination
 	add.w	d0,a1
@@ -1619,7 +1630,7 @@ blit_background:
 	
 
     move.l  #0x09f00000,d3    | A->D copy, ascending mode	
-	move.w	#NB_BYTES_PER_ROW,d1		| blit modulo
+	move.w	#BG_NB_BYTES_PER_ROW,d1		| blit modulo
 
     sub.w   d2,d1       | blit modulo
     lsl.w   #6,d4
@@ -1996,7 +2007,7 @@ blit_planes_any_internal_cookie_cut:
 	tst.w	d1
     beq.b   2f    | optim
 	jmi		8f		| negative: don't display
-    lea		mulFG_NB_BYTES_PER_ROW_table(pc),a4
+	move.l	bob_row_multiplication_table(pc),a4
 	.ifdef	NO68020
 	add.w	d1,d1
     move.w  (a4,d1.w),d1	| y times 40
@@ -2028,7 +2039,7 @@ blit_planes_any_internal_cookie_cut:
     * but a 68000 CPU doesn't and since we RETURN A1...
     *bclr    #0,d1
     add.w   d1,a1       | plane position (D1 < 0x7FFF, 288*40=0x2D00)
-	move.w	#FG_NB_BYTES_PER_ROW,d0
+	move.w	bob_row_size,d0
 	tst.w	d4
 	bpl.b	5f
 	neg.w	d0
@@ -2061,7 +2072,7 @@ blit_planes_any_internal_cookie_cut:
 6:
 	jbsr	process_1_plane
 	
-	lea		(FG_SCREEN_PLANE_SIZE,a1),a1
+	add.w	bob_plane_size,a1
 	dbf		d3,6b
 7:
 	jbsr	process_1_plane
@@ -2240,11 +2251,18 @@ clear_planes_any_blitter_internal:
 	move.w  d4,bltsize(a5)	|rectangle size, starts blit
     rts
 
+bob_row_multiplication_table:
+	.long	0
+bob_row_size:
+	.word	0
+bob_plane_size:
+	.word	0
+	
 sprite_drawn:
 	.skip	NB_TARGET_SPRITES
 
 bob_previous_positions_1:
-	ds.b	NB_TARGET_SPRITES*PREVIOUS_SPRITE_SIZEOF
+	.skip NB_TARGET_SPRITES*PREVIOUS_SPRITE_SIZEOF
 bob_previous_drawn_sprites:
 	.long	bob_previous_positions_1
 bob_previous_displayed_sprites:
@@ -2253,7 +2271,7 @@ bob_previous_displayed_sprites:
 	.else
 	.long	bob_previous_positions_2	
 bob_previous_positions_2:
-	ds.b	NB_TARGET_SPRITES*PREVIOUS_SPRITE_SIZEOF	
+	.skip NB_TARGET_SPRITES*PREVIOUS_SPRITE_SIZEOF
 	.endif
 
 		
@@ -2960,7 +2978,7 @@ HW_SpriteYTable_\height:
 
 * < A0: copperlist address for bitplane pointers
 * < D0: first bitplane address
-set_static_bitplanes:
+set_background_bitplanes:
     moveq #NB_TILE_PLANES-1,d1
  	move.l	#BG_SCREEN_PLANE_SIZE,d2
 1:
@@ -2973,6 +2991,7 @@ set_static_bitplanes:
     dbf d1,1b
     rts
 
+	.ifndef	OCS_VERSION
 set_bob_bitplanes:
 	movem.l	a0-a1/d0-d2,-(a7)
  	lea	bobs_bitplanes+2,a0
@@ -2989,7 +3008,7 @@ set_bob_bitplanes:
     dbf d1,1b
 	movem.l	(a7)+,a0-a1/d0-d2
     rts
-
+	.endif
 	
 osd_debug_hook:
 	rts
@@ -3487,7 +3506,8 @@ temp_filename_buffer:
 	ds.b	255
 _end_of_ng_code:
 		
-  
+sprite_x_offset:
+	.byte	1
 
 	.align 2
 
@@ -3695,10 +3715,22 @@ tiles_bitplanes_end:
 	
 		.section .bsschip
 		
-	
-background_buffer:
+	* AGA and OCS: one background buffer
+bg_screen_buffer_1:
 	.skip	BG_SCREEN_SIZE
-		
+	
+	.ifdef	OCS_VERSION
+	* OCS: background restore buffer
+	* and optional extra background buffer for doublebuffer
+background_restore_buffer:
+	.skip	BG_SCREEN_SIZE
+
+	.ifne	OPT_ENABLE_DOUBLE_BUFFERING
+bg_screen_buffer_2:
+	.skip	BG_SCREEN_SIZE
+	.endif
+	.else
+	* AGA 1 or 2 front buffers
 fg_screen_buffer_1:
 	.skip	FG_SCREEN_SIZE
 	.skip	FG_NB_BYTES_PER_ROW*12*3
@@ -3706,6 +3738,7 @@ fg_screen_buffer_1:
 fg_screen_buffer_2:
 	.skip	FG_SCREEN_SIZE
 	.skip	FG_NB_BYTES_PER_ROW*12*3
+	.endif
 	.endif
 
 
