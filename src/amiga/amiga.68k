@@ -90,7 +90,11 @@ FIRST_SPRITE = SPRITE_START
 * if no bitplane data: there will be some color artefacts
 * but not noticeable unless 2 sprites cross each other paths
 OPT_IGNORE_ZERO_BITPLANE = 0
+	.ifdef	OCS_VERSION
+OPT_ENABLE_DOUBLE_BUFFERING = 0
+	.else
 OPT_ENABLE_DOUBLE_BUFFERING = 1
+	.endif
 OPT_ENABLE_MULTIPLEXED_SPRITES = 0
 
 NB_TILE_PLANES = 4
@@ -415,7 +419,16 @@ _user:
 	move.w	#BG_NB_BYTES_PER_ROW,bob_row_size
 	move.w	#BG_SCREEN_PLANE_SIZE,bob_plane_size
 
+	lea		bg_screen_buffer_1,a0
+	move.l	a0,fg_screen_data_1
+	move.l	a0,playfield_drawn_screen_ptr
+	move.l	a0,playfield_displayed_screen_ptr
 
+	.ifne	OPT_ENABLE_DOUBLE_BUFFERING
+	lea		bg_screen_buffer_2,a0
+	move.l	a0,fg_screen_data_2
+	move.l	a0,playfield_displayed_screen_ptr
+	.endif
 
 	.else
 	* AGA version, dual playfield
@@ -1535,7 +1548,7 @@ really_update_sprites:
 	move.l	#-1,bltalwm(a5)		| needed for blit_background
 1:
 	move.w	(a4),d0
-	bmi.b	11f		| x=0: inactive
+	jeq	11f		| x=0: inactive
 	move.w	(2,a4),d1
 	cmp.w	#NB_LINES,d1
 	jcc		11f				| too low: discard
