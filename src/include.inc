@@ -170,17 +170,12 @@ okay\@:
 
 * 68020 compliant & optimized
 
-    .macro    JXX_A_INDEXED    inst,reg,nb_cases
-    and.w    #0xFF,d0  | mask 8 bits
-	CHECK_MAX	d0,\nb_cases
-    \inst    ([\reg,d0.W*2])
+    .macro    JXX_X_INDEXED    inst,reg,dreg,nb_cases
+    and.w    #0xFF,\dreg  | mask 8 bits
+	CHECK_MAX	\dreg,\nb_cases
+    \inst    ([\reg,\dreg\().w*2])
     .endm
 
-    .macro    JXX_B_INDEXED    inst,reg,nb_cases
-    and.w    #0xFF,d1  | mask 8 bits
-	CHECK_MAX	d1,\nb_cases
-    \inst    ([\reg,d1.W*2])
-    .endm
 
 	.macro DO_EXTB	reg
 	extb.l	\reg
@@ -188,9 +183,6 @@ okay\@:
 
 	.macro PUSH_SR
 	move.w	ccr,-(sp)
-	.endm
-	.macro POP_SR
-	move.w	(sp)+,ccr
 	.endm
 
 
@@ -227,21 +219,15 @@ okay\@:
 
 * 68000 compliant
 
-    .macro    JXX_A_INDEXED    inst,reg,nb_cases
-    and.w    #0xFF,d0  | mask 8 bits
-	CHECK_MAX	d0,\nb_cases
-    add.w    d0,d0    | *2 (16 -> 32 bits)
-    move.l    (\reg,d0.w),\reg
-    \inst    (\reg)
+ 
+    .macro    JXX_X_INDEXED    inst,reg,dreg,nb_cases
+    and.w    #0xFF,\dreg  | mask 8 bits
+	CHECK_MAX	\dreg,\nb_cases
+    add.w    \dreg,\dreg    | *2 (16 -> 32 bits)
+    move.l    (\reg,\dreg\().w),A3
+    \inst    (A3)    | we use another register, as table is not reloaded!
     .endm
 
-    .macro    JXX_B_INDEXED    inst,reg,nb_cases
-    and.w    #0xFF,d1  | mask 8 bits
- 	CHECK_MAX	d1,\nb_cases
-    add.w    d1,d1    | *2 (16 -> 32 bits)
-    move.l    (\reg,d1.w),\reg
-    \inst    (\reg)
-    .endm
 
 	.macro DO_EXTB	reg
 	ext	\reg
@@ -250,9 +236,6 @@ okay\@:
 
 	.macro PUSH_SR
 	move.w	sr,-(sp)
-	.endm
-	.macro POP_SR
-	move.w	(sp)+,ccr
 	.endm
 
 	.macro	MOVE_W_TO_REG    src,dest
@@ -299,6 +282,17 @@ okay\@:
 
 	.endif
 
+	* compatible with all 68xxx cpus
+ 	.macro POP_SR
+	move.w	(sp)+,ccr
+	.endm
+
+    .macro    JXX_A_INDEXED    inst,reg,nb_cases
+	JXX_X_INDEXED	\inst,\reg,d0,\nb_cases
+    .endm
+    .macro    JXX_B_INDEXED    inst,reg,nb_cases
+	JXX_X_INDEXED	\inst,\reg,d1,\nb_cases
+    .endm
 
     .macro    JSR_A_INDEXED    reg,nb_cases
     JXX_A_INDEXED	jsr,\reg,\nb_cases

@@ -454,6 +454,10 @@ _user:
 	
 	.endif
 
+	cmp.w	#0x8000,bob_plane_size
+	jcs	0f
+	BREAKPOINT	"plane size too high for word operations"
+0:
 	
 	jbsr		set_status_bitplanes
 	* set them even if reset by game afterwards
@@ -2053,6 +2057,7 @@ blit_planes_any_internal_cookie_cut:
     *bclr    #0,d1
     add.w   d1,a1       | plane position (D1 < 0x7FFF, 288*40=0x2D00)
 	move.w	bob_row_size,d0
+	move.w	#FG_NB_BYTES_PER_ROW,d0		| TEMP TEMP
 	tst.w	d4
 	bpl.b	5f
 	neg.w	d0
@@ -2270,6 +2275,8 @@ bob_row_size:
 	.word	0
 bob_plane_size:
 	.word	0
+blitter_modulo:
+	.word	0
 	
 sprite_drawn:
 	.skip	NB_TARGET_SPRITES
@@ -2463,17 +2470,21 @@ platform_init:
 	* try to hide color 0 on the border (except on OCS)
 
 	.ifdef	OCS_VERSION
+	move.w	#BG_NB_BYTES_PER_ROW-40,d0
+    move.w d0,bpl2mod(a5)
+    move.w d0,bpl1mod(a5)
 	.else
     move.w #(SPRITE_FMODE<<2)+BITPLANE_FMODE,fmode(a5)	| 32 bit bitplane fetch, 64 bit wide sprites
 	move.w	#0,bplcon4(a5)			| use the same colors as bobs playfield
-	.endif
 
-	move.w	#0,bplcon1(a5)
 
 	move.w	#FMODE_OFFSET+BG_NB_BYTES_PER_ROW-40,d0
     move.w d0,bpl2mod(a5)
 	move.w	#FMODE_OFFSET+FG_NB_BYTES_PER_ROW-40,d0
     move.w d0,bpl1mod(a5)
+	.endif
+
+	move.w	#0,bplcon1(a5)
 
 	lea		game_copperlist,a0
 	move.l	a0,cop1lc(a5)
@@ -3656,8 +3667,9 @@ game_sprites_end:
 	.word	bplcon1
 reset_bplcon1_1:
 	.word 	0
-	
 	.ifdef	OCS_VERSION
+
+	
 tiles_bitplanes:
 bobs_bitplanes:
 	DECL_BITPLANES	0,4	
@@ -3704,6 +3716,7 @@ intreq_block_game:
 	* set 0-scroll value value for both plane sets
 reset_bplcon1_2:
 	.word	0			| reset scrolling
+
 tiles_bitplanes_end:
 	.ifdef	OCS_VERSION
 	DECL_BITPLANES	0,4	
@@ -3721,6 +3734,8 @@ tiles_bitplanes_end:
 	
      .long    -2					
 	.ascii	"ENDCPLST"
+
+
 
 	* aligning on 8 bytes so .align will work
 	* in the next datachip sections
