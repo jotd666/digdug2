@@ -100,8 +100,7 @@ OPT_ENABLE_MULTIPLEXED_SPRITES = 0
 NB_TILE_PLANES = 4
 NB_BOB_PLANES = 4
 TOTAL_NB_COLORS = 1<<NB_TILE_PLANES
-FG_NB_BYTES_PER_ROW = 40
-BG_NB_BYTES_PER_ROW = FG_NB_BYTES_PER_ROW*2
+BG_NB_BYTES_PER_ROW = 40*2
 
 * add 16 so sprites can be drawn at the bottom
 * without corrupting the screen
@@ -110,10 +109,13 @@ NB_PLAYFIELD_LINES = NB_LINES
 
 
 BG_SCREEN_PLANE_SIZE = BG_NB_BYTES_PER_ROW*NB_PLAYFIELD_LINES
-FG_SCREEN_PLANE_SIZE = FG_NB_BYTES_PER_ROW*NB_PLAYFIELD_LINES
 BG_SCREEN_SIZE = BG_SCREEN_PLANE_SIZE*NB_TILE_PLANES
+	.ifndef	OCS_VERSION
+FG_NB_BYTES_PER_ROW = 40
 FG_SCREEN_SIZE = FG_SCREEN_PLANE_SIZE*NB_BOB_PLANES
-
+FG_SCREEN_PLANE_SIZE = FG_NB_BYTES_PER_ROW*NB_PLAYFIELD_LINES
+	.endif
+	
 VIDEO_ADDRESS = 0
 
 NB_HOST_SPRITES = 8
@@ -1873,6 +1875,10 @@ update_one_bob:
 	jra		21f
 	.endif
 101:
+	.ifdef	OCS_VERSION
+	add.w	sprite_x_offset_w,d0
+	.endif
+
 	move.w	(a0)+,d4		| height
 	move.w	(a0)+,d5		| width
 	move.w	(a0)+,d2		| Y-offset
@@ -2013,7 +2019,7 @@ cpu_log_name:
 * blit mask set
 * returns: start of destination in A1 (computed from old A1+X,Y)
 * trashes: a1
-blit_planes_any_internal_cookie_cut:	
+blit_planes_any_internal_cookie_cut:
     movem.l d0-d7/a4,-(a7)
     * pre-compute the maximum of shit here
 	tst.w	d4
@@ -2057,7 +2063,6 @@ blit_planes_any_internal_cookie_cut:
     *bclr    #0,d1
     add.w   d1,a1       | plane position (D1 < 0x7FFF, 288*40=0x2D00)
 	move.w	bob_row_size,d0
-	move.w	#FG_NB_BYTES_PER_ROW,d0		| TEMP TEMP
 	tst.w	d4
 	bpl.b	5f
 	neg.w	d0
@@ -2155,7 +2160,7 @@ process_1_plane:
 * < D3: nb planes to clear
 * < D4: blit height
 * < D5: plane mask
-
+	.ifndef	OCS_VERSION
 * trashes D0-D6/A2
 clear_planes_any_blitter_internal:
     * pre-compute the maximum of shit here
@@ -2219,7 +2224,6 @@ clear_planes_any_blitter_internal:
 	
 	
 	
-	
 	subq	#1,d3
 *	jra		31f
 3:
@@ -2268,6 +2272,7 @@ clear_planes_any_blitter_internal:
 	move.l a1,bltdpt(a5)	|destination top left corner
 	move.w  d4,bltsize(a5)	|rectangle size, starts blit
     rts
+	.endif
 
 bob_row_multiplication_table:
 	.long	0
@@ -3350,8 +3355,9 @@ beamdelay:
 	dbf	d0,0b
 	rts
 
-	
+	.ifndef	OCS_VERSION
 	MUL_TABLE	FG_NB_BYTES_PER_ROW,NB_LINES*2
+	.endif
 	MUL_TABLE	BG_NB_BYTES_PER_ROW,NB_LINES*2
 
 
@@ -3530,8 +3536,10 @@ temp_filename_buffer:
 	ds.b	255
 _end_of_ng_code:
 		
+sprite_x_offset_w:
+	.byte	0
 sprite_x_offset:
-	.byte	1
+	.byte	0
 
 	.align 2
 
