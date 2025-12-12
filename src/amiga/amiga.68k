@@ -2735,6 +2735,10 @@ update_bg_tile:
 	.endif
 	add.w	d1,d0
 	add.w	d0,a1
+	.ifdef	OCS_VERSION
+	lea		background_restore_buffer,a3
+	add.w	d0,a3
+	.endif
 	
 	cmp.b	#0x20,d2
 	jeq		11f				| optim: blank tile
@@ -2794,12 +2798,18 @@ update_bg_tile:
 	
 	.macro	COPY_TILE_PLANE_ROW
 	move.b	d0,(offset,a1)  | buffer
+	.ifdef	OCS_VERSION
+	move.b	d0,(offset,a3)  | restore buffer
+	.endif
 	.endm
 	
 	.macro	CLEAR_TILE_PLANE
 	.set	offset,0
 	.rept	8
 	clr.b	(offset,a1)
+	.ifdef	OCS_VERSION
+	clr.b	(offset,a3)  | restore buffer
+	.endif
 	.set	offset,offset+BG_NB_BYTES_PER_ROW
 	.endr	
 	.endm
@@ -2820,6 +2830,9 @@ update_bg_tile:
 	
 	.macro	TILE_NEXT_PLANE
 	add.w	d5,a1
+	.ifdef	OCS_VERSION
+	add.w	d5,a3
+	.endif
 	.endm
 	
 * made more complex by 4 tile orientations + the fact that the last
