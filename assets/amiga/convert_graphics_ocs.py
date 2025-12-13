@@ -232,16 +232,10 @@ else:
     except OSError:
         pass
 
-# now gather all cluts used by letter/digit tiles, logging probably
-# missed some
-##used_cluts = set()
-##for atc in alphanum_tile_codes:
-##    cluts = tile_cluts.get(atc)
-##    if cluts:
-##        used_cluts.update(cluts)
-### now set cluts for all alphanum tiles
-##for atc in alphanum_tile_codes:
-##    tile_cluts[atc] = sorted(used_cluts)
+# add full letters & digits for 3 cluts
+for i in list(range(0x41,0x5C))+list(range(0x30,0x3A)):
+    add_tile(tile_cluts,i,[0,0xA,0xB,0xD,0xE])
+
 
 
 
@@ -292,7 +286,6 @@ for i,tsd in tile_sheet_dict.items():
 # game can be 16 colors not 32!
 tile_color_rep_dict = {(0,0,255):(33,71,255),
 (16,32,48):(0,0,0),
-(104,0,81):(151,33,174),
 (222,0,0):(255,0,0)}
 
 replace_colors(tile_set_list,tile_color_rep_dict)
@@ -320,11 +313,21 @@ for clut_index,tsd in sprite_sheet_dict.items():
     sprite_set_list_x_size[clut_index] = sprite_set_x_size
     sprite_palette.update(sp)
 
+# replace dark purple by darker purple. This color is only used by the grape bonus & few
+# pixels of the turnip.
+# whereas the darker purple is used by the drill holes, and changing to match sprite colors
+# makes it funny (not in a good way). So it's better to change the sprite purple, the grape
+# doesn't appear very often anyway, and the turnip not often either (plus it's barely noticeable)
+sprite_color_rep_dict = {
+(151,33,174):(104,0,81)}
+replace_colors(sprite_set_list,sprite_color_rep_dict)
+replace_colors(sprite_set_list_x_size,sprite_color_rep_dict)
+
 # destroy title tiles we don't need them (clut=1)
 for i in range(0xE0,0xF5):
     sprite_set_list[1][i] = None
 
-sprite_palette = sorted(sprite_palette)
+sprite_palette = sorted([sprite_color_rep_dict.get(c,c) for c in sprite_palette])
 magi = sprite_palette.index(magenta)
 sprite_palette.pop(magi)
 # temporary: put magenta as first color to be able to decode the frames properly

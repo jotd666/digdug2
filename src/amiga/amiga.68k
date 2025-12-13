@@ -63,8 +63,13 @@ BASE_BPLCON2_VALUE = 0x0024		| sprites above all playfields
 
 HW_SPRITE_X_CORRECTION = 0
 HW_SPRITE_Y_CORRECTION = 0
+
 SPRITE_X_CORRECTION = 0
+	.ifdef	OCS_VERSION
+SPRITE_Y_CORRECTION = -16		| X (portrait)
+	.else
 SPRITE_Y_CORRECTION = 16		| X (portrait)
+	.endif
 SPRITE_HEIGHT = 16
 SPRITE_WIDTH = 16
 
@@ -561,9 +566,14 @@ _user:
 
 	.ifne	OPT_ENABLE_LOGGING
 	* install dump and quit handler
+	* jump 4: dump & illegal
+	* jump A: quit
 	pea		dump_and_quit
 	lea		2.W,a0
 	move.l	#0x4AFC4EF9,(a0)+
+	move.l	(a7)+,(a0)+
+	pea		quit_to_os
+	move.w	#0x4EF9,(a0)+
 	move.l	(a7)+,(a0)+
 	.endif
 
@@ -936,6 +946,7 @@ level3_interrupt:
 *	move.l	d0,_joypad_2_state
 
 	move.l	_joypad_1_state(pc),d1
+	move.l	d1,_joypad_1_old_state
 	moveq	#1,d0
 	jsr	_read_joystick
 	move.l	d0,_joypad_1_state
@@ -1570,7 +1581,7 @@ really_update_sprites:
 	move.w	(a4)+,d4			| height
 	move.w	(a4)+,d2		| width
 	addq	#2,a4			
-	jbsr		blit_background
+	jbsr	blit_background
 
 	.else
 	* loop
@@ -1654,7 +1665,6 @@ blit_background:
 	* same offset for source and destination
 	add.w	d0,a1
 	add.w	d0,a0
-	sub.w	#0x4,a0		| I don't know why we need to do this!
 	
 
     move.l  #0x09f00000,d3    | A->D copy, ascending mode	
@@ -1777,11 +1787,13 @@ update_one_bob:
 	.endif
 	
 	exg	d0,d1		| portrait
-
+	
+	
 	moveq	#0,d3
 	move.b	(TARGET_SPRITE_CODE,a0),d3
 
-	cmp.b	#0x42,d0
+	
+	cmp.b	#0x32+SPRITE_Y_CORRECTION,d0			| position of first "D" of dig dug title
 	jne		0f
 	cmp.b	#0xE0,d3
 	jcs		0f
@@ -1885,10 +1897,15 @@ update_one_bob:
 	.endif
 101:
 	.ifdef	OCS_VERSION
+	move.b	#0,0x110
 	add.w	sprite_x_offset_w,d0
 	.endif
 
 	move.w	(a0)+,d4		| height
+	jeq		2f   | empty fully cropped: used to mask title
+
+	
+102:
 	move.w	(a0)+,d5		| width
 	move.w	(a0)+,d2		| Y-offset
 
@@ -2069,8 +2086,12 @@ blit_planes_any_internal_cookie_cut:
 4:
     * make offset even. Blitter will ignore odd address
     * but a 68000 CPU doesn't and since we RETURN A1...
-    *bclr    #0,d1
+    
+	nop
+	nop
     add.w   d1,a1       | plane position (D1 < 0x7FFF, 288*40=0x2D00)
+	move.l	a1,0x110
+	
 	move.w	bob_row_size,d0
 	tst.w	d4
 	bpl.b	5f
@@ -2564,10 +2585,14 @@ platform_init:
 
 * so memory is quadword-aligned (not trusting .align directives)
 align_for_fmode:
+	.ifdef	OCS_VERSION
+	* do nothing!
+	.else
 	add.w	#0x8,a0
 	move.l	a0,d0
 	and.b	#0xF8,d0
 	move.l	d0,a0
+	.endif
 	rts
 
 
@@ -3131,6 +3156,9 @@ read_inputs:
 	* game not in play: can insert/start game using joystick
 	btst	#JPB_BTN_RED,d0
 	jeq		0f
+	move.l	_joypad_1_old_state,d1
+	btst	#JPB_BTN_RED,d1
+	jne		0f
 	jbsr	add_one_credit
 0:
 	btst	#JPB_BTN_UP,d0
@@ -3506,6 +3534,8 @@ _resload:
 	.long	0
 _joypad_1_state:
 	.long	0
+_joypad_1_old_state:
+	.long	0
 _joypad_2_state:
 	.long	0
 
@@ -3557,6 +3587,7 @@ floppy_file:
 temp_filename_buffer:
 	ds.b	255
 _end_of_ng_code:
+	.align 2
 		
 sprite_x_offset_w:
 	.byte	0
