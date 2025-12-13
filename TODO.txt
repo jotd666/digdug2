@@ -1,7 +1,7 @@
 - ECS version: only 16 colors, no dual playfield, update_bg_tile also writes in back buffer
   => update_bg_tile: write also to back restore buffer, if double buffering, do update twice too
      or just in both buffers
-  => scrolling planes not ok (shifting wrong?)
+  => buffer restore restores from wrong source (16 bit shift?)
   => holes are purple
 - sfx: assign channels & priorities to sounds. Use channel 3 mostly
   use channel 2 only for special items: waiting to see if music can hold on 2 channels,

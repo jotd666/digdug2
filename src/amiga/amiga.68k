@@ -1654,6 +1654,7 @@ blit_background:
 	* same offset for source and destination
 	add.w	d0,a1
 	add.w	d0,a0
+	sub.w	#0x4,a0		| I don't know why we need to do this!
 	
 
     move.l  #0x09f00000,d3    | A->D copy, ascending mode	
@@ -3779,6 +3780,7 @@ bg_screen_buffer_1:
 	.ifdef	OCS_VERSION
 	* OCS: background restore buffer
 	* and optional extra background buffer for doublebuffer
+	.skip	4
 background_restore_buffer:
 	.skip	BG_SCREEN_SIZE
 
