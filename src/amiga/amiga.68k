@@ -1546,12 +1546,18 @@ really_update_sprites:
 	lea		_custom,a5
 	* clear previous positions
 	
-	.ifdef	OCS_VERSION
-	lea	background_restore_buffer,a0
-	move.l	playfield_drawn_screen_ptr(pc),a1
 	move.w	#NB_TARGET_SPRITES-1,d7
+	move.l	playfield_drawn_screen_ptr(pc),a1
+	
+	
+	.ifdef	OCS_VERSION
+	*************************
+	* blit background tiles *
+	*************************
+	lea	background_restore_buffer,a0
 	WAIT_BLIT
 	move.l	#-1,bltalwm(a5)		| needed for blit_background
+	* loop
 1:
 	move.w	(a4),d0
 	jeq	11f		| x=0: inactive
@@ -1567,9 +1573,11 @@ really_update_sprites:
 	jbsr		blit_background
 
 	.else
-	move.l	playfield_drawn_screen_ptr(pc),a1
-	move.w	#NB_TARGET_SPRITES-1,d7
+	* loop
 1:
+	*******************
+	* erase playfield *
+	*******************
 	move.l	(a4),d1	| read X and Y
 	jeq		11f		| x=y=0: inactive, skip
 	move.l	d1,d0

@@ -35,8 +35,8 @@ def doit(width,dual_playfield):
         shiftval_msb = ((shift&(wmask & 0x30))>>2)      # 2 high bits H7 H6
         shiftval_lsb = (shift&0xF)                      # 4 low bits H5->H2
         if not dual_playfield:
-            other_plane_mask_1 = shiftval_lsb << 2
-            other_plane_mask_2 = shiftval_msb
+            other_plane_mask_1 = shiftval_msb
+            other_plane_mask_2 = shiftval_lsb
 
         items.append((shiftval_msb<<4)|other_plane_mask_1)
         items.append((shiftval_lsb<<4)|other_plane_mask_2)
