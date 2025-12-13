@@ -1,6 +1,6 @@
-import subprocess,os,glob,shutil
+import subprocess,os,glob,shutil,pathlib
 
-progdir = os.path.abspath(os.path.join(os.path.dirname(__file__),os.pardir))
+progdir = pathlib.Path(__file__).parent.parent.absolute()
 
 gamename = "digdug2"
 # JOTD path for cranker, adapt to whatever your path is :)
@@ -13,23 +13,25 @@ subprocess.check_call(cmd_prefix+["clean"],cwd=os.path.join(progdir,"src"))
 subprocess.check_call(cmd_prefix+["RELEASE_BUILD=1"],cwd=os.path.join(progdir,"src"))
 # create archive
 
-outdir = os.path.join(progdir,f"{gamename}_HD")
+outdir = progdir / f"{gamename}_HD"
 print(outdir)
 if os.path.exists(outdir):
-    for x in glob.glob(os.path.join(outdir,"*")):
-        os.remove(x)
+    for x in outdir.glob("*"):
+        x.unlink()
 else:
-    os.mkdir(outdir)
-for file in ["readme.md",f"{gamename}.slave"]:  #f"{gamename}.slave",
-    shutil.copy(os.path.join(progdir,file),outdir)
+    outdir.mkdir()
+for file in ["readme.md",f"{gamename}_ocs.slave",f"{gamename}_aga.slave"]:  #f"{gamename}.slave",
+    shutil.copy(progdir / file,outdir)
 
-shutil.copy(os.path.join(progdir,"assets","amiga","DigDug2-A.info"),outdir)
-shutil.copy(os.path.join(progdir,"assets","amiga","DigDug2-B.info"),outdir)
+assets = progdir /"assets"/"amiga"
+shutil.copy(assets/"DigDug2-A.info",outdir)
+shutil.copy(assets/"DigDug2-B.info",outdir)
 
 
 
-exename = gamename
-shutil.copy(os.path.join(progdir,exename),outdir)
-subprocess.check_output(["cranker_windows.exe","-f",os.path.join(progdir,exename),"-o",os.path.join(progdir,f"{exename}.rnc")])
+for ext in ["aga","ocs"]:
+    exename = f"{gamename}_{ext}"
+    shutil.copy(progdir/exename,outdir)
+    subprocess.run(["cranker_windows.exe","-f",progdir/exename,"-o",progdir/f"{exename}.rnc"],check=True)
 
-subprocess.check_call(cmd_prefix+["clean"],cwd=os.path.join(progdir,"src"))
+subprocess.run(cmd_prefix+["clean"],cwd=progdir/"src",check=True)
