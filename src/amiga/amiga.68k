@@ -96,7 +96,7 @@ FIRST_SPRITE = SPRITE_START
 * but not noticeable unless 2 sprites cross each other paths
 OPT_IGNORE_ZERO_BITPLANE = 0
 	.ifdef	OCS_VERSION
-OPT_ENABLE_DOUBLE_BUFFERING = 0
+OPT_ENABLE_DOUBLE_BUFFERING = 1
 	.else
 OPT_ENABLE_DOUBLE_BUFFERING = 1
 	.endif
@@ -2388,7 +2388,6 @@ store_system:
 	* no whdload, no fastmem/68020: assume slow switch to 25 FPS
 	* if running on PiStorm, well, too bad use whdload
 	*
-	* note: game crawls on vanilla A1200 too if stars are on
 	*
 	st.b	frameskip
 1:
@@ -2758,8 +2757,19 @@ update_bg_tile:
 	* updating bitplanes
 	move.l	#BG_SCREEN_PLANE_SIZE,d5
 	move.w	#NB_TILE_PLANES-1,d4
+	.ifdef	OCS_VERSION
+	.ifeq	OPT_ENABLE_DOUBLE_BUFFERING
 	move.l		background_ptr,a1
-
+	.else 
+	* OCS with double buffering
+	lea		bg_screen_buffer_1,a1
+	lea		bg_screen_buffer_2,a4
+	.endif
+	.else
+	* AGA: no double buffering on background
+	move.l		background_ptr,a1
+	.endif
+	
 	lea		mulBG_NB_BYTES_PER_ROW_table,A2
 	.ifdef	NO68020
 	add.w	d1,d1
@@ -2834,6 +2844,9 @@ update_bg_tile:
 	move.b	d0,(offset,a1)  | buffer
 	.ifdef	OCS_VERSION
 	move.b	d0,(offset,a3)  | restore buffer
+	.ifne	OPT_ENABLE_DOUBLE_BUFFERING
+	move.b	d0,(offset,a4)	| second buffer
+	.endif
 	.endif
 	.endm
 	
@@ -2843,6 +2856,9 @@ update_bg_tile:
 	clr.b	(offset,a1)
 	.ifdef	OCS_VERSION
 	clr.b	(offset,a3)  | restore buffer
+	.ifne	OPT_ENABLE_DOUBLE_BUFFERING
+	clr.b	(offset,a4)	| second buffer
+	.endif
 	.endif
 	.set	offset,offset+BG_NB_BYTES_PER_ROW
 	.endr	
@@ -2866,6 +2882,9 @@ update_bg_tile:
 	add.w	d5,a1
 	.ifdef	OCS_VERSION
 	add.w	d5,a3
+	.ifne	OPT_ENABLE_DOUBLE_BUFFERING
+	add.w	d5,a4
+	.endif
 	.endif
 	.endm
 	

@@ -8,9 +8,9 @@ os.environ["PATH"] += os.pathsep+r"K:\progs\cli"
 
 cmd_prefix = ["make","-f",os.path.join(progdir,"makefile.am")]
 
-subprocess.check_call(cmd_prefix+["clean"],cwd=os.path.join(progdir,"src"))
+subprocess.check_call(cmd_prefix+["clean"],cwd=progdir /"src")
 
-subprocess.check_call(cmd_prefix+["RELEASE_BUILD=1"],cwd=os.path.join(progdir,"src"))
+subprocess.check_call(cmd_prefix+["RELEASE_BUILD=1"],cwd=progdir /"src")
 # create archive
 
 outdir = progdir / f"{gamename}_HD"

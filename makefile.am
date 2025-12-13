@@ -42,7 +42,7 @@ $(AMIGA_SHELL): shell.o
 
 
 clean:
-	del $(AGA_OBJS) "$(MAIN_AGA)" "$(MAIN_OCS)" "$(AMIGA_SHELL)"
+	del $(AGA_OBJS) $(OCS_OBJS) "$(MAIN_AGA)" "$(MAIN_OCS)" "$(AMIGA_SHELL)"
 	
 shell.o: $(AMIGASRC)/shell.68k
 	$(ASM_000) -I$(AMIGASRC) -I$(AMIGASRC)/mit_includes $(AMIGASRC)/shell.68k -o shell.o
