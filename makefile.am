@@ -40,9 +40,9 @@ all: $(AMIGA_SHELL) $(MAIN_AGA) $(MAIN_OCS) $(WHDLOADER_OCS) $(WHDLOADER_OCS_CHI
 $(AMIGA_SHELL): shell.o
 	$(GCC_BIN)/m68k-amigaos-ld $(OPT_RELEASE_LINK) -o $(AMIGA_SHELL) shell.o
 
-
+# don't clean shell "digdug2" program, update_floppy will need it
 clean:
-	del $(AGA_OBJS) $(OCS_OBJS) "$(MAIN_AGA)" "$(MAIN_OCS)" "$(AMIGA_SHELL)"
+	del $(AGA_OBJS) $(OCS_OBJS) "$(MAIN_AGA)" "$(MAIN_OCS)"
 	
 shell.o: $(AMIGASRC)/shell.68k
 	$(ASM_000) -I$(AMIGASRC) -I$(AMIGASRC)/mit_includes $(AMIGASRC)/shell.68k -o shell.o

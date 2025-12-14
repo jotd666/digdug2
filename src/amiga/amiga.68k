@@ -401,7 +401,7 @@ _user:
 
 .no_forbid:
 	
-	.ifndef	OPT_ENABLE_LOGGING
+	.ifne	OPT_ENABLE_LOGGING
 	move.l	#log_buffer,log_ptr
 	lea	log_buffer_end,a0
 	move.l	#0xCAFECAFE,d0
@@ -1994,7 +1994,6 @@ osd_dump_logs:
 	move.l	#0X1080,d0
 	jbsr	resload_SaveFile(a2)
 
-	
 	jbsr	save_cpu_log
 	
     movem.l (a7)+,d0-a6
