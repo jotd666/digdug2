@@ -194,6 +194,23 @@ with open(source_dir / "conv.s") as f:
         elif address in {0x8012,0x800f}:
             line = remove_instruction(lines,i)
 
+        elif address == 0xabfd:
+            line = f"""\ttst.b\tinvincible_flag
+\tjne\tl_ac39
+{line}"""
+        elif address == 0xb2fb:
+            line = f"""\ttst.b\tinvincible_flag
+\tjne\tl_b32a
+{line}"""
+
+        elif address == 0x844a:
+            line = f"""\ttst.b\tinfinite_lives_flag
+\tjne\t0f
+{line}{lines[i+1]}{lines[i+2]}0:
+"""
+            lines[i+1]=""
+            lines[i+2]=""
+
         elif address == 0xE703:
             line = change_instruction("jra\tend_io_regs_clear_e710",lines,i)
         elif address == 0xE76B:

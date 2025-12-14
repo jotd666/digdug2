@@ -139,6 +139,7 @@ default_high_score_table_9c17 = $9c17
 player_1_score_1700 = $1700
 player_2_score_1740 = $1740
 high_score_100b = $100b
+player_hit_flag_10d3 = $10d3
 
 ; shared variables with sound cpu. Each byte matches one sound or tune
 ; writing non-zero triggers the sound, zero stops it
@@ -3744,7 +3745,7 @@ A3EF: 10 BE 10 3A    LDY    $103A
 A3F3: 31 A6          LEAY   A,Y
 A3F5: 10 AF 1E       STY    -$2,X
 A3F8: BD C4 F4       JSR    $C4F4
-A3FB: B6 10 D3       LDA    $10D3
+A3FB: B6 10 D3       LDA    player_hit_flag_10d3
 A3FE: 26 26          BNE    $A426
 A400: 10 BE 10 3A    LDY    $103A
 A404: 10 AF 1E       STY    -$2,X
@@ -4593,7 +4594,7 @@ ABF3: A6 0D          LDA    $D,X
 ABF5: 27 42          BEQ    $AC39
 ABF7: CE 25 10       LDU    #character_data_array_2510
 ABFA: BD C4 F4       JSR    $C4F4
-ABFD: B6 10 D3       LDA    $10D3
+ABFD: B6 10 D3       LDA    player_hit_flag_10d3
 AC00: 27 37          BEQ    $AC39	; bra => invincible
 AC02: CC 01 06       LDD    #$0106
 AC05: B7 10 D0       STA    goto_next_life_10d0
@@ -5320,7 +5321,7 @@ B2F2: BD C4 F4       JSR    $C4F4
 B2F5: A6 0F          LDA    $F,X
 B2F7: 80 0C          SUBA   #$0C
 B2F9: A7 0F          STA    $F,X
-B2FB: B6 10 D3       LDA    $10D3
+B2FB: B6 10 D3       LDA    player_hit_flag_10d3
 B2FE: 27 2A          BEQ    $B32A	; bra => invincible
 B300: CC 01 06       LDD    #$0106
 B303: B7 10 D0       STA    goto_next_life_10d0
@@ -5812,7 +5813,7 @@ B791: BD C4 F4       JSR    $C4F4
 B794: 86 F5          LDA    #$F5
 B796: AB 0F          ADDA   $F,X
 B798: A7 0F          STA    $F,X
-B79A: B6 10 D3       LDA    $10D3
+B79A: B6 10 D3       LDA    player_hit_flag_10d3
 B79D: 26 0B          BNE    $B7AA
 B79F: B6 10 50       LDA    periodic_60_timer_1050
 B7A2: 26 CF          BNE    $B773
@@ -6308,7 +6309,7 @@ C4EA: A7 84          STA    ,X
 C4EC: B6 10 10       LDA    demo_on_1010
 C4EF: 10 27 FB F6    LBEQ   $C0E9
 C4F3: 39             RTS
-C4F4: 7F 10 D3       CLR    $10D3
+C4F4: 7F 10 D3       CLR    player_hit_flag_10d3
 C4F7: A6 14          LDA    -$C,X
 C4F9: 48             ASLA
 C4FA: 10 8E C5 2A    LDY    #$C52A
@@ -6330,10 +6331,10 @@ C517: E1 21          CMPB   $1,Y
 C519: 22 0E          BHI    $C529
 C51B: 8C 24 D0       CMPX   #$24D0
 C51E: 26 04          BNE    $C524
-C520: 7C 10 D3       INC    $10D3
+C520: 7C 10 D3       INC    player_hit_flag_10d3
 C523: 39             RTS
 C524: 86 01          LDA    #$01
-C526: B7 10 D3       STA    $10D3
+C526: B7 10 D3       STA    player_hit_flag_10d3
 C529: 39             RTS
 
 C534: EC 1E          LDD    -$2,X
