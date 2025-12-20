@@ -1651,9 +1651,10 @@ really_update_sprites:
 	jne		2f
 	jbsr	update_one_bob
 	lea		sprite_drawn_table(pc),a3	| reload table pointer
+2:
 	addq.w	#TARGET_SPRITE_SIZEOF,a0
 	dbf		d7,1b
-2:
+
 	rts
 	
 	.ifdef	OCS_VERSION
