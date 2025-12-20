@@ -11,10 +11,6 @@
 
 minor/optims:
 
-- add hw sprites for characters if not too close to others (so priorities are respected
-  when not enough hw sprites)
-  divide X & Y by 32 then use a table (zeroed at first). If table[X/32,Y/32] == 0 then mark it
-  and HW sprite can be used.
 - can still insert coin with fire on "get ready" screen
 - slow & flickering from floppy 68000
 - pump appears on top status screen at times

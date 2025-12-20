@@ -94,6 +94,8 @@ SPRITE_START = 0x1780
 LAST_SPRITE = SPRITE_START+(NB_TARGET_SPRITES*TARGET_SPRITE_SIZEOF)-TARGET_SPRITE_SIZEOF
 FIRST_SPRITE = SPRITE_START
 
+GRID_POWER = 5
+GRID_SIDE = 1<<(8-GRID_POWER)   | coords are max 256
 
 * to save bandwidth, do not clear cookie cut blit
 * if no bitplane data: there will be some color artefacts
@@ -1380,6 +1382,13 @@ really_update_tiles:
 * }
 * 
 * 
+	.macro	COMPUTE_GRID_OFFSET
+	lsr.w	#GRID_POWER,d0	| reduce coord from 256 to 1<<(8-GRID_POWER) (0-7)
+	lsr.w	#GRID_POWER,d1
+	lsl.w	#8-GRID_POWER,d1		| multiply by 1<<(8-GRID_POWER) to get offset
+	add.w	d0,d1
+	.endm
+	
 	* shared code between bobs & hw sprites
 	* jumps to 2f if not active
 	* returns d0 and d1 decoded
@@ -1436,6 +1445,25 @@ really_update_hw_sprites:
 0:
 	clr.l	(a0)+
 	dbf		d7,0b
+	* clear "sprite already there" table
+	lea		sprite_location_table(pc),a0
+	move.w	#(GRID_SIDE*GRID_SIDE/4)-1,d7
+0:
+	clr.l	(a0)+
+	dbf		d7,0b
+	* position the bobs&sprites in the grid. Don't put a hardware sprite
+	* if number of objects in grid is != 1 (ourselves)
+
+	lea		sprite_location_table(pc),a3
+	lea		(FIRST_SPRITE,a6),a0		| sprite start
+	move.w	#NB_TARGET_SPRITES-1,d7
+1:
+	COMPUTE_SPRITE_COORDS		| jumps in 2f if not active
+	COMPUTE_GRID_OFFSET
+	addq.b	#1,(a3,d1.w)	| count one more sprite in the area
+2:
+	addq.w	#TARGET_SPRITE_SIZEOF,a0
+	dbf		d7,1b
 	
 	* now update in the reverted order // the bobs
 	lea		(LAST_SPRITE,a6),a0		| sprite start
@@ -1508,6 +1536,21 @@ update_one_hw_sprite:
 	
 	* we're taking from here, mark the sprite as empty
 	* so BOB pass isn't going to consider it
+	lea		sprite_location_table(pc),a3
+	move.w	d0,-(a7)
+	move.w	d1,-(a7)
+	COMPUTE_GRID_OFFSET
+	lea		sprite_location_table(pc),a3
+	cmp.b	#2,(a3,d1.w)
+	jcs		0f
+	* 2 objects in the same slot: don't use HW sprite as it would
+	* screw priorities in many cases
+	addq	#4,a7
+	jra		2f
+0:
+	move.w	(a7)+,d1
+	move.w	(a7)+,d0
+	
 	lea		sprite_drawn_table(pc),a3
 	st.b	(a3,d7.w)
 	
@@ -2330,6 +2373,8 @@ blitter_modulo:
 	
 sprite_drawn_table:
 	.skip	NB_TARGET_SPRITES
+sprite_location_table:
+	.skip	GRID_SIDE*GRID_SIDE
 
 bob_previous_positions_1:
 	.skip NB_TARGET_SPRITES*PREVIOUS_SPRITE_SIZEOF
