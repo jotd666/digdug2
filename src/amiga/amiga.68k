@@ -87,7 +87,7 @@ TILE_CLUT_MASK = NB_TILE_CLUTS-1
 
 SPRITE_START = 0x1780
 
-LAST_SPRITE = SPRITE_START+0x3E
+LAST_SPRITE = SPRITE_START+(NB_TARGET_SPRITES*TARGET_SPRITE_SIZEOF)-TARGET_SPRITE_SIZEOF
 FIRST_SPRITE = SPRITE_START
 
 
@@ -1423,14 +1423,14 @@ really_update_hw_sprites:
 	************************************************
 	GET_MEMORY_START_AND_DP
 	* clear "sprite drawn" table
-	lea		sprite_drawn(pc),a0
+	lea		sprite_drawn_table(pc),a0
 	move.w	#NB_TARGET_SPRITES/4-1,d7
 0:
 	clr.l	(a0)+
 	dbf		d7,0b
 	
 	* now update in the reverted order // the bobs
-	lea		(FIRST_SPRITE,a6),a0		| sprite start
+	lea		(LAST_SPRITE,a6),a0		| sprite start
 	lea		hws_table,a4
 	lea		game_sprites+2,a2				| copperlist part
 	lea		game_sprites_end+2,a6			| end
@@ -1439,7 +1439,7 @@ really_update_hw_sprites:
 	lea		HW_SpriteYTable_16,a1		| all sprites have same size 16 high
 1:
 	jbsr	update_one_hw_sprite
-	addq.w	#TARGET_SPRITE_SIZEOF,a0
+	subq.w	#TARGET_SPRITE_SIZEOF,a0
 	cmp.l	a2,a6
 	jeq		2f			| all sprites are used already: bail out
 	addq	#1,d7
@@ -1472,7 +1472,12 @@ update_one_hw_sprite:
 	* hardware sprite right away
 	moveq	#0,d3
 	move.b	(TARGET_SPRITE_CODE,a0),d3
-
+	move.b	#0,0x112
+	cmp.b	#0x8,d3
+	jne		11f
+	move.b	#0,0x111
+	
+11:
 	.ifdef	NO68020
 	add.w	d3,d3
 	add.w	d3,d3
@@ -1485,7 +1490,7 @@ update_one_hw_sprite:
 
 	COMPUTE_SPRITE_COORDS
 
-
+	move.b	#0,0x110
 	* D2 has the color
 	*move.b	(TARGET_SPRITE_ATTR,a0),d4
     * flip_x = D4 & 0x1
@@ -1497,7 +1502,8 @@ update_one_hw_sprite:
 	
 	* we're taking from here, mark the sprite as empty
 	* so BOB pass isn't going to consider it
-	lea		sprite_drawn(pc),a3
+	lea		sprite_drawn_table(pc),a3
+	move.b	#0,0x110
 	st.b	(a3,d7.w)
 	
 
@@ -1620,20 +1626,18 @@ really_update_sprites:
 
 	GET_MEMORY_START_AND_DP
     lea _custom,A5
-	lea		(SPRITE_START,a6),a0		| sprite start
+	lea		(FIRST_SPRITE,a6),a0		| sprite start
 	move.w	#NB_TARGET_SPRITES-1,d7
 
 
+	lea		sprite_drawn_table(pc),a3
+	move.l	a3,0x120
 	move.l	bob_previous_drawn_sprites(pc),a6
-	.ifdef	HW_SPRITES
-	lea		sprite_drawn(pc),a3
-	.endif
 1:
-	.ifdef	HW_SPRITES
 	tst.b	(a3,d7.w)
 	jne		2f
-	.endif
 	jbsr	update_one_bob
+	lea		sprite_drawn_table(pc),a3	| reload table pointer
 	addq.w	#TARGET_SPRITE_SIZEOF,a0
 	dbf		d7,1b
 2:
@@ -1896,7 +1900,6 @@ update_one_bob:
 	.endif
 101:
 	.ifdef	OCS_VERSION
-	move.b	#0,0x110
 	add.w	sprite_x_offset_w,d0
 	.endif
 
@@ -2088,7 +2091,7 @@ blit_planes_any_internal_cookie_cut:
 	nop
 	nop
     add.w   d1,a1       | plane position (D1 < 0x7FFF, 288*40=0x2D00)
-	move.l	a1,0x110
+
 	
 	move.w	bob_row_size,d0
 	tst.w	d4
@@ -2311,7 +2314,7 @@ bob_plane_size:
 blitter_modulo:
 	.word	0
 	
-sprite_drawn:
+sprite_drawn_table:
 	.skip	NB_TARGET_SPRITES
 
 bob_previous_positions_1:
