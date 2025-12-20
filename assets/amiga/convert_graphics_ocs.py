@@ -355,7 +355,7 @@ full_palette += (nb_colors-len(full_palette)) * [(0x10,0x20,0x30)]
 
 # most sprites are eligible to hw sprites except X-sized (>16)
 # we have to include them all for priority reasons. Hoses can be an exception as they're mostly behind
-possible_hw_sprites = set()
+possible_hw_sprites = get_possible_hw_sprites()
 #{i for i in range(0,0x100) if i not in dsx_sprites and i not in dsxy_sprites and not i in range(0x70,0x7C)}
 
 plane_orientations = [("standard",lambda x:x),

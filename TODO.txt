@@ -11,6 +11,7 @@
 - add hw sprites for characters if not too close to others (helps with flickering)
   divide X & Y by 32 then use a table (zeroed at first). If table[X/32,Y/32] == 0 then mark it
   and HW sprite can be used.
+- re-enable HW sprites, add mirror to HW sprites
 
 
 minor/optims:

@@ -131,6 +131,19 @@ def add_tile(table,index,cluts=[0]):
     for idx in index:
         table[idx] = cluts
 
+def get_possible_hw_sprites():
+    dsy_sprites = get_double_size_y_sprites()
+    dsx_sprites = get_double_size_x_sprites()
+    dsxy_sprites = get_double_size_xy_sprites()
+    possible_hw_sprites = set()
+    sprite_names = get_sprite_names()
+    for i in range(0,0x100):
+        if i not in dsx_sprites and i not in dsxy_sprites:
+            name = sprite_names.get(i,"unknown")
+            if any(x in name for x in ("points","ghost","dragon","red_enemy","player")):
+                possible_hw_sprites.add(i)
+    return possible_hw_sprites
+
 def split_bitplane_data(bitplane_data,actual_nb_planes,cache,width,height,y_start,next_cache_id):
     plane_size = len(bitplane_data) // actual_nb_planes
     bitplane_plane_ids = []
