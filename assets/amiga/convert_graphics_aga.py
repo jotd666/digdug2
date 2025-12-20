@@ -562,28 +562,30 @@ with open(os.path.join(aga_src_dir,"graphics.68k"),"w") as f:
     if possible_hw_sprites:
         f.write("hws_table:\n")
         for i,tile_entry in enumerate(sprite_table_no_size):
-            f.write("\t.long\t")
-            if any(t and "sprdat" in t['standard'] for t in tile_entry):
-                prefix = sprite_names.get(i,"bob")
-                prefix = f"hws_{prefix}_{i:02x}"
-                f.write(prefix)
-            else:
-                f.write("0")
-            f.write("\n")
+            for orientation in ['standard','mirror']:
+                f.write("\t.long\t")
+                if any(t and "sprdat" in t[orientation] for t in tile_entry):
+                    prefix = sprite_names.get(i,"bob")
+                    prefix = f"hws_{prefix}_{i:02x}_{orientation}"
+                    f.write(prefix)
+                else:
+                    f.write("0")
+                f.write("\n")
 
         # HW sprites clut declaration
         for i,tile_entry in enumerate(sprite_table_no_size):
-            if any(t and "sprdat" in t['standard'] for t in tile_entry):
-                prefix = sprite_names.get(i,"bob")
-                f.write(f"hws_{prefix}_{i:02x}:\n")
-                for j,t in enumerate(tile_entry):
-                    f.write("\t.long\t")
-                    if t:
-                        z = f"hws_{prefix}_{i:02x}_{j:02x}"
-                        f.write(f"{z}_0,{z}_1")
-                    else:
-                        f.write("0,0")
-                    f.write("\n")
+            for orientation in ['standard','mirror']:
+                if any(t and "sprdat" in t[orientation] for t in tile_entry):
+                    prefix = sprite_names.get(i,"bob")
+                    f.write(f"hws_{prefix}_{i:02x}_{orientation}:\n")
+                    for j,t in enumerate(tile_entry):
+                        f.write("\t.long\t")
+                        if t:
+                            z = f"hws_{prefix}_{i:02x}_{j:02x}_{orientation}"
+                            f.write(f"{z}_0,{z}_1")
+                        else:
+                            f.write("0,0")
+                        f.write("\n")
 
     # special case title pic
     f.write("\n* special case:\ntitle_pic:\n")
@@ -608,13 +610,14 @@ with open(os.path.join(aga_src_dir,"graphics.68k"),"w") as f:
 
     if possible_hw_sprites:
         for i,tile_entry in enumerate(sprite_table_no_size):
-            if any(t and "sprdat" in t['standard'] for t in tile_entry):
-                prefix = sprite_names.get(i,"bob")
-                for j,t in enumerate(tile_entry):
+            for orientation in ['standard','mirror']:
+                if any(t and "sprdat" in t[orientation] for t in tile_entry):
+                    prefix = sprite_names.get(i,"bob")
+                    for j,t in enumerate(tile_entry):
 
-                    if t:
-                        data = t["standard"]["sprdat"]
-                        for k,d in enumerate(data):
-                            f.write(f"hws_{prefix}_{i:02x}_{j:02x}_{k}:")
-                            bitplanelib.dump_asm_bytes(d,f,mit_format=True)
-                        f.write("\n")
+                        if t:
+                            data = t[orientation]["sprdat"]
+                            for k,d in enumerate(data):
+                                f.write(f"hws_{prefix}_{i:02x}_{j:02x}_{orientation}_{k}:")
+                                bitplanelib.dump_asm_bytes(d,f,mit_format=True)
+                            f.write("\n")
