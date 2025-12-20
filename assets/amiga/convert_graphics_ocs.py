@@ -182,13 +182,6 @@ NB_SPRITE_CLUTS = 16
 NB_TILE_CLUTS = 64
 
 
-def add_tile(table,index,cluts=[0]):
-    if isinstance(index,range):
-        pass
-    elif not isinstance(index,(list,tuple)):
-        index = [index]
-    for idx in index:
-        table[idx] = cluts
 
 sprite_cluts = {}
 tile_cluts = {}
@@ -249,7 +242,6 @@ if dump_it:
         with open(dump_dir / "used_tiles.json","w") as f:
             tile_cluts_dict = {hex(k):[hex(x) for x in v] for k,v in tile_cluts.items() if v}
             json.dump(tile_cluts_dict,f,indent=2)
-
 
 def replace_colors(set_list,rep_dict):
     for ts in set_list:
@@ -387,7 +379,7 @@ def read_tileset(img_set_list,palette,plane_orientation_flags,cache,is_bob,next_
 
                             # only 4 planes + mask => 5 planes
                             orig_wtile = wtile
-                            y_start,wtile = bitplanelib.autocrop_y(wtile)
+                            y_start,wtile = bitplanelib.autocrop_y(wtile,mask_color=magenta)
                             height = wtile.size[1]
                             width = wtile.size[0]//8 + 2
                             bitplane_data = bitplanelib.palette_image2raw(wtile,None,palette,generate_mask=True,mask_color=magenta)
@@ -583,28 +575,30 @@ with open(os.path.join(ocs_src_dir,"graphics.68k"),"w") as f:
     if possible_hw_sprites:
         f.write("hws_table:\n")
         for i,tile_entry in enumerate(sprite_table_no_size):
-            f.write("\t.long\t")
-            if any(t and "sprdat" in t['standard'] for t in tile_entry):
-                prefix = sprite_names.get(i,"bob")
-                prefix = f"hws_{prefix}_{i:02x}"
-                f.write(prefix)
-            else:
-                f.write("0")
-            f.write("\n")
+            for orientation in ['standard','mirror']:
+                f.write("\t.long\t")
+                if any(t and "sprdat" in t[orientation] for t in tile_entry):
+                    prefix = sprite_names.get(i,"bob")
+                    prefix = f"hws_{prefix}_{i:02x}_{orientation}"
+                    f.write(prefix)
+                else:
+                    f.write("0")
+                f.write("\n")
 
         # HW sprites clut declaration
         for i,tile_entry in enumerate(sprite_table_no_size):
-            if any(t and "sprdat" in t['standard'] for t in tile_entry):
-                prefix = sprite_names.get(i,"bob")
-                f.write(f"hws_{prefix}_{i:02x}:\n")
-                for j,t in enumerate(tile_entry):
-                    f.write("\t.long\t")
-                    if t:
-                        z = f"hws_{prefix}_{i:02x}_{j:02x}"
-                        f.write(f"{z}_0,{z}_1")
-                    else:
-                        f.write("0,0")
-                    f.write("\n")
+            for orientation in ['standard','mirror']:
+                if any(t and "sprdat" in t[orientation] for t in tile_entry):
+                    prefix = sprite_names.get(i,"bob")
+                    f.write(f"hws_{prefix}_{i:02x}_{orientation}:\n")
+                    for j,t in enumerate(tile_entry):
+                        f.write("\t.long\t")
+                        if t:
+                            z = f"hws_{prefix}_{i:02x}_{j:02x}_{orientation}"
+                            f.write(f"{z}_0,{z}_1")
+                        else:
+                            f.write("0,0")
+                        f.write("\n")
 
     # special case title pic
     f.write("\n* special case:\ntitle_pic:\n")
@@ -629,13 +623,14 @@ with open(os.path.join(ocs_src_dir,"graphics.68k"),"w") as f:
 
     if possible_hw_sprites:
         for i,tile_entry in enumerate(sprite_table_no_size):
-            if any(t and "sprdat" in t['standard'] for t in tile_entry):
-                prefix = sprite_names.get(i,"bob")
-                for j,t in enumerate(tile_entry):
+            for orientation in ['standard','mirror']:
+                if any(t and "sprdat" in t[orientation] for t in tile_entry):
+                    prefix = sprite_names.get(i,"bob")
+                    for j,t in enumerate(tile_entry):
 
-                    if t:
-                        data = t["standard"]["sprdat"]
-                        for k,d in enumerate(data):
-                            f.write(f"hws_{prefix}_{i:02x}_{j:02x}_{k}:")
-                            bitplanelib.dump_asm_bytes(d,f,mit_format=True)
-                        f.write("\n")
+                        if t:
+                            data = t[orientation]["sprdat"]
+                            for k,d in enumerate(data):
+                                f.write(f"hws_{prefix}_{i:02x}_{j:02x}_{orientation}_{k}:")
+                                bitplanelib.dump_asm_bytes(d,f,mit_format=True)
+                            f.write("\n")

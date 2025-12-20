@@ -62,8 +62,12 @@ BASE_BPLCON3_VALUE = (1<<12)+(BORDERBLANK<<5)  | dpf second playfield palette st
 BASE_BPLCON2_VALUE = 0x0024		| sprites above all playfields
 
 HW_SPRITE_X_CORRECTION = 9
+	.ifdef	OCS_VERSION
+HW_SPRITE_Y_CORRECTION = -1
+	.else
 HW_SPRITE_Y_CORRECTION = 47
-
+	.endif
+	
 SPRITE_X_CORRECTION = 0
 	.ifdef	OCS_VERSION
 SPRITE_Y_CORRECTION = -16		| X (portrait)
@@ -479,7 +483,11 @@ _user:
 	
 	lea		palette,a0
 	.ifdef	OCS_VERSION
-	* ECS: load 16 common colors
+	* ECS: load 16 common colors for tiles/bobs & sprites
+	move.w	#TOTAL_NB_COLORS,d0
+	lea		tiles_colors,a1	
+	bsr		load_palette
+	lea		palette,a0
 	move.w	#TOTAL_NB_COLORS,d0
 	lea		bobs_colors,a1	
 	.else
@@ -1436,7 +1444,6 @@ really_update_hw_sprites:
 	lea		game_sprites_end+2,a6			| end
 	move.w	#NB_TARGET_SPRITES,d6
 	moveq	#0,d7
-	lea		HW_SpriteYTable_16,a1		| all sprites have same size 16 high
 	move.l	#sprite_control_words,d5
 1:
 	jbsr	update_one_hw_sprite
@@ -1465,7 +1472,6 @@ really_update_hw_sprites:
 	
 	
 * < A0: target sprite memory
-* < A1: hw sprite y table
 * < A2: part copperlist where the sprites are
 * A3: scratch
 * < A4: hardware sprite table (0 if not hw sprite)
@@ -1488,6 +1494,11 @@ update_one_hw_sprite:
 	move.l	(a4,d3.w),d3
 	jeq		2f		| not defined or no HW sprite, pass to BOBs
 
+	lea		HW_SpriteYTable_16,a1		| most sprites have same size 16 high
+	btst	#SIZE_Y_BIT,d2
+	jeq		0f
+	lea		HW_SpriteYTable_32,a1		| most sprites have same size 16 high
+0:
 
 	COMPUTE_SPRITE_COORDS
 
@@ -1498,10 +1509,8 @@ update_one_hw_sprite:
 	* we're taking from here, mark the sprite as empty
 	* so BOB pass isn't going to consider it
 	lea		sprite_drawn_table(pc),a3
-
 	st.b	(a3,d7.w)
 	
-
 
 	.ifne	HW_SPRITE_X_CORRECTION
 	add.w	#HW_SPRITE_X_CORRECTION,d0
@@ -1526,7 +1535,7 @@ update_one_hw_sprite:
 
 	* first sprite of couple
 	move.l	(a5)+,a3	| pointer on sprite data
-	*move.l	d0,(a3)		| control word of sprite 1
+	*move.l	d0,(a3)		| control word of sprite 1, not useful
 	move.l	a3,d1
 	* store sprite pointer in copperlist
 	move.w	d1,(4,a2)
@@ -1543,7 +1552,7 @@ update_one_hw_sprite:
 	swap	d0
 	move.w	d0,(2+8,a3)
 	move.l	(a5),a3		| pointer on sprite data
-	*move.l	d0,(a3)		| control word of sprite 2
+	*move.l	d0,(a3)		| control word of sprite 2, not useful
 	move.l	a3,d1
 	* store sprite pointer in copperlist
 	move.w	d1,(4+8,a2)
@@ -3075,6 +3084,7 @@ HW_SpriteYTable_\height:
 	.endm
 
 	DEF_HW_SPRITE_Y_TABLE	16
+	DEF_HW_SPRITE_Y_TABLE	32
 
 * < A0: copperlist address for bitplane pointers
 * < D0: first bitplane address
@@ -3732,11 +3742,9 @@ game_copperlist:
 	
 	* black color background plane
 
-	.ifndef	OCS_VERSION
-tiles_colors:
+tiles_colors:			| AGA: tiles, OCS: HW sprites
 	DECL_COLORS	16,TOTAL_NB_COLORS
-	.endif
-bobs_colors:
+bobs_colors:			| AGA: bobs, OCS: tiles+bobs
 	DECL_COLORS	0,TOTAL_NB_COLORS
 
 
