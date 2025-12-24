@@ -158,7 +158,7 @@ sound_killed_4051 = $4051
 sound_pump_deploying_4045 = $4045
 sound_sfx_4046 = $4046
 sound_sfx_4048 = $4048
-sound_sfx_404c = $404c
+sound_sfx_bonus_picked_404c = $404c
 sound_sfx_404f = $404f
 sound_sfx_4050 = $4050
 sound_sfx_4055 = $4055
@@ -5833,7 +5833,7 @@ B7BF: E7 0A          STB    $A,X
 B7C1: CC 0C 3F       LDD    #$0C3F
 B7C4: A7 0B          STA    $B,X
 B7C6: E7 04          STB    $4,X
-B7C8: F7 40 4C       STB    sound_sfx_404c
+B7C8: F7 40 4C       STB    sound_sfx_bonus_picked_404c
 B7CB: BD C0 BB       JSR    $C0BB
 B7CE: 6F 0C          CLR    $C,X
 B7D0: BD 81 50       JSR    suspend_task_8150

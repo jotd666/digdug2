@@ -287,7 +287,7 @@ with open(source_dir / "conv.s") as f:
             if "inc" in toks:
                 # INC sound_44xx: enabling sfx
                 lines[i+1] += "\tjbsr\tplay_sound\n"
-            elif "sta" in toks:
+            elif "sta" in toks or "stb" in toks:
                 # STA sound_44xx: enabling or disabling sfx
                 lines[i+1] += "\tjbsr\tsound_control\n"
         if "ERROR" in line:

@@ -822,6 +822,7 @@ l_83ad:
 	jbsr	sound_control
 	GET_ADDRESS	sound_warning_4042         	| [$83c0: stb    sound_warning_4042]
 	move.b	d1,(a0)                         	| [...]
+	jbsr	sound_control
 	jra	l_83ad                             	| [$83c3: bra    $83ad]
 * level completed!
 l_83c5:
@@ -4194,6 +4195,7 @@ l_9a5c:
 	move.w	#0x0001,d1                      	| [$9a5f: ldd    #$0001]
 	GET_ADDRESS	sound_highscore_tune_404a  	| [$9a62: stb    sound_highscore_tune_404a]
 	move.b	d1,(a0)                         	| [...]
+	jbsr	play_sound
 	GET_REG_UNCHECKED_ADDRESS	0x0800,d2              	| [$9a65: sta    $0800,x] [video_address]
 	move.b	d0,(a0)                         	| [...]
 	VIDEO_BYTE_DIRTY | [...]
@@ -6978,8 +6980,9 @@ l_aa30:
 	move.w	#0x0801,d1                      	| [$aa32: ldd    #$0801]
 	GET_REG_ADDRESS	0x4,d4                 	| [$aa35: sta    $4,u]
 	move.b	d0,(a0)                         	| [...]
-	GET_ADDRESS	sound_hurry_4043           	| [$aa37: stb    sound_hurry_4043]
+	GET_ADDRESS	sound_ground_crumbling_4043           	| [$aa37: stb    sound_ground_crumbling_4043]
 	move.b	d1,(a0)                         	| [...]
+	jbsr	play_sound
 	exg	d4,d2                              	| [$aa3a: exg    u,x]
 	jbsr	l_c0bb                            	| [$aa3c: jsr    $c0bb]
 	GET_REG_ADDRESS	0xc,d2                 	| [$aa3f: clr    $c,x]
@@ -7027,8 +7030,9 @@ l_aa9a:
 	move.w	#0x0001,d1                      	| [$aa9d: ldd    #$0001]
 	GET_REG_ADDRESS	0xc,d2                 	| [$aaa0: sta    $c,x]
 	move.b	d0,(a0)                         	| [...]
-	GET_ADDRESS	sound_hurry_4043           	| [$aaa2: stb    sound_hurry_4043]
+	GET_ADDRESS	sound_ground_crumbling_4043           	| [$aaa2: stb    sound_ground_crumbling_4043]
 	move.b	d1,(a0)                         	| [...]
+	jbsr	play_sound
 	GET_ADDRESS	0x1009                     	| [$aaa5: inc    $1009]
 	addq.b	#1,(a0)                         	| [...]
 	jra	l_aaad                             	| [$aaa8: bra    $aaad]
@@ -9456,8 +9460,9 @@ l_b7aa:
 	move.b	d0,(a0)                         	| [...]
 	GET_REG_ADDRESS	0x4,d2                 	| [$b7c6: stb    $4,x]
 	move.b	d1,(a0)                         	| [...]
-	GET_ADDRESS	sound_sfx_404c             	| [$b7c8: stb    sound_sfx_404c]
+	GET_ADDRESS	sound_sfx_bonus_picked_404c             	| [$b7c8: stb    sound_sfx_bonus_picked_404c]
 	move.b	d1,(a0)                         	| [...]
+	jbsr	play_sound
 l_b7cb:
 	jbsr	l_c0bb                            	| [$b7cb: jsr    $c0bb]
 	GET_REG_ADDRESS	0xc,d2                 	| [$b7ce: clr    $c,x]
