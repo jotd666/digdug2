@@ -1,3 +1,5 @@
+- missing sounds for pick bonus (mushroom...)
+- missing sounds for earth crumbling
 - command line arguments
 - sometimes lockup at level 11 for instance, then monsters suicide
 - sfx: assign channels & priorities to sounds. Use channel 3 mostly

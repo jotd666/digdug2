@@ -742,109 +742,7 @@ call_bcpl:
 
 
 
-* < D0: sprite X
-* < D1: sprite Y
-* < D2: sprite code & flags
-* < D3: sprite color (clut index, no flip information)
-* > D6: allocated sprite index
-alloc_sprite:
-	* first pass: find a free sprite next to a sprite with
-	* same clut
-	lea		host_sprites(pc),a2
-	moveq	#0,d6
-0:
-	cmp.b	(SPRITE_CLUT,a2),d3
-	bne.b	10f
-	* allocated (else would be -1/invalid) + same clut
-	* check even/odd index
-	btst	#0,d6
-	beq.b	1f
-	* odd: check if previous entry is free
-	tst.b	(SPRITE_X-SPRITE_SIZEOF,a2)
-	beq.b	8f
-	tst.b	(SPRITE_Y-SPRITE_SIZEOF,a2)
-	bne.b	10f
-8:
-	* previous entry is free, same clut: we can use that
-	* entry, no color conflict
-	lea		(-SPRITE_SIZEOF,a2),a2
-9:
-	move.b	d0,(a2)+		| X
-	move.b	d1,(a2)+		| Y
-	move.b	d2,(a2)+		| code
-	move.b	d3,(a2)+		| clut (no flip information)
-	rts						| done
-1:
-	* even: check if next entry is free
-	tst.b	(SPRITE_X+SPRITE_SIZEOF,a2)
-	beq.b	2f
-	tst.b	(SPRITE_Y+SPRITE_SIZEOF,a2)
-	bne.b	10f
-2:
-	* next entry is free, same clut: we can use that
-	* entry, no color conflict
-	lea		(SPRITE_SIZEOF,a2),a2
-	bra.b	9b
-10:
-	* next entry
-	addq.w	#SPRITE_SIZEOF,a2
-	addq	#1,d6
-	cmp.w	#NB_HOST_SPRITES,d6
-	bne.b	0b
-	* second pass if first pass failed (could not match
-	* a pair with one occupied slot with compatible clut,
-	* which happens when there are very few sprites
-	* displayed): we have to find 2 consecutive free slots
 
-	lea		host_sprites(pc),a2
-	moveq	#0,d6
-11:
-	* we consider that a sprite is not allocated
-	* if one of the coordinates is zero (real game
-	* doesn't care and sets X to 255, and Y to 0 at times
-	tst.b	(SPRITE_Y,a2)
-	beq.b	12f
-	tst.b	(SPRITE_X,a2)
-	bne.b	20f
-12:
-	* not allocated: test odd sprite
-	tst.b	(SPRITE_Y+SPRITE_SIZEOF,a2)
-	jeq	9b
-	tst.b	(SPRITE_X+SPRITE_SIZEOF,a2)
-	jeq	9b		| ok, both slots are free, allocate the first one
-20:
-	* next sprite pair
-	lea		(2*SPRITE_SIZEOF,a2),a2
-	addq	#2,d6
-	cmp.w	#NB_HOST_SPRITES,d6
-	bne.b	11b
-	
-	* third pass: last chance/emergency: there ARE free slots
-	* but maybe too many different cluts so we can't find a suitable slot.
-	* In that case, pick the first free slot
-	*
-	lea		host_sprites(pc),a2
-	moveq	#0,d6
-21:
-	tst.b	(SPRITE_X,a2)
-	beq.b	9b		| ok, a slot is free, allocate it
-	tst.b	(SPRITE_Y,a2)
-	beq.b	9b		| ok, a slot is free, allocate it
-30:
-	* next sprite
-	lea		(SPRITE_SIZEOF,a2),a2
-	addq	#1,d6
-	cmp.w	#NB_HOST_SPRITES,d6
-	bne.b	21b
-	* just cannot happen
-	* if we reach that point there's a big problem, break if dev mode
-	* hopefully if we save buffer in A1 we can reproduce the issue at will!
-	.ifndef	RELEASE
-	lea			sprite_allocation_error,a0
-	jbsr	osd_break
-	.endif
-	* in release mode, just discard this sprite, maybe we'll get away with it!
-	rts
 	
 * zero all registers but 6809 stack pointer
 cpu_init:
@@ -1180,11 +1078,12 @@ osd_is_vblank_interrupt_enabled:
 	rts
 	
 	
-* 2 conditions I can think of:
+
 
 * Z: set if not playing
 is_game_playing:
-
+	* TODO check screen somewhere to avoid insert coin on
+	* "get ready" screen
 	movem.l	a5/a6,-(a7)
 	GET_MEMORY_START_AND_DP
 	tst.b	game_in_play_101b(a6)
@@ -1451,6 +1350,12 @@ really_update_hw_sprites:
 0:
 	clr.l	(a0)+
 	dbf		d7,0b
+	* make sure to respect original game priorities like with BOBs
+	*
+	* if not done, HW sprite can be drawn on top of a BOB that is supposed
+	* to be drawn on top. So only assign HW sprite if the object is alone
+	* in its slot (32x32 square)
+	*
 	* position the bobs&sprites in the grid. Don't put a hardware sprite
 	* if number of objects in grid is != 1 (ourselves)
 
@@ -2144,9 +2049,7 @@ blit_planes_any_internal_cookie_cut:
 4:
     * make offset even. Blitter will ignore odd address
     * but a 68000 CPU doesn't and since we RETURN A1...
-    
-	nop
-	nop
+
     add.w   d1,a1       | plane position (D1 < 0x7FFF, 288*40=0x2D00)
 
 	

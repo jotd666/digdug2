@@ -47,11 +47,11 @@ POTGO_RESET = 0xFF00  	| was 0xFFFF but changed, thanks to robinsonb5@eab
 _detect_controller_types:
     movem.l d0/a0,-(a7)
 	moveq	#0,d0
-	bsr		.detect
+	jbsr		_detect_controller_types_nowait
 * ignore first read
 	bsr	.wvbl
 	moveq	#0,d0
-	bsr		.detect
+	jbsr		_detect_controller_types_nowait
 	
 	lea	controller_joypad_0(pc),a0
 	move.b	D0,(A0)
@@ -59,7 +59,7 @@ _detect_controller_types:
 	bsr	.wvbl
 	
 	moveq	#1,d0
-	bsr		.detect
+	jbsr		_detect_controller_types_nowait
 	lea	controller_joypad_1(pc),a0
 	move.b	D0,(A0)
     movem.l (a7)+,d0/a0
@@ -74,7 +74,7 @@ _detect_controller_types:
 	btst	#5,d0
 	beq.b	.wait
 	rts
-.detect:
+_detect_controller_types_nowait:
 		movem.l	d1-d5/a0-a1,-(a7)
 	
 		tst.l	d0
