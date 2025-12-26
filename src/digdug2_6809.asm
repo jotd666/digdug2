@@ -161,7 +161,7 @@ sound_sfx_4048 = $4048
 sound_sfx_bonus_picked_404c = $404c
 sound_sfx_404f = $404f
 sound_sfx_4050 = $4050
-sound_sfx_4055 = $4055
+sound_sfx_one_million_4055 = $4055
 sound_warning_4042 = $4042
 
 ; unused small nice tunes!
@@ -1336,7 +1336,7 @@ random_8aa0:
 8B1C: 86 0B          LDA    #$0B
 8B1E: C6 02          LDB    #$02
 8B20: BD 85 BD       JSR    fill_status_text_85bd
-8B23: 7C 40 55       INC    sound_sfx_4055
+8B23: 7C 40 55       INC    sound_sfx_one_million_4055
 8B26: 20 15          BRA    $8B3D
 8B28: BD 8C 17       JSR    $8C17
 8B2B: 8E 17 00       LDX    #player_1_score_1700
@@ -7635,7 +7635,7 @@ E956: 7F 50 0A       CLR    video_stuff_500A
 E959: 7F 50 08       CLR    video_stuff_5008
 E95C: 7E 80 72       JMP    init_8072
 
-E95F: 7C 40 55       INC    sound_sfx_4055
+E95F: 7C 40 55       INC    sound_sfx_one_million_4055
 E962: 8E 07 FF       LDX    #$07FF
 E965: 86 20          LDA    #$20
 E967: C6 80          LDB    #$80

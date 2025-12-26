@@ -1112,14 +1112,14 @@ lose_all_lives:
 	movem.l	(a7)+,a6/a5
 	rts
 
-add_10000_points:
+add_100000_points:
 	movem.l	a5/a6,-(a7)
 	GET_MEMORY_START_AND_DP
 	movem.w	d0/d7,-(a7)
-	*move.b	player_1_score_9663+2(a6),d0
+	move.b	player_1_score_1700(a6),d0
 	MOVEQ	#1,d7
 	abcd	d7,d0
-	*move.b	d0,player_1_score_9663+2(a6)
+	move.b	d0,player_1_score_1700(a6)
 	movem.w	(a7)+,d0/d7
 	movem.l	(a7)+,a5/a6
 	rts
@@ -3302,7 +3302,7 @@ handle_keyboard:
 	st.b	cheat_used
 	* add 10000 points
 	move.w	#0x0FF,_custom+color
-	jbsr	add_10000_points
+	jbsr	add_100000_points
 	
 0:
 	cmp.b	#0x53,d0	| F4 key
