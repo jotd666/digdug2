@@ -244,6 +244,7 @@ start:
 	.global		_resload
 	.global		_dosbase
 	.global		cheat_used
+	.global		no_io_flag
 * osd layer		
 		.global osd_enable_interrupts
 		.global osd_disable_interrupts
@@ -345,11 +346,6 @@ _user:
 	beq.b	2f
 	bsr		bcpl_string_to_int
 	move.l	d0,difficulty_level
-2:
-	move.l	(A0)+,D0	| STARTLEVEL/K/N
-	beq.b	2f
-	bsr		bcpl_string_to_int
-	move.l	d0,start_level_option
 2:
 
 
@@ -510,6 +506,8 @@ _user:
 2:
 	btst	#0,d0
 	sne		invincible_flag
+	btst	#2,d0
+	sne		no_io_flag
 
 	BTST	#1,d0
 	sne		infinite_lives_flag
@@ -899,7 +897,11 @@ level3_interrupt:
 	addq.b	#1,d0
 	cmp.b	#5,d0
 	bne.b	1f
-	* D5 should be left untouched!
+	* we can't rely on the current value of D5 when interrupting. We could
+	* interrupt a non-6809 code with a D5 set to anything (not S offset)
+	* so we set S to something innocuous just in case it's used directly.
+	* Below this address there's plenty of room for auto-variables
+	move.l	#0x8000,d5
 	jbsr		do_irq
 	clr.b	interrupt_mode	
 	clr.b	d0
@@ -3555,7 +3557,8 @@ update_tile_function:
 _keyexit:
 	.byte	0x45	| ESC by default unless whdload overwrites it
 
-	
+no_io_flag:
+	.byte	0
 cheat_used:
 	.byte	0
 dosname:

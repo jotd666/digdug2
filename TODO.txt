@@ -1,5 +1,6 @@
+- try to merge discarded optims from -copy
+- pass optimizer
 - command line arguments
-- sometimes lockup at level 11 for instance, then monsters suicide
 - sfx: assign channels & priorities to sounds. Use channel 3 mostly
   use channel 2 only for special items: waiting to see if music can hold on 2 channels,
   else would have to use audiomixer
@@ -14,6 +15,8 @@ minor/optims:
 - can still insert coin with fire on "get ready" screen
 - slow & flickering from floppy 68000
 - pump appears on top status screen at times
+- sometimes lockup at level 11 for instance, then monsters suicide
+  maybe fixed now with better 60Hz makeup interrupt
 
 
 fix random:

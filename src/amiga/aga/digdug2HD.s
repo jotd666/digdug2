@@ -5,8 +5,8 @@
 
 ;CHIP_ONLY
 
-EXPMEM = $100000
-CHIPSIZE = $100000
+EXPMEM = $C0000
+CHIPSIZE = $80000
 
 _base	SLAVE_HEADER					; ws_security + ws_id
 	dc.w	17					; ws_version (was 10)
@@ -28,7 +28,7 @@ _expmem
     IFD CHIP_ONLY
     dc.l    $0
     ELSE
-	dc.l	EXPMEM+$60000					; ws_expmem
+	dc.l	EXPMEM					; ws_expmem
     ENDC
 	dc.w	_name-_base				; ws_name
 	dc.w	_copy-_base				; ws_copy
@@ -41,6 +41,7 @@ _expmem
 _config
 	dc.b	"C1:X:invincible:0;"
 	dc.b	"C1:X:infinite lives:1;"
+	dc.b	"C1:X:no highscore load or save:2;"   ; to fix cd32load incompatibilities
 	dc.b	"C1:X:cheat keys:4;"
 	dc.b	"C2:X:25 Hz update:0;"
 

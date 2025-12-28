@@ -20,6 +20,10 @@ SCORE_FILE_SIZE = 0x200-0x1b0
 
 		
 osd_read_high_scores:
+	tst.b	no_io_flag
+	jeq		0f
+	rts
+0:
 	movem.l	d0-d7/a0-a6,-(a7)
 	move.l	_resload,d0
 	beq.b	0f
@@ -63,6 +67,10 @@ osd_read_high_scores:
 	rts
 	
 osd_write_high_scores:
+	tst.b	no_io_flag
+	jeq		0f
+	rts
+0:
 	movem.l	d0-d7/a0-a6,-(a7)
 	.ifdef	RELEASE
 	tst.b	cheat_used		| don't save score if cheat on
