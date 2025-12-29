@@ -838,6 +838,23 @@ _nmi:
 	move.w	#0x7FFF,_custom+intreq
 	rts
 	
+handle_music_termination:
+	move.b	_mt_E8Trigger,d0
+	jeq		0f
+	* E8 command just issued from module, handle it
+	* those commands are there to signal that some tune is
+	* completed, game is actively waiting on some
+	and.b	#0xFF,d0
+	subq	#1,d0
+	move.l	a5,d1		| save a5
+	GET_MEMORY_START_AND_DP
+	lea		(0x4040,a6),a0
+	clr.b	(a0,d0.w)		| memory address offset where to cancel the sound
+	clr.b	_mt_E8Trigger	| ack
+	move.l	d1,a5
+0:
+	rts
+
 level3_interrupt:
     movem.l d0-d7/a0-a6,-(a7)
 	lea		_custom,a5
@@ -866,6 +883,7 @@ level3_interrupt:
 	bne.b	0f
 	bsr		toggle_pause
 0:
+	jbsr	handle_music_termination
 	
 	* ack vbl twice (040/pistorm bug)
 	move.w	#0x20,(intreq,a5)
