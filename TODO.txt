@@ -1,5 +1,6 @@
-- try to merge discarded optims from -copy
+- re-optimize
 - pass optimizer
+- cycle exact sprites flicker maybe bad wait to set sprite pos (depends on fmode?)
 - command line arguments
 - sfx: assign channels & priorities to sounds. Use channel 3 mostly
   use channel 2 only for special items: waiting to see if music can hold on 2 channels,

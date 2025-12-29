@@ -241,11 +241,8 @@ osd_sound_start:
 	bsr		force_sound_stop
     lea _custom,a6
  	movem.l	d0/a0,-(a7)
-	*lea	pooyan_tunes,a0
-	illegal
-	illegal
-	illegal
-	illegal
+	lea	digdug2_tunes,a0
+
 	
 	move.b	d1,music_track_start_number
 	move.w	d1,d0
@@ -284,7 +281,7 @@ music_loops:
 music_volume:
 	.byte	0
 music_track_start_number:
-	.word	0
+	.word	-1
 music_pattern:
 	.word	0
 music_tick:

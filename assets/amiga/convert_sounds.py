@@ -67,9 +67,14 @@ def convert():
 
 
 
+    sound_dict.update({
+    "MAIN_TUNE_SND"      :{"index":2,"pattern":0,"volume":32},
+    }
+    )
+
     dummy_sounds = [5,3,
     0xB,
-    2,0x13,1,0xa,0xc
+    0x13,1,0xa,0xc
     ]
 
     with open(os.path.join(src_dir,"..","sounds.inc"),"w") as f:
@@ -222,11 +227,11 @@ def convert():
 
 
         # make sure next section will be aligned
-##        with open(os.path.join(sound_dir,f"{gamename}_conv.mod"),"rb") as f:
-##            contents = f.read()
+        with open(os.path.join(sound_dir,f"{gamename}_conv.mod"),"rb") as f:
+            contents = f.read()
 
         fw.write("{}:".format(music_module_label))
-        #write_asm(contents,fw)
+        write_asm(contents,fw)
         fw.write("\t.align\t8\n")
 
 

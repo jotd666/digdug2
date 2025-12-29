@@ -3741,7 +3741,7 @@ scrolling_bitplanes:
 	* pos 25 in PAL: sprite pos are read
 	* we replace the positions by new ones, allowing to
 	* reuse the same sprite data several times
-	.word	0x01+((25)*256),0xFFFE
+	.word	0x01+((26)*256),0xFFFE
 	.set	offset,0
 sprite_control_words:
 	.rept	8
