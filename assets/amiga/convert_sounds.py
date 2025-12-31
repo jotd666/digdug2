@@ -8,14 +8,12 @@ sox = "sox"
 
 sound_dir = this_dir / ".." / "sounds"
 
-sound_settings_dict = { 0x15 : {"channel":3,"priority":1},
-## 3 : {"channel":1,"priority":20},
-##  0x13 : {"channel":3,"priority":10},
-##  0x20 : {"channel":2,"priority":10},
-##  0x21 : {"channel":2,"priority":10},
-##  0x22 : {"channel":2,"priority":10},
-##  0x82 : {"channel":1,"priority":10},
-##  0x83 : {"channel":1,"priority":10},
+sound_settings_dict = { 0x14 : {"channel":3,"priority":1},  # credit
+8 : {"channel":2,"priority":40},
+3 : {"channel":2,"priority":20},
+0x15 : {"channel":2,"priority":70},
+0xC : {"channel":2,"priority":70},
+0x13 : {"channel":2,"priority":70},
 
 }
 
@@ -54,16 +52,13 @@ def convert():
                 extra_info = sound_settings_dict.get(index) or dict()
 
                 sfx_sample_rate = extra_info.get("sample_rate",lq_sample_rate)
-                sound_dict[entry] = {"channel":extra_info.get("channel",-1),
+                sound_dict[entry] = {"channel":extra_info.get("channel",3),
                 "priority":extra_info.get("priority",40),"index":index,"sample_rate":sfx_sample_rate}
             except ValueError:
                 pass
 
 
 
-    for v in sound_dict.values():
-        if "channel" not in v:
-            v["channel"] = -1 # auto
 
 
     main_mod = "digdug2_main_tune"

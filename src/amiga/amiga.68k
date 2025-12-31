@@ -827,8 +827,8 @@ do_irq:
 *	clr.l	(0x4044,a6)  | game over music is done
 *	clr.l	(0x4048,a6)  | game over music is done
 *	clr.l	(0x404C,a6)  | game over music is done
-*	clr.l	(0x4050,a6)  | death sfx is done & others
-*	clr.b	(0x404D,a6)  | death sfx is done
+	clr.l	(0x4050,a6)  | death sfx is done & others
+	clr.b	(0x404D,a6)  | death sfx is done
 	
 	jra			irq_8000					| pass control to the cpu core
 	
@@ -2560,8 +2560,9 @@ platform_init:
 
 	* 2 first channels are reserved for the music
 	* auto channel selection cannot pick them
-	move	#3,d0
-	jbsr	_mt_musicmask
+	* but this shit doesn't seem to work
+	*move	#3,d0
+	*jbsr	_mt_musicmask
 
 
 	

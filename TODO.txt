@@ -1,9 +1,11 @@
-- re-optimize
+- re-optimize manually
 - pass optimizer
 - cycle exact sprites flicker maybe bad wait to set sprite pos (depends on fmode?)
 - command line arguments
 - sfx: assign channels & priorities to sounds. Use channel 3 mostly
   use channel 2 only for special items, don't use auto, use priorities
+  => ground crumbling now not working, a lot of sounds missing
+- highscore tune: locking the game even if track has E81 command
 - first level: start music plays completely, other levels: it doesn't
 - killed: 2 consecutive sounds, first sound doesn't play
   probably because music stops after, then second sound plays
