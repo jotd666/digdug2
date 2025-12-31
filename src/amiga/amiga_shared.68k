@@ -1,11 +1,10 @@
-		.global osd_read_high_scores
-		.global osd_write_high_scores
-		.global	load_highscores
-		.global	save_highscores
-		.global update_elevator_sound
-		.global osd_sound_start
-		.global osd_music_stop
-		.global music_tick
+	.global osd_read_high_scores
+	.global osd_write_high_scores
+	.global	load_highscores
+	.global	save_highscores
+	.global osd_sound_start
+	.global osd_music_stop
+	.global	last_started_music_sound
 		
 
 
@@ -157,16 +156,14 @@ osd_music_stop:
 *	jbsr	_mt_stopfx
 *	movem.l	(a7)+,d0/a0/a6
 
-	
 	tst.b	music_playing
 	jne		force_sound_stop
-rts
+	rts
 
 force_sound_stop:
 	movem.l	d0-d1/a0/a6,-(a7)
 	lea		_custom,a6
 	move.b	#-1,music_track_start_number
-    clr.w   music_tick   | not playing anymore
 	clr.b	music_playing
 	clr.b	looped_sound_enabled
     jsr		_mt_end
@@ -177,13 +174,6 @@ force_sound_stop:
 osd_sound_start:
 	movem.l	d0/d1/a0/a6,-(a7)
 	lea		_custom,a6
-	and.w	#0xFF,d0
-	jne		0f
-	* null sound: stop
-	jbsr	osd_music_stop
-	jra		10f
-0:
-
 
 	lsl.w	#3,d0
 	lea		sound_table,a0
@@ -220,30 +210,30 @@ osd_sound_start:
 	
 	* music
 4:
-	* don't play if already playing
-	* (music_tick value is not important for looped tunes
-	* as long as it's not zero)
 
-
-	* here we allow music to override another looping music
-	*tst.w	music_tick
-	*bne.b	10b
-	* play the proper module pattern
-	* load up the countdown if loop
-	
 	move.w	(2,a0,d0.w),d1	| pattern number in .mod file
-	* since it's not zero, next vbl tick will play the music
-	
-	cmp.b	music_track_start_number(pc),d1
-	beq.b	10b		| same track, skip
 
     movem.l d0-a6,-(a7)
-	bsr		force_sound_stop
     lea _custom,a6
  	movem.l	d0/a0,-(a7)
-	lea	digdug2_tunes,a0
-
-	
+	lea	module_table,a0
+	lsr.w	#1,d0		| divide by 2 as sound number was *8
+	move.l	(a0,d0.w),a0
+	.ifndef	RELEASE
+	cmp.l	#0,a0
+	jne		22f
+	BREAKPOINT	"module not found for index d1"
+22:
+	.endif
+	cmp.b	music_track_start_number(pc),d1
+	jne	23f		| not the track, play
+	cmp.l	current_module,a0
+	jne	23f
+	movem.l	(a7)+,d0/a0
+	jra	5f	| same track, same module -> skip
+23:
+	jbsr		force_sound_stop
+	move.l	a0,current_module
 	move.b	d1,music_track_start_number
 	move.w	d1,d0
     sub.l   a1,a1		| samples are in the module
@@ -256,14 +246,15 @@ osd_sound_start:
 	move.w	(2,a0,d0.w),music_pattern	| pattern number in .mod file
 	move.w	(4,a0,d0.w),d2
 
-	move.w	d2,music_duration
-	move.w	d2,music_tick
+	lsr.w	#3,d0
+	move.w	d0,last_started_music_sound
 
     moveq	#0,d0
 	move.b	music_volume(pc),d0
     jsr	_mt_mastervol
 	st.b	music_playing
     jsr _mt_start
+5:
     movem.l (a7)+,d0-a6
 	
 6:
@@ -280,15 +271,16 @@ music_loops:
 	.byte	0
 music_volume:
 	.byte	0
+	.align	2
+current_module:
+	.long	0
 music_track_start_number:
 	.word	-1
 music_pattern:
 	.word	0
-music_tick:
+last_started_music_sound:
 	.word	0
 
-music_duration:
-	.word	0
 high_score_buffer:
 	.skip	SCORE_FILE_SIZE
 highscore_needs_saving:

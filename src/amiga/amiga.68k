@@ -823,12 +823,12 @@ do_irq:
 	jbsr	cpu_init
 	GET_MEMORY_START_AND_DP
 	* TEMP TEMP
-	clr.l	(0x4040,a6)  | start music is done
-	clr.l	(0x4044,a6)  | game over music is done
-	clr.l	(0x4048,a6)  | game over music is done
-	clr.l	(0x404C,a6)  | game over music is done
-	clr.l	(0x4050,a6)  | death sfx is done & others
-	clr.b	(0x404D,a6)  | death sfx is done
+*	clr.l	(0x4040,a6)  | start music is done
+*	clr.l	(0x4044,a6)  | game over music is done
+*	clr.l	(0x4048,a6)  | game over music is done
+*	clr.l	(0x404C,a6)  | game over music is done
+*	clr.l	(0x4050,a6)  | death sfx is done & others
+*	clr.b	(0x404D,a6)  | death sfx is done
 	
 	jra			irq_8000					| pass control to the cpu core
 	
@@ -844,11 +844,10 @@ handle_music_termination:
 	* E8 command just issued from module, handle it
 	* those commands are there to signal that some tune is
 	* completed, game is actively waiting on some
-	and.b	#0xFF,d0
-	subq	#1,d0
+	move.w	last_started_music_sound,d0
 	move.l	a5,d1		| save a5
 	GET_MEMORY_START_AND_DP
-	lea		(0x4040,a6),a0
+	lea		(sound_level_start_tune_4040,a6),a0
 	clr.b	(a0,d0.w)		| memory address offset where to cancel the sound
 	clr.b	_mt_E8Trigger	| ack
 	move.l	d1,a5
@@ -2557,8 +2556,12 @@ platform_init:
 	move.l	a0,(0xD0,a6)
 	move.l	system_vbr(pc),a0
 	moveq	#1,d0	| PAL
-	jsr		_mt_install_cia
+	jbsr		_mt_install_cia
 
+	* 2 first channels are reserved for the music
+	* auto channel selection cannot pick them
+	move	#3,d0
+	jbsr	_mt_musicmask
 
 
 	
@@ -3258,7 +3261,7 @@ add_one_credit:
 1:
 	or.b	#0xF0,d0
 	move.b	d0,(credits_unit_4803,a6)
-	move.w	#credit_15_SND,d0
+	move.w	#credit_14_SND,d0
 	jbsr	osd_sound_start
 	movem.l	(a7)+,d0/a5/a6
 	rts

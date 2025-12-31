@@ -6,7 +6,7 @@ play_sound:
     move.l  d0,-(a7)
     move.l  a0,d0
     sub.l   a6,d0
-    sub.w   #0x403F,d0
+    sub.w   #sound_level_start_tune_4040,d0
     jbsr    osd_sound_start
     move.l  (a7)+,d0
     rts
@@ -15,7 +15,7 @@ stop_sound:
     move.l  d0,-(a7)
     move.l  a0,d0
     sub.l   a6,d0
-    sub.w   #0x403F,d0
+    sub.w   #sound_level_start_tune_4040,d0
     lea		music_table(pc),a1
 	tst.b	(a1,d0.w)
 	jeq		0f
@@ -24,35 +24,47 @@ stop_sound:
     move.l  (a7)+,d0
     rts
 
+* < (a0): previous value
+* < d0: new value
+* > (a0): possibly updated value
+* (and if d0 != (a0) does something else does nothing)
+*
+* we need to know what was the previous value because the game
+* tries to stop non-playing tunes when another tune is playing
+* and our host API only has a global "stop_music" call
 sound_control:
-    tst.b   d0
-    jeq     0f
-    jbsr    play_sound
-	rts
+	cmp.b	(a0),d0
+	jeq		1f		| already in the correct state: do nothing
+    move.b	d0,(a0)	| change value
+    jeq     0f		| if changes to 0 stop sound if this tune was playing
+	* if changes to 1, play sound
+    jbra    play_sound
 0:
 	jbra	stop_sound
-
+1:
+	rts
+	
 music_table:
-	.byte	0	| 0x00
+	.byte	1	| 0x00
 	.byte	1	| 0x01
 	.byte	1	| 0x02
-	.byte	1	| 0x03
-	.byte	0	| 0x04
-	.byte	1	| 0x05
+	.byte	0	| 0x03
+	.byte	1	| 0x04
+	.byte	0	| 0x05
 	.byte	0	| 0x06
 	.byte	0	| 0x07
 	.byte	0	| 0x08
-	.byte	0	| 0x09
+	.byte	1	| 0x09
 	.byte	1	| 0x0a
 	.byte	1	| 0x0b
-	.byte	1	| 0x0c
+	.byte	0	| 0x0c
 	.byte	0	| 0x0d
 	.byte	0	| 0x0e
 	.byte	0	| 0x0f
 	.byte	0	| 0x10
 	.byte	0	| 0x11
-	.byte	0	| 0x12
-	.byte	1	| 0x13
+	.byte	1	| 0x12
+	.byte	0	| 0x13
 	.byte	0	| 0x14
 	.byte	0	| 0x15
 	.byte	0	| 0x16
@@ -552,7 +564,6 @@ sync_loop_80c1:
 	GET_ADDRESS	sound_credit_4054          	| [$80e0: adda   sound_credit_4054]
 	add.b	(a0),d0                          	| [...]
                                          | [$80e3: sta    sound_credit_4054]
-	move.b	d0,(a0)                         	| [...]
 	jbsr	sound_control
 	GET_ADDRESS	namco_io_4800              	| [$80e6: clr    namco_io_4800]
 	clr.b	(a0)                         	| [...]
@@ -1083,22 +1094,21 @@ l_83ad:
 	jne	l_83c5                             	| [$83b8: bne    $83c5]
 	GET_ADDRESS	0x10dc                     	| [$83ba: ldd    $10dc]
 	LOAD_D                                 	| [$83ba: ldd    $10dc]
+
 	GET_ADDRESS	sound_in_game_tune_4041    	| [$83bd: sta    sound_in_game_tune_4041]
-	move.b	d0,(a0)                         	| [...]
 	jbsr	sound_control
 	GET_ADDRESS	sound_warning_4042         	| [$83c0: stb    sound_warning_4042]
-	move.b	d1,(a0)                         	| [...]
+	exg		d0,d1
 	jbsr	sound_control
+	exg		d0,d1
 	jra	l_83ad                             	| [$83c3: bra    $83ad]
 * level completed!
 l_83c5:
 	move.b	#0x00,d0                        	| [$83c5: ldd    #$0000]
 	move.w	#0x0000,d1                      	| [$83c5: ldd    #$0000]
 	GET_ADDRESS	sound_in_game_tune_4041    	| [$83c8: sta    sound_in_game_tune_4041] stop music
-	move.b	d0,(a0)                         	| [...]
 	jbsr	sound_control
 	GET_ADDRESS	sound_warning_4042         	| [$83cb: sta    sound_warning_4042] stop other music
-	move.b	d0,(a0)                         	| [...]
 	jbsr	sound_control
 	MAKE_D                                 	| [...]
 	GET_ADDRESS	0x10dc                     	| [$83ce: std    $10dc]
@@ -1134,10 +1144,8 @@ player_killed_83ff:
 	move.b	#0x00,d0                        	| [$83ff: ldd    #$0000]
 	move.w	#0x0000,d1                      	| [$83ff: ldd    #$0000]
 	GET_ADDRESS	sound_in_game_tune_4041    	| [$8402: sta    sound_in_game_tune_4041]
-	move.b	d0,(a0)                         	| [...]
 	jbsr	sound_control
 	GET_ADDRESS	sound_warning_4042         	| [$8405: sta    sound_warning_4042]
-	move.b	d0,(a0)                         	| [...]
 	jbsr	sound_control
 	MAKE_D                                 	| [...]
 	GET_ADDRESS	0x10dc                     	| [$8408: std    $10dc]
@@ -1202,10 +1210,8 @@ l_8463:
 	move.b	#0x00,d0                        	| [$8469: ldd    #$0000]
 	move.w	#0x0000,d1                      	| [$8469: ldd    #$0000]
 	GET_ADDRESS	sound_in_game_tune_4041    	| [$846c: sta    sound_in_game_tune_4041]
-	move.b	d0,(a0)                         	| [...]
 	jbsr	sound_control
 	GET_ADDRESS	sound_warning_4042         	| [$846f: sta    sound_warning_4042]
-	move.b	d0,(a0)                         	| [...]
 	jbsr	sound_control
 	MAKE_D                                 	| [...]
 	GET_ADDRESS	0x10dc                     	| [$8472: std    $10dc]
@@ -3333,7 +3339,6 @@ l_91e1:
 	GET_ADDRESS	round_number_1034          	| [$91e8: lda    round_number_1034]
 	move.b	(a0),d0                         	| [...]
 	GET_ADDRESS	sound_credit_4054          	| [$91eb: sta    sound_credit_4054]
-	move.b	d0,(a0)                         	| [...]
 	jbsr	sound_control
 	move.w	#0x2010,d2                      	| [$91ee: ldx    #$2010]
 l_91f1:
@@ -4298,7 +4303,6 @@ task_entry_12_highscore_screen_9955:
 	move.b	#0x01,d0                        	| [$9960: ldd    #$012e]
 	move.w	#0x012e,d1                      	| [$9960: ldd    #$012e]
 	GET_ADDRESS	sound_highscore_tune_404a  	| [$9963: sta    sound_highscore_tune_404a]
-	move.b	d0,(a0)                         	| [...]
 	jbsr	sound_control
 	GET_ADDRESS	timer_104f                 	| [$9966: stb    timer_104f]
 	move.b	d1,(a0)                         	| [...]
@@ -4373,7 +4377,6 @@ l_99e3:
 l_99ed:
 	move.b	#0x01,d0                        	| [$99ed: lda    #$01]
 	GET_ADDRESS	sound_highscore_tune_404a  	| [$99ef: sta    sound_highscore_tune_404a]
-	move.b	d0,(a0)                         	| [...]
 	jbsr	sound_control
 	GET_ADDRESS	pump_button_pressed_1015   	| [$99f2: cmpa   pump_button_pressed_1015]
 	cmp.b	(a0),d0                          	| [...]
@@ -4753,7 +4756,6 @@ l_9c0c:
 	GET_ADDRESS	highscore_enabled_10e5     	| [$9c10: sta    highscore_enabled_10e5]
 	move.b	d0,(a0)                         	| [...]
 	GET_ADDRESS	sound_highscore_tune_404a  	| [$9c13: sta    sound_highscore_tune_404a]
-	move.b	d0,(a0)                         	| [...]
 	jbsr	sound_control
 	rts                                    	| [$9c16: rts]
 
@@ -5129,7 +5131,6 @@ task_entry_06_player_on_edge_9f03:
 	move.b	(a0),d0                         	| [...]
 	jeq	task_entry_06_player_on_edge_9f03  	| [$9f09: beq    task_entry_06_player_on_edge_9f03]
 	GET_ADDRESS	sound_sfx_4048             	| [$9f0b: sta    sound_sfx_4048] ground collapses
-	move.b	d0,(a0)                         	| [...]
 	jbsr	sound_control
 l_9f0e:
 	jbsr	suspend_task_8150                 	| [$9f0e: jsr    suspend_task_8150]
@@ -5258,7 +5259,6 @@ l_9fc0:
 	move.b	#0x01,d0                        	| [$9fc7: ldd    #$0105]
 	move.w	#0x0105,d1                      	| [$9fc7: ldd    #$0105]
 	GET_ADDRESS	sound_killed_4051          	| [$9fca: sta    sound_killed_4051]
-	move.b	d0,(a0)                         	| [...]
 	jbsr	sound_control
 	GET_ADDRESS	goto_next_life_10d0        	| [$9fcd: sta    goto_next_life_10d0]
 	move.b	d0,(a0)                         	| [...]
@@ -5760,7 +5760,6 @@ task_entry_07_pump_management_a232:
 * deploy pump
 l_a26c:
 	GET_ADDRESS	sound_pump_deploying_4045  	| [$a26c: sta    sound_pump_deploying_4045]
-	move.b	d0,(a0)                         	| [...]
 	jbsr	sound_control
 	GET_REG_ADDRESS	0x5,d2                 	| [$a26f: lda    $5,x]
 	move.b	(a0),d0                         	| [...]
@@ -6279,7 +6278,6 @@ l_a500:
 	move.b	d0,(a0)                         	| [...]
 	move.b	#0x01,d0                        	| [$a50a: lda    #$01]
 	GET_ADDRESS	sound_sfx_4046             	| [$a50c: sta    sound_sfx_4046]
-	move.b	d0,(a0)                         	| [...]
 	jbsr	sound_control
 	GET_REG_ADDRESS	0x4a,d2                	| [$a50f: lda    $4a,x]
 	move.b	(a0),d0                         	| [...]
@@ -6324,10 +6322,8 @@ l_a541:
 	move.b	#0x00,d0                        	| [$a543: ldd    #$00ff]
 	move.w	#0x00ff,d1                      	| [$a543: ldd    #$00ff]
 	GET_ADDRESS	sound_pump_deploying_4045  	| [$a546: sta    sound_pump_deploying_4045]
-	move.b	d0,(a0)                         	| [...]
 	jbsr	sound_control
 	GET_ADDRESS	sound_sfx_4046             	| [$a549: sta    sound_sfx_4046]
-	move.b	d0,(a0)                         	| [...]
 	jbsr	sound_control
 	GET_REG_ADDRESS	-0x6,d2                	| [$a54c: stb    -$6,x]
 	move.b	d1,(a0)                         	| [...]
@@ -6345,7 +6341,6 @@ task_entry_08_hammer_management_a55b:
 	move.b	(a0),d0                         	| [...]
 	jeq	task_entry_08_hammer_management_a55b	| [$a561: beq    task_entry_08_hammer_management_a55b]
 	GET_ADDRESS	sound_hammer_4047          	| [$a563: sta    sound_hammer_4047]
-	move.b	d0,(a0)                         	| [...]
 	jbsr	sound_control
 	move.w	#character_data_array_2510,d2   	| [$a566: ldx    #character_data_array_2510]
 	jbsr	l_a678                            	| [$a569: jsr    $a678]
@@ -6399,7 +6394,6 @@ l_a598:
 	move.b	(a0),d0                         	| [...]
 	jeq	task_entry_08_hammer_management_a55b	| [$a59e: beq    task_entry_08_hammer_management_a55b]
 	GET_ADDRESS	sound_hammer_4047          	| [$a5a0: sta    sound_hammer_4047]
-	move.b	d0,(a0)                         	| [...]
 	jbsr	sound_control
 	GET_ADDRESS	hammer_button_pressed_1014 	| [$a5a3: lda    hammer_button_pressed_1014]
 	move.b	(a0),d0                         	| [...]
@@ -6474,7 +6468,6 @@ l_a601:
 	move.b	(a0),d0                         	| [...]
 	jeq	l_a661                             	| [$a611: beq    $a661]
 	GET_ADDRESS	sound_hammer_4047          	| [$a613: sta    sound_hammer_4047]
-	move.b	d0,(a0)                         	| [...]
 	jbsr	sound_control
 	move.w	#character_data_array_2510,d2   	| [$a616: ldx    #character_data_array_2510]
 	GET_ADDRESS	hole_hit_10d5              	| [$a619: lda    hole_hit_10d5]
@@ -6497,7 +6490,6 @@ l_a62b:
 	move.b	(a0),d0                         	| [...]
 	jeq	l_a661                             	| [$a63b: beq    $a661]
 	GET_ADDRESS	sound_hammer_4047          	| [$a63d: sta    sound_hammer_4047]
-	move.b	d0,(a0)                         	| [...]
 	jbsr	sound_control
 	move.w	#character_data_array_2510,d2   	| [$a640: ldx    #character_data_array_2510]
 l_a643:
@@ -8151,7 +8143,6 @@ l_afd7:
 	move.b	#0x01,d0                        	| [$afd7: ldd    #$013f]
 	move.w	#0x013f,d1                      	| [$afd7: ldd    #$013f]
 	GET_ADDRESS	sound_sfx_404f             	| [$afda: sta    sound_sfx_404f]
-	move.b	d0,(a0)                         	| [...]
 	jbsr	sound_control
 	GET_REG_ADDRESS	0x4,d2                 	| [$afdd: stb    $4,x]
 	move.b	d1,(a0)                         	| [...]
@@ -8666,7 +8657,6 @@ l_b27a:
 	jeq	l_b28d                             	| [$b27c: beq    $b28d]
 	move.b	#0x01,d0                        	| [$b27e: lda    #$01]
 	GET_ADDRESS	sound_flame_404e           	| [$b280: sta    sound_flame_404e]
-	move.b	d0,(a0)                         	| [...]
 	jbsr	sound_control
 	jbsr	l_c0bb                            	| [$b283: jsr    $c0bb]
 	GET_REG_ADDRESS	0xd,d2                 	| [$b286: lda    $d,x]
@@ -8799,7 +8789,6 @@ l_b32a:
 	MOVE_W_TO_REG	a0,d2                         	| [...]
 	move.b	#0x01,d0                        	| [$b32d: lda    #$01]
 	GET_ADDRESS	sound_flame_404e           	| [$b32f: sta    sound_flame_404e]
-	move.b	d0,(a0)                         	| [...]
 	jbsr	sound_control
 	rts                                    	| [$b332: rts]
 l_b333:
@@ -12696,7 +12685,6 @@ l_e997:
 	move.b	#0x01,d0                        	| [$e997: ldd    #$0108]
 	move.w	#0x0108,d1                      	| [$e997: ldd    #$0108]
 	GET_ADDRESS	sound_highscore_tune_404a  	| [$e99a: sta    sound_highscore_tune_404a]
-	move.b	d0,(a0)                         	| [...]
 	jbsr	sound_control
 	GET_ADDRESS	0x1072                     	| [$e99d: stb    $1072]
 	move.b	d1,(a0)                         	| [...]
@@ -12724,7 +12712,6 @@ l_e9b1:
 	move.b	#0x01,d0                        	| [$e9c5: ldd    #$0120]
 	move.w	#0x0120,d1                      	| [$e9c5: ldd    #$0120]
 	GET_ADDRESS	sound_highscore_tune_404a  	| [$e9c8: sta    sound_highscore_tune_404a]
-	move.b	d0,(a0)                         	| [...]
 	jbsr	sound_control
 	GET_ADDRESS	0x1074                     	| [$e9cb: ldu    $1074]
 	MOVE_W_TO_REG	a0,d4                         	| [...]

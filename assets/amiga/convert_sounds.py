@@ -66,16 +66,22 @@ def convert():
             v["channel"] = -1 # auto
 
 
+    main_mod = "digdug2_main_tune"
+    others = "digdug2_others"
+
 
     sound_dict.update({
-    "MAIN_TUNE_SND"      :{"index":2,"pattern":0,"volume":32},
+    "MAIN_TUNE_SND"      :{"index":1,"pattern":0,"volume":32,"module":main_mod},
+    "GAME_OVER_TUNE_SND"      :{"index":0x4,"pattern":1,"volume":32,"module":others},
+    "WARNING_TUNE_SND"      :{"index":0x2,"pattern":4,"volume":32,"module":others},
+    "HURRY_TUNE_SND"      :{"index":0x3,"pattern":0,"volume":32,"module":main_mod},  # temp not available yet
+    "HIGHSCORE_TUNE_SND"      :{"index":0xA,"pattern":2,"volume":32,"module":others},
+    "LEVEL_COMPLETE_TUNE_SND"      :{"index":0x12,"pattern":5,"volume":32,"module":others},
+    "LEVEL_START_TUNE_SND"      :{"index":0x0,"pattern":0,"volume":32,"module":others},
     }
     )
 
-    dummy_sounds = [5,3,
-    0xB,
-    0x13,1,0xa,0xc
-    ]
+    dummy_sounds = [0x9,0xb]  # TODO: check if useful to keep that
 
     with open(os.path.join(src_dir,"..","sounds.inc"),"w") as f:
         for k,v in sorted(sound_dict.items(),key = lambda x:x[1]["index"]):
@@ -125,20 +131,34 @@ def convert():
             n += 1
         fw.write("\n")
 
-    music_module_label = f"{gamename}_tunes"
 
     raw_file = os.path.join(tempfile.gettempdir(),"out.raw")
     with open(sndfile,"w") as fst,open(outfile,"w") as fw:
         fst.write(snd_header)
 
         fw.write("\t.section\t.datachip\n")
-        fw.write("\t.global\t{}\n".format(music_module_label))
+
+        fw.write("\t.global\tmodule_table\n")
+
 
         for wav_file,details in sound_dict.items():
             wav_name = os.path.basename(wav_file).lower()[:-4]
             if details.get("channel") is not None:
                 fw.write("\t.global\t{}_raw\n".format(wav_name))
 
+
+        # write the table index => module (there are several modules now)
+        vals = [("0","empty")]*32
+        for k,v in sound_dict.items():
+            m = v.get("module")
+            if m:
+                index = v["index"]
+                vals[index] = (m+"_tunes",k)
+
+        fw.write("module_table:\n")
+        for i,val in enumerate(vals):
+            fw.write(f"\t.long\t{val[0]}  | {i:02x} ({val[1]})\n")
+        fw.write("\n")
 
         for wav_entry,details in sound_dict.items():
             sound_index = details["index"]
@@ -226,12 +246,14 @@ def convert():
                 write_asm(contents,fw)
 
 
-        # make sure next section will be aligned
-        with open(os.path.join(sound_dir,f"{gamename}_conv.mod"),"rb") as f:
-            contents = f.read()
 
-        fw.write("{}:".format(music_module_label))
-        write_asm(contents,fw)
+        for mmod in [main_mod,others]:
+            with open(os.path.join(sound_dir,f"{mmod}.mod"),"rb") as f:
+                contents = f.read()
+            fw.write(f"{mmod}_tunes:\n")
+            write_asm(contents,fw)
+
+
         fw.write("\t.align\t8\n")
 
 
