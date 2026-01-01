@@ -167,6 +167,13 @@ force_sound_stop:
 	clr.b	music_playing
 	clr.b	looped_sound_enabled
     jsr		_mt_end
+	
+	move.w	last_started_music_sound,d0
+	move.l	a5,d1		| save a5
+	GET_MEMORY_START_AND_DP
+	lea		(sound_level_start_tune_4040,a6),a0	
+	clr.b	(a0,d0.w)		| memory address offset where to cancel the sound
+	move.l	d1,a5
 0:
 	movem.l	(a7)+,d0-d1/a0/a6
 	rts

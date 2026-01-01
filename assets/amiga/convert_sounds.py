@@ -69,10 +69,12 @@ def convert():
     "MAIN_TUNE_SND"      :{"index":1,"pattern":0,"volume":32,"module":main_mod},
     "GAME_OVER_TUNE_SND"      :{"index":0x4,"pattern":1,"volume":32,"module":others},
     "WARNING_TUNE_SND"      :{"index":0x2,"pattern":4,"volume":32,"module":others},
-    "HURRY_TUNE_SND"      :{"index":0x3,"pattern":0,"volume":32,"module":main_mod},  # temp not available yet
+    "HURRY_TUNE_SND"      :{"index":0x3,"pattern":1,"volume":32,"module":main_mod},
     "HIGHSCORE_TUNE_SND"      :{"index":0xA,"pattern":2,"volume":32,"module":others},
     "LEVEL_COMPLETE_TUNE_SND"      :{"index":0x12,"pattern":5,"volume":32,"module":others},
     "LEVEL_START_TUNE_SND"      :{"index":0x0,"pattern":0,"volume":32,"module":others},
+    "CAUGHT_SND"      :{"index":0xD,"pattern":6,"volume":32,"module":others},
+    "KILLED_SND"      :{"index":0x11,"pattern":7,"volume":32,"module":others},
     }
     )
 
