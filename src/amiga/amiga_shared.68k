@@ -186,6 +186,7 @@ osd_sound_start:
 	movem.l	d0/d1/a0/a6,-(a7)
 	lea		_custom,a6
 
+
 	cmp.w	#HURRY_TUNE_SND,d0
 	jne		0f
 	st.b	lock_hurry_tune
@@ -314,11 +315,12 @@ handle_hurry_music_restart:
 	rts
 	
 handle_music_termination:
+	moveq	#0,d0
 	move.b	_mt_E8Trigger,d0
 	jeq		0f
-	cmp.b	#1,d0
-	jeq		1f
-	* command E8=2 asks to play the rest of "hurry" tune,
+	cmp.b	#4,d0
+	jne		1f
+	* command E8=4 asks to play the rest of "hurry" tune,
 	* which is on a different module so we cannot even chain the tunes
 	* no9 wasn't aware of that, I workarounded that but it's annoying
 	*
@@ -333,7 +335,9 @@ handle_music_termination:
 	* E8 command just issued from module, handle it
 	* those commands are there to signal that some tune is
 	* completed, game is actively waiting on some
-	move.w	last_started_music_sound,d0
+	lea		music_trigger_address_table(pc),a0
+	move.b	(a0,d0.w),d0
+	
 	move.l	a5,d1		| save a5
 	GET_MEMORY_START_AND_DP
 	lea		(sound_level_start_tune_4040,a6),a0
@@ -372,6 +376,17 @@ highscore_needs_saving:
 highscore_loaded:
 	.byte	0
 
+music_trigger_address_table:
+	.byte	-1
+	.byte	LEVEL_START_TUNE_SND	| trigger 81
+	.byte	GAME_OVER_TUNE_SND     	| trigger 82
+	.byte	HIGHSCORE_TUNE_SND     	| trigger 83
+	.byte	WARNING_TUNE_SND       	| trigger 84
+	.byte	LEVEL_COMPLETE_TUNE_SND | trigger 85
+	.byte	CAUGHT_SND            	| trigger 86
+	.byte	KILLED_SND            	| trigger 87
+	.byte	-1               	 	| trigger 88
+	
 normal_hiscorename:
 	.asciz	"digdug2.high"
 

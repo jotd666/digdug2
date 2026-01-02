@@ -1,7 +1,7 @@
 - re-optimize manually
 - command line arguments
 - falling in water: no kill sound?
-- everywhere but in first level: start music cut by main music
+- caught sound not working
 - test highscores again
 
 minor/optims:
