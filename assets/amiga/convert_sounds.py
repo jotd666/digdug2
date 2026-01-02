@@ -28,13 +28,17 @@ def convert(low_memory):
     sndfile = os.path.join(out_dir,"sound_entries.68k")
 
 
-    hq_sample_rate = 12000 if low_memory else 20000  #{"aga":18004,"ecs":12000,"ocs":11025}[mode]
+    hq_sample_rate = 10000 if low_memory else 20000  #{"aga":18004,"ecs":12000,"ocs":11025}[mode]
     lq_sample_rate = hq_sample_rate//2 # if aga_mode else 8000
 
 
     loop_channel = 2
 
     EMPTY_SND = "EMPTY_SND"
+
+    dummy_sounds = {0x9,0xb}  # TODO: check if useful to keep that
+    if low_memory:
+        dummy_sounds.update({1,2,0x15,0x14,0x13,0x1F})  # remove tunes & some non-essential samples
 
     sound_dict = {}
     sfx_list = set()
@@ -45,15 +49,16 @@ def convert(low_memory):
         if len(parts)>1:
             try:
                 index = int(parts[1],16)
-                sfx_list.add(index)
-                # auto-declare according to name suffix
-                entry = f"{sound_name}_SND"
-                # fix channel to avoid overlap
-                extra_info = sound_settings_dict.get(index) or dict()
+                if index not in dummy_sounds:
+                    sfx_list.add(index)
+                    # auto-declare according to name suffix
+                    entry = f"{sound_name}_SND"
+                    # fix channel to avoid overlap
+                    extra_info = sound_settings_dict.get(index) or dict()
 
-                sfx_sample_rate = extra_info.get("sample_rate",lq_sample_rate)
-                sound_dict[entry] = {"channel":extra_info.get("channel",-1),
-                "priority":extra_info.get("priority",40),"index":index,"sample_rate":sfx_sample_rate}
+                    sfx_sample_rate = extra_info.get("sample_rate",lq_sample_rate)
+                    sound_dict[entry] = {"channel":extra_info.get("channel",-1),
+                    "priority":extra_info.get("priority",40),"index":index,"sample_rate":sfx_sample_rate}
             except ValueError:
                 pass
 
@@ -68,8 +73,6 @@ def convert(low_memory):
     sound_dict.update({
     "MAIN_TUNE_SND"      :{"index":1,"pattern":0,"volume":32,"module":main_mod},
     "GAME_OVER_TUNE_SND"      :{"index":0x4,"pattern":1,"volume":32,"module":others},
-    "WARNING_TUNE_SND"      :{"index":0x2,"pattern":4,"volume":32,"module":others},
-    "HURRY_TUNE_SND"      :{"index":0x1F,"pattern":1,"volume":32,"module":main_mod},  # fake, should chain with "warning"
     "HIGHSCORE_TUNE_SND"      :{"index":0xA,"pattern":2,"volume":32,"module":others},
     "LEVEL_COMPLETE_TUNE_SND"      :{"index":0x12,"pattern":5,"volume":32,"module":others},
     "LEVEL_START_TUNE_SND"      :{"index":0x0,"pattern":0,"volume":32,"module":others},
@@ -77,8 +80,12 @@ def convert(low_memory):
     "KILLED_SND"      :{"index":0x11,"pattern":7,"volume":32,"module":others},
     }
     )
+    if not low_memory:
+        sound_dict.update(
+        {"WARNING_TUNE_SND"      :{"index":0x2,"pattern":4,"volume":32,"module":others},
+        "HURRY_TUNE_SND"      :{"index":0x1F,"pattern":1,"volume":32,"module":main_mod},  # fake, should chain with "warning"
+})
 
-    dummy_sounds = [0x9,0xb]  # TODO: check if useful to keep that
 
     with open(os.path.join(src_dir,"..","sounds.inc"),"w") as f:
         for k,v in sorted(sound_dict.items(),key = lambda x:x[1]["index"]):

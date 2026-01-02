@@ -1,3 +1,15 @@
+	.global	push_sr_table
+push_sr_table:
+	.long	push_sr_571
+	.long	push_sr_8263
+	.long	push_sr_8944
+	.long	push_sr_9609
+	.long	push_sr_9953
+	.long	push_sr_10238
+	.long	push_sr_10795
+	.long	push_sr_11260
+	.long	0
+
 	.include "data.inc"
 	.global	irq_8000
 	.global	reset_e5ba
@@ -569,6 +581,7 @@ l_81b0:
 	move.b	(a0),d0                         	| [...]
 	BIT	#0x04,d0                           	| [$81b7: bita   #$04]
 	movem.l	(sp)+,d0                       	| [$81b9: puls   a]
+push_sr_571:
 	PUSH_SR                                	| [...]
 	MAKE_D                                 	| [...]
 	POP_SR                                 	| [...]
@@ -8261,6 +8274,7 @@ l_b1c5:
 	LOAD_D                                 	| [$b1c9: ldd    player_y_16_bit_250e]
 	GET_REG_ADDRESS	-0x2,d2                	| [$b1cc: subd   -$2,x]
 	SUB_W_TO_REG	a0,d1                          	| [...]
+push_sr_8263:
 	PUSH_SR                                	| [...]
 	MAKE_A                                 	| [...]
 	POP_SR                                 	| [...]
@@ -8942,6 +8956,7 @@ l_b533:
 	LOAD_D                                 	| [$b537: ldd    player_y_16_bit_250e]
 	GET_REG_ADDRESS	-0x2,d2                	| [$b53a: subd   -$2,x]
 	SUB_W_TO_REG	a0,d1                          	| [...]
+push_sr_8944:
 	PUSH_SR                                	| [...]
 	MAKE_A                                 	| [...]
 	POP_SR                                 	| [...]
@@ -9607,6 +9622,7 @@ l_c0bb:
 	LOAD_D                                 	| [$c0c4: ldd    -$2,x]
 	GET_ADDRESS	0x10ce                     	| [$c0c6: subd   $10ce]
 	SUB_W_TO_REG	a0,d1                          	| [...]
+push_sr_9609:
 	PUSH_SR                                	| [...]
 	MAKE_A                                 	| [...]
 	POP_SR                                 	| [...]
@@ -9951,6 +9967,7 @@ l_c2ab:
 	GET_ADDRESS	0x10cf                     	| [$c2ab: ror    $10cf]
 	move.b	(a0),d6	| [$c2ab: ror    $10cf]
 	roxr.b	#1,d6                         	| [$c2ab: ror    $10cf]
+push_sr_9953:
 	PUSH_SR
 	move.b	d6,(a0)	| [$c2ab: ror    $10cf]
 	POP_SR
@@ -10236,6 +10253,7 @@ l_c508:
 	LOAD_D                                 	| [$c50c: ldd    -$2,u]
 	GET_REG_ADDRESS	-0x2,d2                	| [$c50e: subd   -$2,x]
 	SUB_W_TO_REG	a0,d1                          	| [...]
+push_sr_10238:
 	PUSH_SR                                	| [...]
 	MAKE_A                                 	| [...]
 	POP_SR                                 	| [...]
@@ -10284,9 +10302,8 @@ l_c534:
 	MAKE_D                                 	| [...]
 	GET_ADDRESS	0x10ce                     	| [$c548: addd   $10ce]
 	ADD_W_TO_REG	a0,d1                          	| [...]
-	PUSH_SR                                	| [...]
 	MAKE_A                                 	| [...]
-	POP_SR                                 	| [...]
+	tst.w	d1                                 	| [...]
 	jeq	l_c567                             	| [$c54b: beq    $c567]
 	MAKE_D
 	cmp.w	#0x0780,d1                       	| [$c54d: cmpd   #$0780]
@@ -10794,6 +10811,7 @@ l_c841:
 	GET_ADDRESS	0x10ce                     	| [$c841: ror    $10ce]
 	move.b	(a0),d6	| [$c841: ror    $10ce]
 	roxr.b	#1,d6                         	| [$c841: ror    $10ce]
+push_sr_10795:
 	PUSH_SR
 	move.b	d6,(a0)	| [$c841: ror    $10ce]
 	POP_SR
@@ -11259,6 +11277,7 @@ l_caad:
 	GET_ADDRESS	0x10cf                     	| [$caad: ror    $10cf]
 	move.b	(a0),d6	| [$caad: ror    $10cf]
 	roxr.b	#1,d6                         	| [$caad: ror    $10cf]
+push_sr_11260:
 	PUSH_SR
 	move.b	d6,(a0)	| [$caad: ror    $10cf]
 	POP_SR

@@ -29,9 +29,9 @@ NB_POSSIBLE_SPRITES = 0x100
 NB_POSSIBLE_TILES = 0x100
 BORDERBLANK = 0
 
-*******
-* OCS *
-*******
+***********
+* ECS/OCS *
+***********
 
 	.ifdef	OCS_VERSION
 NO68020 = 1
@@ -40,6 +40,10 @@ SPRITE_FMODE = 0			| required!!
 FMODE_OFFSET = 0
 SCROLL_WIDTH = 0x10
 BASE_BPLCON0_VALUE = 0x4200+BORDERBLANK
+
+	.if	OCS_VERSION==0
+SUPER_DEGRADED_OCS_VERSION = 1
+	.endif
 	.else
 *******
 * AGA *
@@ -270,12 +274,10 @@ start:
 		.global	osd_cpu_logging_control
 		.endif
 
-
-		.global	is_game_playing
 		
 	.include	"ReadJoypad.i"
 	.include	"whdload_funcs.i"
-		.text
+
 
 
 	    
@@ -301,7 +303,7 @@ _user:
 	* set user mode
 	move.w	#0,SR
 	
-    bra		.no_forbid
+    jra		.no_forbid
 .standard:
 	
     * open dos library, graphics library
@@ -399,7 +401,28 @@ _user:
 	move.l	D0,A0
 	move.l	#-1,184(A0)	| pr_WindowPtr: no more system requesters (insert volume, write protected...)
 
+	move.w	AttnFlags(a6),d0
+	btst	#AFB_68020,d0
+	jeq		0f				| 68020: ok 50 fps
+	* now the tricky part: patch the code to change move.w sr,-(sp) by move.w ccr,-(sp) if on 68020
+	* allowing a version compiled for 68000 to run on 68020 without whdload
+	jbsr	correct_push_sr_code
+
+	* kick 1.3 doesn't have CacheClearU, do it the hard way
+	lea	flush_icache,a5
+	jsr		_LVOSupervisor(a6)
+
+0:
 .no_forbid:
+	tst.l	_resload
+	jeq		0f
+	* patch move.w sr for whdload part
+	* this is needed even on whdload as some code runs in user mode. whdload corrects the problem
+	* at run-time but it takes some cycles
+	jbsr	correct_push_sr_code
+	move.l	_resload(pc),a2
+	jbsr	resload_FlushCache(a2)
+0:
 	
 	.ifne	OPT_ENABLE_LOGGING
 	move.l	#log_buffer,log_ptr
@@ -594,6 +617,28 @@ dump_and_quit:
 	illegal
 	.endif
 
+correct_push_sr_code:
+	lea	push_sr_table,a0
+0:
+	move.l	(a0)+,d0
+	jeq		1f
+	move.l	d0,a1
+	move.w	(a1),d0
+	cmp.w	#0x40E7,d0
+	jne		2f
+	* patch instruction move.w sr,-(sp) => move.w ccr,-(sp)
+	move.w	#0x42e7,(a1)
+	jra		0b
+2:
+	cmp.w	#0x42e7,d0
+	* no need to do anything, already fixed or 68020+ version
+	jra		0b
+	
+3:
+	BREAKPOINT	"non push sr instruction in A1"
+	jra		0b
+1:
+	rts
 	
 * < D0: bcpl string (with leading size byte)
 * < A1: dest C string
@@ -2361,9 +2406,16 @@ store_system:
 	pea		2f(pc)	
 2:
 	move.l	(a7)+,d0
+
+	* check for slow mem too
+	cmp.l	#0xC00000,d0
+	jcs		1f
+	cmp.l	#0xD80000,d0
+	jcs		3f
+1:	
 	cmp.l	#0x200000,d0
 	bcc.b	1f				
-0:
+3:
 	* no whdload, no fastmem/68020: assume slow switch to 25 FPS
 	* plus don't animate the waves
 	* if running on PiStorm, well, too bad use whdload
@@ -3576,14 +3628,12 @@ osd_sound_start:
 
 	movem.l	d0/d1/a0/a6,-(a7)
 
-	.ifdef	OCS_VERSION
-	.ifeq OCS_VERSION
+	.ifdef	SUPER_DEGRADED_OCS_VERSION
 	* extremely low memory: remove in-game music (first module)
 	cmp.w	#MAIN_TUNE_SND,d0
 	jeq		10f
 	cmp.w	#HURRY_TUNE_SND,d0
 	jeq		10f
-	.endif
 	.endif
 	
 	cmp.w	#CAUGHT_SND,d0
@@ -3603,12 +3653,13 @@ osd_sound_start:
 0:
 	lea		_custom,a6
 
+	.ifndef	SUPER_DEGRADED_OCS_VERSION
 	cmp.w	#HURRY_TUNE_SND,d0
 	jne		0f
 	st.b	lock_hurry_tune
 	move.w	#WARNING_TUNE_SND,d0
 0:
-
+	.endif
 	lsl.w	#3,d0
 	lea		sound_table,a0
 
@@ -3690,9 +3741,12 @@ osd_sound_start:
 	
 	* 2 first channels are reserved for the music
 	* auto channel selection cannot pick them
-
+	* no need for this in OCS version as it has no in-game music
+	* let the sfx occupy all channels
+	.ifndef	SUPER_DEGRADED_OCS_VERSION
 	move	#3,d0
 	jbsr	_mt_musicmask	
+	.endif
 	
 	movem.l	(a7)+,d0/a0
 

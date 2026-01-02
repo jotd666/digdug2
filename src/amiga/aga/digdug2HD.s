@@ -5,7 +5,7 @@
 
 ;CHIP_ONLY
 
-EXPMEM = $E0000
+EXPMEM = $F0000
 CHIPSIZE = $80000
 
 _base	SLAVE_HEADER					; ws_security + ws_id

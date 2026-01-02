@@ -6,13 +6,17 @@ Requires a 2-button joystick, or the keyboard
 Features:
 
 - arcade perfect gameplay
-- 25 fps super smooth on vanilla A1200, 50 fps with fastmem
+- 50 fps vanilla A1200
+- 25 fps on A500
+- whdload mode available for AGA/ECS
+- floppy mode available for ECS/OCS (AGA+ECS+OCS versions don't fit on a 880kb disk)
 
 Note:
 
 AGA version runs on vanilla A1200: arcade exact colors
-OCS version runs on any OCS amiga with 512k expansion: slightly less colors (not
+ECS version runs on any ECS amiga: slightly less colors (not
 really noticeable) and not very fast either
+OCS version is the same as ECS but without the in-game music to save chipmem
 
 Credits:
 

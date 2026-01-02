@@ -1,6 +1,4 @@
-- slow & flickering from floppy 68000  cycle exact adjust sprite line read
-  (depends on AGA/OCS?)
-- version without main music for OCS (only 1 module) see if fits
+
 
 minor/optims:
 

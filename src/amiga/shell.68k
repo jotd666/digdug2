@@ -273,7 +273,9 @@ graphicsname:
 	.asciz	"graphics.library"
 	
 exe_aga:
-	.asciz	"digdug2_aga"
+* all 3 versions wouldn't fit on a floppy
+* let's put only ecs & ocs
+*	.asciz	"digdug2_aga"
 exe_ecs:
 	.asciz	"digdug2_ecs"
 exe_ocs:
