@@ -1,8 +1,8 @@
 - re-optimize manually
-- pass optimizer
 - command line arguments
-- highscore tune: playing but screen doesn't wait for ack
-- first level: start music cut by main music: test again
+- falling in water: no kill sound?
+- everywhere but in first level: start music cut by main music
+- test highscores again
 
 minor/optims:
 
@@ -11,7 +11,7 @@ minor/optims:
 - pump appears on top status screen at times
 - sometimes lockup at level 11 for instance, then monsters suicide
   maybe fixed now with better 60Hz makeup interrupt as never occurs anymore now
-
+- D5 should be saved (or not changed) on osd calls outside interrupts
 
 fix random:
 

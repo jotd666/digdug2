@@ -180,6 +180,8 @@ force_sound_stop:
 	movem.l	(a7)+,d0-d1/a0/a6
 	rts
 	
+* handling of tunes is quite a mess on that game.
+
 osd_sound_start:
 	movem.l	d0/d1/a0/a6,-(a7)
 	lea		_custom,a6
@@ -259,7 +261,9 @@ osd_sound_start:
 	movem.l	(a7)+,d0/a0
 	jra	5f	| same track, same module -> skip
 23:
-	jbsr		force_sound_stop
+	* we don't force sound stop
+	* it sets memory flags to 0 and triggers events too soon
+	* (game over screen end, in-game music start)
 	move.l	a0,current_module
 	move.b	d1,music_track_start_number
 	move.w	d1,d0
