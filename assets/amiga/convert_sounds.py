@@ -17,18 +17,18 @@ sound_settings_dict = { 0x14 : {"channel":3,"priority":1},  # credit
 
 }
 
-def convert():
+def convert(low_memory):
     if not shutil.which("sox"):
         raise Exception("sox command not in path, please install it")
     # BTW convert wav to mp3: ffmpeg -i input.wav -codec:a libmp3lame -b:a 330k output.mp3
 
+    out_dir = ocs_src_dir if low_memory else src_dir
+
+    outfile = os.path.join(out_dir,"sounds.68k")
+    sndfile = os.path.join(out_dir,"sound_entries.68k")
 
 
-    outfile = os.path.join(src_dir,"sounds.68k")
-    sndfile = os.path.join(src_dir,"sound_entries.68k")
-
-
-    hq_sample_rate = 12000  #{"aga":18004,"ecs":12000,"ocs":11025}[mode]
+    hq_sample_rate = 12000 if low_memory else 20000  #{"aga":18004,"ecs":12000,"ocs":11025}[mode]
     lq_sample_rate = hq_sample_rate//2 # if aga_mode else 8000
 
 
@@ -243,12 +243,14 @@ def convert():
                 write_asm(contents,fw)
 
 
-
-        for mmod in [main_mod,others]:
-            with open(os.path.join(sound_dir,f"{mmod}.mod"),"rb") as f:
-                contents = f.read()
-            fw.write(f"{mmod}_tunes:\n")
-            write_asm(contents,fw)
+        input_mods = [None,others] if low_memory else [main_mod,others]
+        for mmod,name in zip(input_mods,[main_mod,others]):
+            if mmod:
+                with open(os.path.join(sound_dir,f"{mmod}.mod"),"rb") as f:
+                    contents = f.read()
+            fw.write(f"{name}_tunes:\n")    # write empty label on low memory setup
+            if mmod:
+                write_asm(contents,fw)
 
 
         fw.write("\t.align\t8\n")
@@ -261,6 +263,7 @@ def convert():
             fst.write(" | {}\n".format(i))
 
 
-convert()
+convert(low_memory=True)
+convert(low_memory=False)
 
 

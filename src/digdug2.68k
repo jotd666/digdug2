@@ -2,6 +2,7 @@
 	.global	irq_8000
 	.global	reset_e5ba
 
+
 play_sound:
     move.l  d0,-(a7)
     move.l  a0,d0
@@ -2709,7 +2710,7 @@ jump_table_8f80:
 	.long	task_entry_11_8890
 	.long	task_entry_12_highscore_screen_9955
 	.long	task_entry_13_94e4
-	.long	task_entry_14_9438
+	.long	task_entry_14_waves_animation_9438
 	.long	task_entry_15_9cb6
 	.long	task_entry_16_level_select_and_start_9d20
 
@@ -3128,11 +3129,13 @@ l_91f8:
 	jbsr	clear_some_params_8732            	| [$920c: jsr    clear_some_params_8732]
 	jmp	task_entry_04_demo_task_909c       	| [$920f: jmp    task_entry_04_demo_task_909c]
 
-task_entry_14_9438:
+task_entry_14_waves_animation_9438:
 	jbsr	suspend_task_8150                 	| [$9438: jsr    suspend_task_8150]
 	GET_ADDRESS	0x10d4                     	| [$943b: lda    $10d4]
 	move.b	(a0),d0                         	| [...]
-	jeq	task_entry_14_9438                 	| [$943e: beq    task_entry_14_9438]
+	jeq	task_entry_14_waves_animation_9438                 	| [$943e: beq    task_entry_14_waves_animation_9438]
+	tst.b	static_waves_flag
+	jne		task_entry_14_waves_animation_9438
 	clr.w	d2                               	| [$9440: ldx    #$0000]
 	GET_ADDRESS	scroll_value_1008          	| [$9443: ldb    scroll_value_1008]
 	move.b	(a0),d1                         	| [...]
@@ -3151,7 +3154,7 @@ task_entry_14_9438:
 	and.b	#0x1f,d1                         	| [$9455: andb   #$1f]
 	ABX                                    	| [$9457: abx]
 	move.b	#0x1f,d1                        	| [$9458: ldb    #$1f]
-	GET_ADDRESS	0x1009                     	| [$945a: stb    $1009]
+	GET_ADDRESS	0x1009                     	| [$945a: stb    $1009] number of rows
 	move.b	d1,(a0)                         	| [...]
 l_945d:
 	GET_REG_UNCHECKED_ADDRESS	0x0800,d2              	| [$945d: lda    $0800,x] [video_address]
@@ -3212,7 +3215,7 @@ l_949b:
 	GET_ADDRESS	0x1009                     	| [$949b: dec    $1009]
 	subq.b	#1,(a0)                         	| [...]
 	jeq	l_94a8                             	| [$949e: beq    $94a8] next row
-	add.w	#0x20,d2                         	| [$94a0: leax   $20,x]
+	add.w	#0x20,d2    | [$94a0: leax   $20,x]
 	jra	l_947d                             	| [$94a3: bra    $947d]
 l_94a5:
 	GET_ADDRESS	0x106d                     	| [$94a5: sta    $106d]
@@ -3232,7 +3235,7 @@ l_94a8:
 	or.b	(a0),d0                           	| [...]
 	GET_ADDRESS	ground_collapses_10da      	| [$94ba: ora    ground_collapses_10da]
 	or.b	(a0),d0                           	| [...]
-	jne	task_entry_14_9438                 	| [$94bd: lbne   task_entry_14_9438]
+	jne	task_entry_14_waves_animation_9438                 	| [$94bd: lbne   task_entry_14_waves_animation_9438]
 	GET_ADDRESS	0x10ec                     	| [$94c1: inc    $10ec]
 	addq.b	#1,(a0)                         	| [...]
 	GET_ADDRESS	0x10eb                     	| [$94c4: inc    $10eb]
@@ -3242,14 +3245,10 @@ l_94a8:
 	clr.b	(a0)                         	| [...]
 	GET_ADDRESS	0x10cb                     	| [$94cd: lda    $10cb]
 	move.b	(a0),d0                         	| [...]
-	jeq	task_entry_14_9438                 	| [$94d0: lbeq   task_entry_14_9438]
+	jeq	task_entry_14_waves_animation_9438                 	| [$94d0: lbeq   task_entry_14_waves_animation_9438]
 	GET_ADDRESS	0x10e6                     	| [$94d4: inc    $10e6]
 	addq.b	#1,(a0)                         	| [...]
-	jmp	task_entry_14_9438                 	| [$94d7: jmp    task_entry_14_9438]
-	                         	| [$94da: suba   #$80]  
-	                         	| [$94dc: suba   #$80]  2 0x80 byte subs => no effect!
-	sub.b	#0x40,d0                         	| [$94de: suba   #$40]
-	jra	l_94f2                             	| [$94e0: bra    $94f2]
+	jmp	task_entry_14_waves_animation_9438                 	| [$94d7: jmp    task_entry_14_waves_animation_9438]
 
 task_entry_13_94e4:
 	jbsr	suspend_task_8150                 	| [$94e4: jsr    suspend_task_8150]
@@ -3259,7 +3258,6 @@ task_entry_13_94e4:
 	move.w	#0x2010,d2                      	| [$94ec: ldx    #$2010]
 	GET_ADDRESS	sound_game_over_tune_4044  	| [$94ef: lda    sound_game_over_tune_4044]
 	move.b	(a0),d0                         	| [...]
-l_94f2:
 	jne	l_9558                             	| [$94f2: bne    $9558]
 	move.w	#0x993b,d4                      	| [$94f4: ldu    #$993b]
 l_94f7:

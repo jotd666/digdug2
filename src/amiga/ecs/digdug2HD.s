@@ -6,7 +6,7 @@
 ;CHIP_ONLY
 
 EXPMEM = $100000
-CHIPSIZE = $80000
+CHIPSIZE = $C0000
 
 _base	SLAVE_HEADER					; ws_security + ws_id
 	dc.w	17					; ws_version (was 10)
@@ -43,6 +43,7 @@ _config
 	dc.b	"C1:X:infinite lives:1;"
 	dc.b	"C1:X:cheat keys:4;"
 	dc.b	"C2:X:force 25 Hz update:0;"
+	dc.b	"C2:X:no wave animation:1;"
 
 	dc.b	"C4:L:number of lives:5,3,2;"
 	dc.b	"C5:L:difficulty level:easy,normal,difficult,very difficult;"
@@ -64,7 +65,7 @@ DECL_VERSION:MACRO
 	ENDC
 	ENDM
 _data   dc.b    0
-_name	dc.b	"Dig Dug 2 (OCS)",0
+_name	dc.b	"Dig Dug 2",0
 _copy	dc.b	'2026 JOTD',0
 _info
     ;dc.b    "Music by no9",0
@@ -129,5 +130,5 @@ _resload:
 progstart
     dc.l    0
 exe
-	dc.b	"digdug2_ocs",0
+	dc.b	"digdug2_ecs",0
 	

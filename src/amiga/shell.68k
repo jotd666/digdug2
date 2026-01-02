@@ -274,8 +274,8 @@ graphicsname:
 	
 exe_aga:
 	.asciz	"digdug2_aga"
-* no specific ECS version
 exe_ecs:
+	.asciz	"digdug2_ecs"
 exe_ocs:
 	.asciz	"digdug2_ocs"
 	

@@ -188,6 +188,16 @@ osd_sound_start:
 
 	movem.l	d0/d1/a0/a6,-(a7)
 
+	.ifdef	OCS_VERSION
+	.ifeq OCS_VERSION
+	* extremely low memory: remove in-game music (first module)
+	cmp.w	#MAIN_TUNE_SND,d0
+	jeq		10f
+	cmp.w	#HURRY_TUNE_SND,d0
+	jeq		10f
+	.endif
+	.endif
+	
 	cmp.w	#CAUGHT_SND,d0
 	jeq	1f
 	cmp.w	#KILLED_SND,d0

@@ -1842,7 +1842,7 @@ jump_table_8f80:
 	.word	task_entry_11_8890
 	.word	task_entry_12_highscore_screen_9955
 	.word	task_entry_13_94e4
-	.word	task_entry_14_9438
+	.word	task_entry_14_waves_animation_9438
 	.word	task_entry_15_9cb6
 	.word	task_entry_16_level_select_and_start_9d20 
 	 
@@ -2101,10 +2101,10 @@ demo_loop_9144:
 920C: BD 87 32       JSR    clear_some_params_8732
 920F: 7E 90 9C       JMP    task_entry_04_demo_task_909c
 
-task_entry_14_9438:
+task_entry_14_waves_animation_9438:
 9438: BD 81 50       JSR    suspend_task_8150
 943B: B6 10 D4       LDA    $10D4
-943E: 27 F8          BEQ    task_entry_14_9438
+943E: 27 F8          BEQ    task_entry_14_waves_animation_9438
 9440: 8E 00 00       LDX    #$0000
 9443: F6 10 08       LDB    scroll_value_1008
 9446: C4 F8          ANDB   #$F8
@@ -2161,19 +2161,16 @@ task_entry_14_9438:
 94B4: BA 10 D0       ORA    goto_next_life_10d0
 94B7: BA 10 D1       ORA    level_completed_flag_10d1
 94BA: BA 10 DA       ORA    ground_collapses_10da
-94BD: 10 26 FF 77    LBNE   task_entry_14_9438
+94BD: 10 26 FF 77    LBNE   task_entry_14_waves_animation_9438
 94C1: 7C 10 EC       INC    $10EC
 94C4: 7C 10 EB       INC    $10EB
 94C7: BD CC 7F       JSR    $CC7F
 94CA: 7F 10 EC       CLR    $10EC
 94CD: B6 10 CB       LDA    $10CB
-94D0: 10 27 FF 64    LBEQ   task_entry_14_9438
+94D0: 10 27 FF 64    LBEQ   task_entry_14_waves_animation_9438
 94D4: 7C 10 E6       INC    $10E6
-94D7: 7E 94 38       JMP    task_entry_14_9438
-94DA: 80 80          SUBA   #$80    ; WTF 
-94DC: 80 80          SUBA   #$80    ; why subbing twice? it has no effect
-94DE: 80 40          SUBA   #$40
-94E0: 20 10          BRA    $94F2
+94D7: 7E 94 38       JMP    task_entry_14_waves_animation_9438
+
 
 task_entry_13_94e4:
 94E4: BD 81 50       JSR    suspend_task_8150

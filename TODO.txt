@@ -4,7 +4,6 @@
 
 minor/optims:
 
-- re-optimize manually
 - cycle exact sprites flicker maybe bad wait to set sprite pos (depends on fmode?)
 - pump appears on top status screen at times
 - sometimes lockup at level 11 for instance, then monsters suicide

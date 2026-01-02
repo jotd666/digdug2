@@ -11,7 +11,7 @@
 	.global highscore_needs_saving_flag
 	.global vbl_sync_counter
 	.global vbl_sync_flag
-	.global no_sync_flag
+	.global static_waves_flag
 	.global m6809_direct_page_pointer
 	.global	stack_top
 	.global	user_stack_top
@@ -89,7 +89,7 @@ vbl_sync_flag:
 	.byte	0
 vbl_sync_counter:
 	.byte	0
-no_sync_flag:
+static_waves_flag:
 	.byte 	0
 break_at_startup_flag:
 	.byte	0
