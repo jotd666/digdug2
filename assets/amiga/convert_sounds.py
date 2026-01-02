@@ -9,11 +9,11 @@ sox = "sox"
 sound_dir = this_dir / ".." / "sounds"
 
 sound_settings_dict = { 0x14 : {"channel":3,"priority":1},  # credit
-8 : {"channel":2,"priority":40},
-3 : {"channel":2,"priority":20},
+8 : {"priority":40},
+3 : {"priority":20},
 0x15 : {"channel":2,"priority":70},
-0xC : {"channel":2,"priority":70},
-0x13 : {"channel":2,"priority":70},
+0xC : {"priority":70},
+0x13 : {"priority":80},
 
 }
 
@@ -52,7 +52,7 @@ def convert():
                 extra_info = sound_settings_dict.get(index) or dict()
 
                 sfx_sample_rate = extra_info.get("sample_rate",lq_sample_rate)
-                sound_dict[entry] = {"channel":extra_info.get("channel",3),
+                sound_dict[entry] = {"channel":extra_info.get("channel",-1),
                 "priority":extra_info.get("priority",40),"index":index,"sample_rate":sfx_sample_rate}
             except ValueError:
                 pass
@@ -69,7 +69,7 @@ def convert():
     "MAIN_TUNE_SND"      :{"index":1,"pattern":0,"volume":32,"module":main_mod},
     "GAME_OVER_TUNE_SND"      :{"index":0x4,"pattern":1,"volume":32,"module":others},
     "WARNING_TUNE_SND"      :{"index":0x2,"pattern":4,"volume":32,"module":others},
-    "HURRY_TUNE_SND"      :{"index":0x3,"pattern":1,"volume":32,"module":main_mod},
+    "HURRY_TUNE_SND"      :{"index":0x1F,"pattern":1,"volume":32,"module":main_mod},  # fake, should chain with "warning"
     "HIGHSCORE_TUNE_SND"      :{"index":0xA,"pattern":2,"volume":32,"module":others},
     "LEVEL_COMPLETE_TUNE_SND"      :{"index":0x12,"pattern":5,"volume":32,"module":others},
     "LEVEL_START_TUNE_SND"      :{"index":0x0,"pattern":0,"volume":32,"module":others},
@@ -82,7 +82,7 @@ def convert():
 
     with open(os.path.join(src_dir,"..","sounds.inc"),"w") as f:
         for k,v in sorted(sound_dict.items(),key = lambda x:x[1]["index"]):
-            f.write(f"\t.equ\t{k},  0x{v['index']:x}\n")
+            f.write(f"\t.equ\t{k.upper()},  0x{v['index']:x}\n")
 
     max_sound = 0x100  # max(x["index"] for x in sound_dict.values())+1
     sound_table = [""]*max_sound

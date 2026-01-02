@@ -838,21 +838,7 @@ _nmi:
 	move.w	#0x7FFF,_custom+intreq
 	rts
 	
-handle_music_termination:
-	move.b	_mt_E8Trigger,d0
-	jeq		0f
-	* E8 command just issued from module, handle it
-	* those commands are there to signal that some tune is
-	* completed, game is actively waiting on some
-	move.w	last_started_music_sound,d0
-	move.l	a5,d1		| save a5
-	GET_MEMORY_START_AND_DP
-	lea		(sound_level_start_tune_4040,a6),a0
-	clr.b	(a0,d0.w)		| memory address offset where to cancel the sound
-	clr.b	_mt_E8Trigger	| ack
-	move.l	d1,a5
-0:
-	rts
+
 
 level3_interrupt:
     movem.l d0-d7/a0-a6,-(a7)
@@ -882,7 +868,9 @@ level3_interrupt:
 	bne.b	0f
 	bsr		toggle_pause
 0:
+	* countdown active to start "hurry" tune?
 	jbsr	handle_music_termination
+	jbsr	handle_hurry_music_restart
 	
 	* ack vbl twice (040/pistorm bug)
 	move.w	#0x20,(intreq,a5)
@@ -1105,10 +1093,15 @@ is_game_playing:
 	* "get ready" screen
 	movem.l	a5/a6,-(a7)
 	GET_MEMORY_START_AND_DP
+	cmp.b	#0x52,(0X1AE,a6)	| "R" from ready screen: game considered in play
+	jeq		1f
 	tst.b	game_in_play_101b(a6)
-
+0:
 	movem.l	(a7)+,a5/a6
 	rts
+1:
+	cmp.l	#0,a6		| unset Z
+	jra		0b
 	
 skip_level:
 	movem.l	a6/a5,-(a7)
@@ -2557,14 +2550,6 @@ platform_init:
 	move.l	system_vbr(pc),a0
 	moveq	#1,d0	| PAL
 	jbsr		_mt_install_cia
-
-	* 2 first channels are reserved for the music
-	* auto channel selection cannot pick them
-	* but this shit doesn't seem to work
-	*move	#3,d0
-	*jbsr	_mt_musicmask
-
-
 	
     rts
 	
@@ -3262,7 +3247,7 @@ add_one_credit:
 1:
 	or.b	#0xF0,d0
 	move.b	d0,(credits_unit_4803,a6)
-	move.w	#credit_14_SND,d0
+	move.w	#CREDIT_14_SND,d0
 	jbsr	osd_sound_start
 	movem.l	(a7)+,d0/a5/a6
 	rts

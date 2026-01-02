@@ -5,7 +5,8 @@
 	.global osd_sound_start
 	.global osd_music_stop
 	.global	last_started_music_sound
-		
+	.global	handle_hurry_music_restart
+	.global handle_music_termination
 
 
 * sound engine and also highscore management, common to all versions
@@ -163,6 +164,7 @@ osd_music_stop:
 force_sound_stop:
 	movem.l	d0-d1/a0/a6,-(a7)
 	lea		_custom,a6
+	clr.b	start_hurry_tune_timeout
 	move.b	#-1,music_track_start_number
 	clr.b	music_playing
 	clr.b	looped_sound_enabled
@@ -181,6 +183,12 @@ force_sound_stop:
 osd_sound_start:
 	movem.l	d0/d1/a0/a6,-(a7)
 	lea		_custom,a6
+
+	cmp.w	#HURRY_TUNE_SND,d0
+	jne		0f
+	st.b	lock_hurry_tune
+	move.w	#WARNING_TUNE_SND,d0
+0:
 
 	lsl.w	#3,d0
 	lea		sound_table,a0
@@ -217,6 +225,16 @@ osd_sound_start:
 	
 	* music
 4:
+	* handle "lock" on hurry tune until some other tune plays
+	cmp.w	#WARNING_TUNE_SND*8,d0
+	jne		20f
+	tst.b	lock_hurry_tune
+	jeq		21f
+	move.w	#HURRY_TUNE_SND*8,d0
+	jra		21f
+20:
+	clr.b	lock_hurry_tune
+21:
 
 	move.w	(2,a0,d0.w),d1	| pattern number in .mod file
 
@@ -245,6 +263,13 @@ osd_sound_start:
 	move.w	d1,d0
     sub.l   a1,a1		| samples are in the module
     jsr _mt_init
+	
+	* 2 first channels are reserved for the music
+	* auto channel selection cannot pick them
+
+	move	#3,d0
+	jbsr	_mt_musicmask	
+	
 	movem.l	(a7)+,d0/a0
 
     * set master volume a little less loud if needed
@@ -267,9 +292,53 @@ osd_sound_start:
 6:
 	jra	10b
 
-	
+handle_hurry_music_restart:
+	move.b	start_hurry_tune_timeout,d0
+	jeq		0f
+	subq.b	#1,d0
+	jne		2f
+	jbsr	osd_music_stop
 
+	move.w	#HURRY_TUNE_SND,d0
+	jbsr	osd_sound_start	
+	moveq	#0,d0
+2:
+	move.b	d0,start_hurry_tune_timeout
+0:
+	rts
 	
+handle_music_termination:
+	move.b	_mt_E8Trigger,d0
+	jeq		0f
+	cmp.b	#1,d0
+	jeq		1f
+	* command E8=2 asks to play the rest of "hurry" tune,
+	* which is on a different module so we cannot even chain the tunes
+	* no9 wasn't aware of that, I workarounded that but it's annoying
+	*
+	* problem is: game starts the "warning" tune over and over
+	* so the "hurry" pattern cannot play, unless we tell the game
+	* that this is the same thing: so don't clear the memory flag
+
+	clr.b	_mt_E8Trigger	| ack
+	move.b	#10,start_hurry_tune_timeout
+	rts
+1:
+	* E8 command just issued from module, handle it
+	* those commands are there to signal that some tune is
+	* completed, game is actively waiting on some
+	move.w	last_started_music_sound,d0
+	move.l	a5,d1		| save a5
+	GET_MEMORY_START_AND_DP
+	lea		(sound_level_start_tune_4040,a6),a0
+	clr.b	(a0,d0.w)		| memory address offset where to cancel the sound
+	clr.b	_mt_E8Trigger	| ack
+	move.l	d1,a5
+0:
+	rts
+	
+lock_hurry_tune:
+	.byte	0
 music_playing:
 	.byte	0
 looped_sound_enabled:
@@ -277,6 +346,8 @@ looped_sound_enabled:
 music_loops:
 	.byte	0
 music_volume:
+	.byte	0
+start_hurry_tune_timeout:
 	.byte	0
 	.align	2
 current_module:
