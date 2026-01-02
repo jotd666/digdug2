@@ -1,11 +1,9 @@
-- re-optimize manually
 - command line arguments
-- falling in water: no kill sound?
-- caught sound not working
-- test highscores again
+
 
 minor/optims:
 
+- re-optimize manually
 - cycle exact sprites flicker maybe bad wait to set sprite pos (depends on fmode?)
 - slow & flickering from floppy 68000
 - pump appears on top status screen at times

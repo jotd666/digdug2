@@ -190,7 +190,7 @@ osd_sound_start:
 
 	cmp.w	#CAUGHT_SND,d0
 	jeq	1f
-	cmp.w	#FALLING_0F_SND,d0
+	cmp.w	#KILLED_SND,d0
 	jne	0f
 	* anticipate that the game is going to cut the music
 	* right after playing this sfx. If we don't cut the music
@@ -200,7 +200,6 @@ osd_sound_start:
 	move.l	a5,d1
 	GET_MEMORY_START_AND_DP
 	clr.w	(sound_level_start_tune_4040,a6)
-	*clr.b	(sound_level_start_tune_4040+CAUGHT_SND,a6)
 	jbsr	osd_music_stop
 	move.l	d1,a5
 0:
@@ -370,6 +369,7 @@ handle_music_termination:
 	* E8 command just issued from module, handle it
 	* those commands are there to signal that some tune is
 	* completed, game is actively waiting on some
+	move.b	#0,0x110
 	lea		music_trigger_address_table(pc),a0
 	move.b	(a0,d0.w),d0
 	move.l	a5,d1		| save a5

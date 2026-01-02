@@ -4232,16 +4232,16 @@ l_9a54:
 l_9a5c:
 	GET_ADDRESS	0x10c7                     	| [$9a5c: ldx    $10c7]
 	MOVE_W_TO_REG	a0,d2                         	| [...]
-	move.b	#0x00,d0                        	| [$9a5f: ldd    #$0001]
-	move.w	#0x0001,d1                      	| [$9a5f: ldd    #$0001]
+	move.w	#0x0000,d1                      	| [$9a5f: ldd    #$0001]
 	GET_ADDRESS	sound_highscore_tune_404a  	| [$9a62: stb    sound_highscore_tune_404a]
+	* actually tell the game that tune has/should stop
 	move.b	d1,(a0)                         	| [...]
-	jbsr	play_sound
 	GET_REG_UNCHECKED_ADDRESS	0x0800,d2              	| [$9a65: sta    $0800,x] [video_address]
-	move.b	d0,(a0)                         	| [...]
+	clr.b	(a0)                         	| [...]
 	VIDEO_BYTE_DIRTY | [...]
 	GET_ADDRESS	game_in_play_101b          	| [$9a69: sta    game_in_play_101b]
-	move.b	d0,(a0)                         	| [...]
+	clr.b	(a0)                         	| [...]
+	jbsr	osd_music_stop
 l_9a6c:
 	jbsr	suspend_task_8150                 	| [$9a6c: jsr    suspend_task_8150]
 	GET_ADDRESS	joystick_button_1_4805     	| [$9a6f: lda    joystick_button_1_4805]
