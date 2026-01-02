@@ -175,17 +175,36 @@ force_sound_stop:
 	GET_MEMORY_START_AND_DP
 	lea		(sound_level_start_tune_4040,a6),a0	
 	clr.b	(a0,d0.w)		| memory address offset where to cancel the sound
+
+
 	move.l	d1,a5
-0:
+
 	movem.l	(a7)+,d0-d1/a0/a6
 	rts
 	
 * handling of tunes is quite a mess on that game.
 
 osd_sound_start:
-	movem.l	d0/d1/a0/a6,-(a7)
-	lea		_custom,a6
 
+	movem.l	d0/d1/a0/a6,-(a7)
+
+	cmp.w	#CAUGHT_SND,d0
+	jeq	1f
+	cmp.w	#FALLING_0F_SND,d0
+	jne	0f
+	* anticipate that the game is going to cut the music
+	* right after playing this sfx. If we don't cut the music
+	* first, the game will stop sound, preventing the "caught" sound
+	* to be played
+1:
+	move.l	a5,d1
+	GET_MEMORY_START_AND_DP
+	clr.w	(sound_level_start_tune_4040,a6)
+	*clr.b	(sound_level_start_tune_4040+CAUGHT_SND,a6)
+	jbsr	osd_music_stop
+	move.l	d1,a5
+0:
+	lea		_custom,a6
 
 	cmp.w	#HURRY_TUNE_SND,d0
 	jne		0f
@@ -230,6 +249,7 @@ osd_sound_start:
 	
 	* music
 4:
+
 	* handle "lock" on hurry tune until some other tune plays
 	cmp.w	#WARNING_TUNE_SND*8,d0
 	jne		20f
@@ -240,7 +260,7 @@ osd_sound_start:
 20:
 	clr.b	lock_hurry_tune
 21:
-
+	
 	move.w	(2,a0,d0.w),d1	| pattern number in .mod file
 
     movem.l d0-a6,-(a7)
@@ -312,12 +332,23 @@ handle_hurry_music_restart:
 2:
 	move.b	d0,start_hurry_tune_timeout
 0:
+	move.b	start_sfx_10_timeout,d0
+	jeq		0f
+	subq.b	#1,d0
+	jne		2f
+	move.w	#SFX_10_SND,d0
+	jbsr	osd_sound_start
+	moveq	#0,d0
+2:
+	move.b	d0,start_sfx_10_timeout
+0:
 	rts
 	
 handle_music_termination:
 	moveq	#0,d0
 	move.b	_mt_E8Trigger,d0
 	jeq		0f
+	clr.b	_mt_E8Trigger	| ack
 	cmp.b	#4,d0
 	jne		1f
 	* command E8=4 asks to play the rest of "hurry" tune,
@@ -328,21 +359,23 @@ handle_music_termination:
 	* so the "hurry" pattern cannot play, unless we tell the game
 	* that this is the same thing: so don't clear the memory flag
 
-	clr.b	_mt_E8Trigger	| ack
 	move.b	#10,start_hurry_tune_timeout
 	rts
+1:
+	cmp.b	#3,d0
+	jne		1f
+	* do the usual but also play sfx
+	move.b	#10,start_sfx_10_timeout
 1:
 	* E8 command just issued from module, handle it
 	* those commands are there to signal that some tune is
 	* completed, game is actively waiting on some
 	lea		music_trigger_address_table(pc),a0
 	move.b	(a0,d0.w),d0
-	
 	move.l	a5,d1		| save a5
 	GET_MEMORY_START_AND_DP
 	lea		(sound_level_start_tune_4040,a6),a0
 	clr.b	(a0,d0.w)		| memory address offset where to cancel the sound
-	clr.b	_mt_E8Trigger	| ack
 	move.l	d1,a5
 0:
 	rts
@@ -358,6 +391,8 @@ music_loops:
 music_volume:
 	.byte	0
 start_hurry_tune_timeout:
+	.byte	0
+start_sfx_10_timeout:
 	.byte	0
 	.align	2
 current_module:

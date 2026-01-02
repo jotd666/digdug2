@@ -9,7 +9,6 @@ play_sound:
     sub.w   #sound_level_start_tune_4040,d0
 	jeq		0f
 	* not start music. Are we trying to cut start music?
-	move.b	#1,0x110
 	tst.b	(sound_level_start_tune_4040,a6)
 	jne		1f				| don't interrupt level start tune
 0:
@@ -24,6 +23,7 @@ stop_sound:
     sub.l   a6,d0
     sub.w   #sound_level_start_tune_4040,d0
 	and.b	#0x1F,d0	| probably not useful
+
     lea		music_table(pc),a1
 	tst.b	(a1,d0.w)
 	jeq		0f

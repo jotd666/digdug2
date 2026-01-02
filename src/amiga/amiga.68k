@@ -1089,11 +1089,14 @@ osd_is_vblank_interrupt_enabled:
 
 * Z: set if not playing
 is_game_playing:
-	* TODO check screen somewhere to avoid insert coin on
-	* "get ready" screen
+	* check game in play flag plus
+	* screen somewhere to avoid insert coin by fire on
+	* "get ready" screen or "best scores"
 	movem.l	a5/a6,-(a7)
 	GET_MEMORY_START_AND_DP
 	cmp.b	#0x52,(0X1AE,a6)	| "R" from ready screen: game considered in play
+	jeq		1f
+	cmp.b	#0x42,(0X228,a6)	| "B" from best scores: game considered in play
 	jeq		1f
 	tst.b	game_in_play_101b(a6)
 0:
@@ -1120,7 +1123,7 @@ toggle_monsters:
 lose_all_lives:
 	movem.l	a6/a5,-(a7)
 	GET_MEMORY_START_AND_DP
-	move.b	#0,nb_lives_1703(a6)					| no more lives
+	move.b	#1,nb_lives_1703(a6)					| no more lives
 	movem.l	(a7)+,a6/a5
 	rts
 
