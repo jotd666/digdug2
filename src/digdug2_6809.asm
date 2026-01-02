@@ -2170,11 +2170,11 @@ task_entry_14_9438:
 94D0: 10 27 FF 64    LBEQ   task_entry_14_9438
 94D4: 7C 10 E6       INC    $10E6
 94D7: 7E 94 38       JMP    task_entry_14_9438
-94DA: 80 80          SUBA   #$80
-94DC: 80 80          SUBA   #$80
+94DA: 80 80          SUBA   #$80    ; WTF 
+94DC: 80 80          SUBA   #$80    ; why subbing twice? it has no effect
 94DE: 80 40          SUBA   #$40
 94E0: 20 10          BRA    $94F2
-94E2: 05 05          LSR    $05
+
 task_entry_13_94e4:
 94E4: BD 81 50       JSR    suspend_task_8150
 94E7: B6 10 E3       LDA    $10E3
