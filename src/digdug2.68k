@@ -2484,39 +2484,35 @@ l_8e71:
 	move.b	d0,(a0)                         	| [...]
 	jmp	task_entry_0f_8dfa                 	| [$8e7a: jmp    task_entry_0f_8dfa]
 
-
+* highly optimized by hand, as it's a very used loop
 copy_character_positions_8e81:
 	move.w	#character_data_array_2510,d2   	| [$8e81: ldx    #character_data_array_2510]
 	move.w	#logical_character_positions_1100,d4	| [$8e84: ldu    #logical_character_positions_1100]
+	GET_REG_ADDRESS	0,d4                 	| [$8e8b: lda    $1,u]
+	move.l	a0,a1
+	GET_REG_ADDRESS	0,d2               	| [$8e87: lda    -$10,x]
 copy_loop_8e87:
-	GET_REG_ADDRESS	-0x10,d2               	| [$8e87: lda    -$10,x]
-	move.b	(a0),d0                         	| [...]
+	move.b	(-0x10,a0),d0            | [$8e87: lda    -$10,x]
 	jeq	l_8ea2                             	| [$8e89: beq    $8ea2]
-	GET_REG_ADDRESS	0x1,d4                 	| [$8e8b: lda    $1,u]
-	move.b	(a0),d0                         	| [...]
-	GET_REG_ADDRESS	0x8,d2                 	| [$8e8d: sta    $8,x]
-	move.b	d0,(a0)                         	| [...]
-	GET_REG_ADDRESS	0x2,d4                 	| [$8e8f: ldd    $2,u]
-	LOAD_D                                 	| [$8e8f: ldd    $2,u]
-	GET_REG_ADDRESS	0xa,d2                 	| [$8e91: std    $a,x]
-	MOVE_W_FROM_REG	d1,a0                         	| [...]
-	GET_REG_ADDRESS	0x4,d4                 	| [$8e93: ldd    $4,u] load source coordinates
-	LOAD_D                                 	| [$8e93: ldd    $4,u] load source coordinates
+	                 	
+	move.b	(1,a1),d0                       | [$8e8b: lda    $1,u]
+	move.b	d0,(8,a0)                 	| [$8e8d: sta    $8,x]
+	move.w	(2,a1),d1                 	| [$8e8f: ldd    $2,u]
+	move.w	d1,(0xa,a0)                 	| [$8e91: std    $a,x]
+	move.w	(4,a1),d1                 	| [$8e93: ldd    $4,u] load source coordinates
+	MAKE_A			| update d0 as d1 was just read
 	tst.b	d1                               	| [$8e95: tstb]
 	jne	l_8e9a                             	| [$8e96: bne    $8e9a]
 	exg	d0,d1                              	| [$8e98: exg    a,b]
 l_8e9a:
-	GET_REG_ADDRESS	0xd,d2                 	| [$8e9a: sta    $d,x]
-	move.b	d0,(a0)                         	| [...]
-	                 	| [$8e9c: stb    $f,x]
-	move.b	d1,(2,a0)                         	| [...]
-	GET_REG_ADDRESS	0,d4                   	| [$8e9e: clr    ,u] display priority cleared
-	clr.b	(a0)                         	| [...]
-	                 	| [$8ea0: clr    $5,u] vertical coordinate cleared (copy or XY is in D see 8E93)
-	clr.b	(5,a0)                         	| [...]
+	move.b	d0,(0xd,a0)                 	| [$8e9a: sta    $d,x]
+	move.b	d1,(0xf,a0)                 	| [$8e9c: stb    $f,x]
+	clr.b	(a1)                   	| [$8e9e: clr    ,u] display priority cleared
+	clr.b	(5,a1)                 	| [$8ea0: clr    $5,u] vertical coordinate cleared (copy or XY is in D see 8E93)
 l_8ea2:
-	addq.w	#0x6,d4                         	| [$8ea2: leau   $6,u] next source data
+	addq.w	#0x6,a1                         	| [$8ea2: leau   $6,u] next source data
 	add.w	#0x20,d2                         	| [$8ea4: leax   $20,x] next dest character data
+	add.w	#0x20,a0                         	| [$8ea4: leax   $20,x] next dest character data
 	cmp.w	#0x2790,d2                       	| [$8ea7: cmpx   #$2790]
 	jne	copy_loop_8e87                     	| [$8eaa: bne    copy_loop_8e87]
 	rts                                    	| [$8eac: rts]
