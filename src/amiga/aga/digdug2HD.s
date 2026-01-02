@@ -43,7 +43,7 @@ _config
 	dc.b	"C1:X:infinite lives:1;"
 	dc.b	"C1:X:no highscore load or save:2;"   ; to fix cd32load incompatibilities
 	dc.b	"C1:X:cheat keys:4;"
-	dc.b	"C2:X:25 Hz update:0;"
+	dc.b	"C2:X:force 25 Hz update:0;"
 
 	dc.b	"C4:L:number of lives:5,3,2;"
 	dc.b	"C5:L:difficulty level:easy,normal,difficult,very difficult;"

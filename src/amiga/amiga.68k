@@ -335,13 +335,7 @@ _user:
 	or.l	#0x10,cheat_flags
 2:
 
-	move.l	(A0)+,D0	| STARTLIVES/K/N
-	beq.b	2f
-	bsr		bcpl_string_to_int
-	subq	#3,d0
-	jmi		2f
-	move.l	d0,start_lives
-2:
+
 	move.l	(A0)+,D0	| SKILL/K/N
 	beq.b	2f
 	bsr		bcpl_string_to_int
@@ -3418,7 +3412,7 @@ program_args_end:
 read_args_string:
 	.byte	read_args_string_end-read_args_string
 	.ascii	"INVINCIBLE/S,INFLIVES/S,"
-	.ascii	"CHEATKEYS/S,STARTLIVES/K/N,SKILL/K/N,STARTLEVEL/K/N"
+	.ascii	"CHEATKEYS/S,SKILL/K/N"
 read_args_string_end:
 	.align	2
 

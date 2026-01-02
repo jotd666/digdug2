@@ -1,11 +1,11 @@
-- command line arguments
-
+- slow & flickering from floppy 68000  cycle exact adjust sprite line read
+  (depends on AGA/OCS?)
+- version without main music for OCS (only 1 module) see if fits
 
 minor/optims:
 
 - re-optimize manually
 - cycle exact sprites flicker maybe bad wait to set sprite pos (depends on fmode?)
-- slow & flickering from floppy 68000
 - pump appears on top status screen at times
 - sometimes lockup at level 11 for instance, then monsters suicide
   maybe fixed now with better 60Hz makeup interrupt as never occurs anymore now
