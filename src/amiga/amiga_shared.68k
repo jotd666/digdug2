@@ -214,6 +214,8 @@ osd_sound_start:
 3:
 	jsr		_mt_playfx
 10:
+	* exiting osd_sound_start
+
 	movem.l	(a7)+,d0/d1/a0/a6
 	rts
 11:

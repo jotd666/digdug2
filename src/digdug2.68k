@@ -17,6 +17,7 @@ stop_sound:
     sub.l   a6,d0
     sub.w   #sound_level_start_tune_4040,d0
 	and.b	#0x1F,d0	| probably not useful
+	jeq		0f			| don't stop startup music, it will stop itself
     lea		music_table(pc),a1
 	tst.b	(a1,d0.w)
 	jeq		0f

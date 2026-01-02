@@ -2,7 +2,7 @@
 - pass optimizer
 - command line arguments
 - highscore tune: playing but screen doesn't wait for ack
-- first level: start music cut by main music
+- first level: start music cut by main music: test again
 
 minor/optims:
 
