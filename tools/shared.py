@@ -65,9 +65,7 @@ def remove_error(line):
 # log has the registers, then "DEAD" in hex then ram and rom base addresses
 
 # do not compare those, they're fake diffs
-excluded_pcs = {0X8120,0x8122,0x8125,0x811E,0x9F06,0xAB88,0xACE0,0xACC8,0x80C1,0x80C4,0x80C6,0x9CB9}
-#excluded_pcs.update(range(0x8000,0x8072)) # remove irq
-excluded_pcs.update(range(0x9438,0x94BE)) # remove waves random
+excluded_pcs = {0x5227}
 
 
 

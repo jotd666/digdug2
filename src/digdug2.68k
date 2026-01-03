@@ -586,7 +586,6 @@ push_sr_571:
 	MAKE_D                                 	| [...]
 	POP_SR                                 	| [...]
 	jne	l_81c0                             	| [$81bb: bne    $81c0] branch when character is hammering (main character)
-	MAKE_D                                 	| [...]
 	add.w	#0x0008,d1                       	| [$81bd: addd   #$0008] draw lower, most of the time
 	MAKE_A                                 	| [...]
 l_81c0:

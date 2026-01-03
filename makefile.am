@@ -40,7 +40,8 @@ AGA_OBJS = amiga_aga.o sounds.o $(PROGNAME)_020.o ram.o graphics_aga.o rom.o vbr
 OCS_OBJS = amiga_ocs.o sounds_ocs.o $(PROGNAME)_000.o ram.o graphics_ecs.o rom.o vbr.o ReadJoyPad.o ptplayer.o 
 ECS_OBJS = amiga_ecs.o sounds.o $(PROGNAME)_000.o ram.o graphics_ecs.o rom.o vbr.o ReadJoyPad.o ptplayer.o 
 
-all: $(AMIGA_SHELL) $(MAIN_AGA) $(MAIN_ECS) $(MAIN_OCS) $(WHDLOADER_ECS) $(WHDLOADER_ECS_CHIP) $(WHDLOADER_AGA) $(WHDLOADER_AGA_CHIP) $(AMIGASRC)/aga/graphics.68k $(AMIGASRC)/sounds.68k $(AMIGASRC)/ocs/sounds.68k
+#$(MAIN_AGA) 
+all: $(AMIGA_SHELL) $(MAIN_ECS) $(MAIN_OCS) $(WHDLOADER_ECS) $(WHDLOADER_ECS_CHIP) $(WHDLOADER_AGA) $(WHDLOADER_AGA_CHIP) $(AMIGASRC)/aga/graphics.68k $(AMIGASRC)/sounds.68k $(AMIGASRC)/ocs/sounds.68k
  
 $(AMIGA_SHELL): shell.o
 	$(GCC_BIN)/m68k-amigaos-ld $(OPT_RELEASE_LINK) -o $(AMIGA_SHELL) shell.o
