@@ -1,3 +1,5 @@
+- crash random on level completed!! completed music seems to crash the game
+- focus on stack save/d5 save
 - make it work with CD32load without the hack. Stack has to be relocated
   on resload calls
 

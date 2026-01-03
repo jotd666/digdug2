@@ -41,7 +41,7 @@ _expmem
 _config
 	dc.b	"C1:X:invincible:0;"
 	dc.b	"C1:X:infinite lives:1;"
-	dc.b	"C1:X:no highscore load or save:2;"   ; to fix cd32load incompatibilities
+	dc.b	"C1:X:no highscore load or save:2;"   ; to fix cd32load crash at start
 	dc.b	"C1:X:cheat keys:4;"
 	dc.b	"C2:X:force 25 Hz update:0;"
 	dc.b	"C2:X:no wave animation:1;"
@@ -66,7 +66,11 @@ DECL_VERSION:MACRO
 	ENDC
 	ENDM
 _data   dc.b    0
-_name	dc.b	"Dig Dug 2 (AGA)",0
+_name	dc.b	"Dig Dug 2 (AGA)"
+	IFD	CHIP_ONLY
+	dc.b	" (cd32load/chip)"
+	ENDC
+	dc.b	0
 _copy	dc.b	'2026 JOTD',0
 _info
     ;dc.b    "Music by no9",0

@@ -203,7 +203,7 @@ wait\@:
 	move.w	#0x0400,(dmacon,a5)		| blitter normal priority
 .endm
 
-.macro MUL_TABLE value,len
+	.macro MUL_TABLE value,len
 mul\value\()_table:
 	.set    mulv,0
 	.rept	\len
@@ -212,7 +212,31 @@ mul\value\()_table:
 	.endr
 .endm
 
-
+	* this game uses USP & SSP and is sensitive about stack usage
+	* plus it's way better to save U just in case of an osd call
+	* which is interrupted, then calls game irq which uses U
+	
+	.macro	OSD_ENTER
+	tst.b	osd_entry_count
+	jne		osd_enter_\@
+	* top entry: save game U register
+	move.w	d5,target_usp_value
+	* save & relocate stack
+	move.l	a7,saved_stack
+	lea		osd_stack,a7
+osd_enter_\@:
+	addq.b	#1,osd_entry_count	| increase nesting
+	.endm
+	
+	.macro	OSD_EXIT
+	subq.b	#1,osd_entry_count	| decrease nesting
+	jne		osd_exit_\@
+	* out of the osd stack: restore game stack
+	move.l	saved_stack,a7
+	* osd didn't change d5
+osd_exit_\@:
+	.endm
+	
 * debug macro that colors the screen until LMB pressed
 .macro 	blitz_bypass
 	move.w	d0,-(a7)
@@ -402,12 +426,15 @@ _user:
 	move.l	#-1,184(A0)	| pr_WindowPtr: no more system requesters (insert volume, write protected...)
 
 	move.w	AttnFlags(a6),d0
-	btst	#AFB_68020,d0
+	btst	#AFB_68010,d0
 	jeq		0f				| 68020: ok 50 fps
 	* now the tricky part: patch the code to change move.w sr,-(sp) by move.w ccr,-(sp) if on 68020
 	* allowing a version compiled for 68000 to run on 68020 without whdload
 	jbsr	correct_push_sr_code
 
+	move.w	AttnFlags(a6),d0
+	btst	#AFB_68020,d0
+	jeq		0f				| 68020: ok 50 fps
 	* kick 1.3 doesn't have CacheClearU, do it the hard way
 	lea	flush_icache,a5
 	jsr		_LVOSupervisor(a6)
@@ -420,7 +447,7 @@ _user:
 	* this is needed even on whdload as some code runs in user mode. whdload corrects the problem
 	* at run-time but it takes some cycles
 	move.l	whd_attn_flags(pc),d0
-	btst	#AFB_68020,d0
+	btst	#AFB_68010,d0
 	beq	0f
 	jbsr	correct_push_sr_code
 	move.l	_resload(pc),a2
@@ -871,15 +898,26 @@ do_irq:
 	* set base for RAM
 	jbsr	cpu_init
 	GET_MEMORY_START_AND_DP
-	* TEMP TEMP
+* uncomment to ignore the wait for end of tunes that the game expects
 *	clr.l	(0x4040,a6)  | start music is done
 *	clr.l	(0x4044,a6)  | game over music is done
 *	clr.l	(0x4048,a6)  | game over music is done
 *	clr.l	(0x404C,a6)  | game over music is done
 *	clr.l	(0x4050,a6)  | death sfx is done & others
 *	clr.b	(0x404D,a6)  | death sfx is done
-	
-	jra			irq_8000					| pass control to the cpu core
+
+	* should we set a saved copy of U or use the one that existed
+	* when the game was interrupted? depends if the game was interrupted
+	* in the original game code or in an osd function
+	cmp.b	#1,osd_entry_count
+	jeq		0f
+	* osd_entry_count > 1: means that we interrupted an osd call
+	* we have to restore d5 as it was on entering the osd call
+	* restore game U (aka d5) so it's used in the irq
+	* we must not change d5 until game irq has been called
+	move.w	target_usp_value,d5
+0:
+	jra		irq_8000					| pass control to the cpu core
 	
 * just in case some hardware calls nmi
 _nmi:
@@ -890,11 +928,14 @@ _nmi:
 
 
 level3_interrupt:
+	* disable osd context switch
+	* we must not save d5 or change stack from an osd call from an interrupt
+	addq.b	#1,osd_entry_count
     movem.l d0-d7/a0-a6,-(a7)
 	lea		_custom,a5
 	move.w	(intreqr,a5),d0
 	btst	#5,d0
-	beq.b		1f
+	beq.b		1f		| copper
 
 	clr.b	vbl_sync_flag
 	
@@ -927,7 +968,6 @@ level3_interrupt:
 	jra	3f
 1:
 	* has to be copper
-	* still do NOT change D5, there are enough free registers!
 
 	* we're going to ack copper & software interrupt now
 	* do it twice (040/pistorm bug)
@@ -951,11 +991,6 @@ level3_interrupt:
 	addq.b	#1,d0
 	cmp.b	#5,d0
 	bne.b	1f
-	* we can't rely on the current value of D5 when interrupting. We could
-	* interrupt a non-6809 code with a D5 set to anything (not S offset)
-	* so we set S to something innocuous just in case it's used directly.
-	* Below this address there's plenty of room for auto-variables
-	move.l	#0x8000,d5
 	jbsr		do_irq
 	clr.b	interrupt_mode	
 	clr.b	d0
@@ -964,16 +999,16 @@ level3_interrupt:
 	jra		3f
 2:
 
-
+	move.l	d5,-(a7)
 	
-	subq.w	#1,delay_timer
 		
-	* make sure that we didn't change D5 from there. The IRQ
-	* may use it (D5 = S) to create local variables
-	jbsr		do_irq
-	* now D5 can be destroyed
 	jbsr	really_update_scroll
 	jbsr	really_update_hw_sprites
+	move.l	(a7)+,d5
+	* do the irq now
+	* doing the irq now leaves more time to update hw sprites
+	* and avoid the blinking
+	jbsr		do_irq
 
 	
 	tst.b	frameskip
@@ -995,6 +1030,8 @@ level3_interrupt:
 
 3:
     movem.l (a7)+,d0-d7/a0-a6
+	* enable osd context switch
+    subq.b	#1,osd_entry_count
     rte
 	
 osd_read_4802:
@@ -1089,42 +1126,7 @@ osd_break:
 
 	
 
-* < D0: number of 1/60Hz ticks
-* can work with interrupts enabled or disabled
-osd_wait:
-	movem.l	d0-a6,-(a7)
-	move.w	d0,delay_timer
-	jbsr	osd_is_vblank_interrupt_enabled
-	tst.w	d0
-	jne		2f
-	* interrupts are disabled: timer isn't going to change
-	* wait using vertical blank interrupt request (we don't need it!)
-	clr.w	one_out_of_five
-0:
-	move.w	#0x20,_custom+intreq
-	move.w	#0x20,_custom+intreq
-1:
-	move.w	_custom+intreqr,d0
-	btst	#5,d0
-	beq.b	1b
-	addq.w	#1,one_out_of_five
-	cmp.w	#5,one_out_of_five
-	bne.b	5f
-	subq.w	#1,delay_timer	
-	clr.w	one_out_of_five
-5:
-	subq.w	#1,delay_timer
-	beq.b	4f
-	bpl.b	0b
-4:
-	movem.l	(a7)+,d0-a6
-	rts
 	
-2:
-	tst.w	delay_timer
-	bne.b	2b
-	movem.l	(a7)+,d0-a6
-	rts
 
 
 * < D0: nonzero interrupts enabled
@@ -1346,10 +1348,22 @@ really_update_tiles:
 * 
 * 
 	.macro	COMPUTE_GRID_OFFSET
+	.ifndef	RELEASE
+	movem.l	d0/d1,-(a7)
+	nop
+	.endif
 	lsr.w	#GRID_POWER,d0	| reduce coord from 256 to 1<<(8-GRID_POWER) (0-7)
 	lsr.w	#GRID_POWER,d1
 	lsl.w	#8-GRID_POWER,d1		| multiply by 1<<(8-GRID_POWER) to get offset
 	add.w	d0,d1
+	.ifndef	RELEASE
+	cmp.w	#GRID_SIDE*GRID_SIDE,d1
+	jcs		cgo_ok_\@
+	movem.l	(a7)+,d0/d1
+	BREAKPOINT	"grid offset out of range, check coords in d0/d1"
+cgo_ok_\@:
+	addq	#8,a7
+	.endif
 	.endm
 	
 	* shared code between bobs & hw sprites
@@ -1374,6 +1388,7 @@ really_update_tiles:
 	* compute sy
 	move.b	(TARGET_SPRITE_Y,a0),d1  | sprite Y
 	subq.w	#1,d1	| sy = spriteram_2[offs]-1  (MAME mirrors sy but we don't!)	
+	jmi		2f
 	.endm
 	
 * /*
@@ -2658,8 +2673,7 @@ osd_disable_interrupts:
 * should preserve all registers
 
 osd_video_word_dirty:
-	move.l	a7,saved_stack
-	lea		osd_stack,a7
+	OSD_ENTER
 	movem.l	d0/d1/d7/a0/a1,-(a7)
 	jbsr	video_byte_dirty
 	tst.b	d7
@@ -2667,18 +2681,17 @@ osd_video_word_dirty:
 	move.b	d7,(1,a0)		| next byte too
 0:
 	movem.l	(a7)+,d0/d1/d7/a0/a1
-	move.l	saved_stack,a7
+	OSD_EXIT
 	rts	
 
 
 	
 osd_video_byte_dirty:
-	move.l	a7,saved_stack
-	lea		osd_stack,a7
+	OSD_ENTER
 	movem.l	d0/d1/d7/a0/a1,-(a7)
 	jbsr	video_byte_dirty
 	movem.l	(a7)+,d0/d1/d7/a0/a1
-	move.l	saved_stack,a7
+	OSD_EXIT
 	rts	
 
 video_byte_dirty:
@@ -3601,10 +3614,12 @@ osd_music_stop:
 *	movem.l	(a7)+,d0/a0/a6
 
 	tst.b	music_playing
-	jne		force_sound_stop
+	jne		0f
 	rts
 
-force_sound_stop:
+	* force sound stop
+0:
+	OSD_ENTER
 	movem.l	d0-d1/a0/a6,-(a7)
 	lea		_custom,a6
 	clr.b	start_hurry_tune_timeout
@@ -3623,12 +3638,13 @@ force_sound_stop:
 	move.l	d1,a5
 
 	movem.l	(a7)+,d0-d1/a0/a6
+	OSD_EXIT
 	rts
 	
 * handling of tunes is quite a mess on that game.
 
 osd_sound_start:
-
+	OSD_ENTER
 	movem.l	d0/d1/a0/a6,-(a7)
 
 	.ifdef	SUPER_DEGRADED_OCS_VERSION
@@ -3667,7 +3683,7 @@ osd_sound_start:
 	lea		sound_table,a0
 
 	move.w	(a0,d0.w),d1	| sound type
-	beq.b	11f		| no sound
+	jeq		11f		| no sound
 	cmp.w	#3,d1
 	jeq		10f		| skipped (normal)
 2:
@@ -3690,6 +3706,7 @@ osd_sound_start:
 	* exiting osd_sound_start
 
 	movem.l	(a7)+,d0/d1/a0/a6
+	OSD_EXIT
 	rts
 11:
 	move.w	d0,d1
@@ -3764,9 +3781,9 @@ osd_sound_start:
 
     moveq	#0,d0
 	move.b	music_volume(pc),d0
-    jsr	_mt_mastervol
+    jbsr	_mt_mastervol
 	st.b	music_playing
-    jsr _mt_start
+    jbsr _mt_start
 5:
     movem.l (a7)+,d0-a6
 	
@@ -3976,6 +3993,10 @@ system_vbr:
 	.long	0
 
 
+target_usp_value:
+	.word	0
+osd_entry_count:
+	.byte	0
 flip_flop:
 	.byte	0
 
@@ -3998,7 +4019,11 @@ pause_flag:
 frameskip:
 	.word	0
 
-	.skip	0x100
+	* this is the replacement stack space for osd calls so the game
+	* has its stack preserved
+	* we need at least 1k stack else things will go very wrong
+	* with whdload (or cd32load) running
+	.skip	0x400
 osd_stack:
 saved_stack:
 	.long	0
@@ -4023,8 +4048,7 @@ _gfxbase:
 	.long	0
 _dosbase:
 	.long	0
-delay_timer:
-	.word	0
+
 one_out_of_five:
 	.word	0
 
