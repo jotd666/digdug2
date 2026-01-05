@@ -213,8 +213,8 @@ mul\value\()_table:
 .endm
 
 	* this game uses USP & SSP and is sensitive about stack usage
-	* plus it's way better to save U just in case of an osd call
-	* which is interrupted, then calls game irq which uses U
+	* plus it's way better to save S just in case of an osd call
+	* which is interrupted, then calls game irq which uses S
 	
 	.macro	OSD_ENTER
 	tst.b	osd_entry_count
@@ -906,14 +906,14 @@ do_irq:
 *	clr.l	(0x4050,a6)  | death sfx is done & others
 *	clr.b	(0x404D,a6)  | death sfx is done
 
-	* should we set a saved copy of U or use the one that existed
+	* should we set a saved copy of S or use the one that existed
 	* when the game was interrupted? depends if the game was interrupted
 	* in the original game code or in an osd function
 	cmp.b	#1,osd_entry_count
 	jeq		0f
 	* osd_entry_count > 1: means that we interrupted an osd call
 	* we have to restore d5 as it was on entering the osd call
-	* restore game U (aka d5) so it's used in the irq
+	* restore game S (aka d5) so it's used in the irq
 	* we must not change d5 until game irq has been called
 	move.w	target_usp_value,d5
 0:
@@ -931,7 +931,7 @@ level3_interrupt:
 	* disable osd context switch
 	* we must not save d5 or change stack from an osd call from an interrupt
 	addq.b	#1,osd_entry_count
-    movem.l d0-d7/a0-a6,-(a7)
+    	movem.l d0-d7/a0-a6,-(a7)
 	lea		_custom,a5
 	move.w	(intreqr,a5),d0
 	btst	#5,d0
