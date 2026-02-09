@@ -3155,7 +3155,10 @@ set_bob_bitplanes:
 osd_debug_hook:
 	rts
 
-	
+* the joystick is 4-way. If a diagonal is attempted we must
+* cancel up/down (on MAME, lateral move has priority) else character
+* doesn't move at all
+
 read_inputs:
 	movem.l	a0/d0/d1,-(a7)
 	lea		keyboard_table(pc),a0
@@ -3200,20 +3203,26 @@ read_inputs:
 	bset	#BIT_DOWN,d1	
 0:
 	tst.b	(0x4F,a0)		| "<-" key
-	jeq	0f
-	bset	#BIT_LEFT,d1
-0:
+	jne	1f
 	btst	#JPB_BTN_LEFT,d0
 	jeq		0f
+1:
 	bset	#BIT_LEFT,d1
+	* left set, clear up & down, game doesn't support that and blocks
+	bclr	#BIT_DOWN,d1	
+	bclr	#BIT_UP,d1	
 0:
 	tst.b	(0x4E,a0)		| "->" key
-	jeq	0f
-	bset	#BIT_RIGHT,d1
+	jne	1f
 0:
 	btst	#JPB_BTN_RIGHT,d0
 	jeq		0f
+1:
 	bset	#BIT_RIGHT,d1
+	* right set, clear up & down, game doesn't support that and blocks
+	bclr	#BIT_LEFT,d1	
+	bclr	#BIT_DOWN,d1	
+	bclr	#BIT_UP,d1	
 0:
 	move.b	d1,(joystick_directions_4804,a6)
 

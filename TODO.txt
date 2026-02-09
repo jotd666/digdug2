@@ -1,14 +1,13 @@
+- seems to crash when repeating insert coins with "5"
+- hide title at start like the original
 
 minor/optims:
 
 - make it work with CD32load without the hack. Stack has to be relocated
   on resload calls
-- cycle exact sprites flicker maybe bad wait to set sprite pos (depends on fmode?)
-  play in invincible, read from 0x100 to adjust it real time in cycle exact
-  (seem ok on real CD32, check again)
 - pump appears on top status screen at times
-- sometimes lockup at level 11 for instance, then monsters suicide
-  maybe fixed now with better 60Hz makeup interrupt as never occurs anymore now
+- sometimes lockup at level 11 for instance, then monsters suicide, very rare
+  but still happens
 
 fix random:
 
