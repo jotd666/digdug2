@@ -311,7 +311,7 @@ okay\@:
 * registers must be masked out to proper size before use
 	.macro	GET_INDIRECT_ADDRESS_REGS	reg1,reg2,destreg
 	move.l	\reg1,a0
-	add.l	\reg2,a0
+	lea	(a0,\reg2\().l),a0
 	GET_ADDRESS_FUNC
 	MOVE_W_TO_REG	a0,\destreg
 	.endm
@@ -358,7 +358,7 @@ okay\@:
 	move.l	\reg,a0
 	.else
 	lea	\offset,a0
-	add.l	\reg,a0
+	lea	(a0,\reg\().l),a0
 	.endif
 	GET_ADDRESS_FUNC
 	.endm
@@ -379,7 +379,7 @@ okay\@:
 
 	.macro GET_REG_ADDRESS_FROM_REG	reg,reg2
 	move.l	\reg,a0
-	add.l	\reg2,a0
+	lea	(a0,\reg2\().l),a0
 	GET_ADDRESS_FUNC
 	.endm
 
@@ -398,7 +398,7 @@ okay\@:
 	move.l	\reg,a0
 	.else
 	lea	\offset,a0
-	add.l	\reg,a0
+	lea	(a0,\reg\().l),a0
 	.endif
 	GET_UNCHECKED_ADDRESS_FUNC
 	.endm
@@ -419,7 +419,7 @@ okay\@:
 
 	.macro GET_REG_UNCHECKED_ADDRESS_FROM_REG	reg,reg2
 	move.l	\reg,a0
-	add.l	\reg2,a0
+	lea	(a0,\reg2\().l),a0
 	GET_UNCHECKED_ADDRESS_FUNC
 	.endm
 

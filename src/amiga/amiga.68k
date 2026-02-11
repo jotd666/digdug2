@@ -3324,6 +3324,7 @@ add_one_credit:
 	jeq		0f
 	addq	#1,d1
 	or.b	#0xF0,d1
+	moveq	#0,d0
 	move.b	d1,(credits_tens_4802,a6)
 0:
 	move.w	(a7)+,d1
