@@ -91,8 +91,6 @@ number_of_players_4801 = $4801
 credits_tens_4802 = $4802
 credits_unit_4803 = $4803
 ; bit 3 bot both
-start_1p_4805 = $4805
-start_2p_4807 = $4807
 joystick_directions_4804 = $4804
 joystick_button_1_4805 = $4805
 joystick_button_2_4815 = $4815
