@@ -1,11 +1,7 @@
 	.global	push_sr_table
 push_sr_table:
 	.long	push_sr_571
-	.long	push_sr_8263
-	.long	push_sr_8944
-	.long	push_sr_9609
 	.long	push_sr_9953
-	.long	push_sr_10238
 	.long	push_sr_10795
 	.long	push_sr_11260
 	.long	0
@@ -8273,19 +8269,12 @@ l_b1c5:
 	LOAD_D                                 	| [$b1c9: ldd    player_y_16_bit_250e]
 	GET_REG_ADDRESS	-0x2,d2                	| [$b1cc: subd   -$2,x]
 	SUB_W_TO_REG	a0,d1                          	| [...]
-push_sr_8263:
-	PUSH_SR                                	| [...]
-	MAKE_A                                 	| [...]
-	POP_SR                                 	| [...]
 	jpl	l_b1d7                             	| [$b1ce: bpl    $b1d7]
-	COM	d0                                 	| [$b1d0: coma]
-	COM	d1                                 	| [$b1d1: comb]
-	MAKE_D                                 	| [...]
+	not.w	d1                                 	| [$b1d0: coma]
+	                                 	| [$b1d1: comb]
 	add.w	#0x0001,d1                       	| [$b1d2: addd   #$0001]
-	MAKE_A                                 	| [...]
 	addq.w	#0x2,d4                         	| [$b1d5: leau   $2,u]
 l_b1d7:
-	MAKE_D
 	cmp.w	#0x0018,d1                       	| [$b1d7: cmpd   #$0018]
 	jhi	l_b1f0                             	| [$b1db: bhi    $b1f0]
 	GET_REG_ADDRESS	-0x9,d2                	| [$b1dd: ldb    -$9,x]
@@ -8955,19 +8944,12 @@ l_b533:
 	LOAD_D                                 	| [$b537: ldd    player_y_16_bit_250e]
 	GET_REG_ADDRESS	-0x2,d2                	| [$b53a: subd   -$2,x]
 	SUB_W_TO_REG	a0,d1                          	| [...]
-push_sr_8944:
-	PUSH_SR                                	| [...]
-	MAKE_A                                 	| [...]
-	POP_SR                                 	| [...]
 	jpl	l_b545                             	| [$b53c: bpl    $b545]
-	COM	d0                                 	| [$b53e: coma]
-	COM	d1                                 	| [$b53f: comb]
-	MAKE_D                                 	| [...]
+	not.w	d1                                 	| [$b53e: coma]
+	                                 	| [$b53f: comb]
 	add.w	#0x0001,d1                       	| [$b540: addd   #$0001]
-	MAKE_A                                 	| [...]
 	addq.w	#0x2,d4                         	| [$b543: leau   $2,u]
 l_b545:
-	MAKE_D
 	cmp.w	#0x0018,d1                       	| [$b545: cmpd   #$0018]
 	jhi	l_b57a                             	| [$b549: bhi    $b57a]
 	GET_REG_ADDRESS	-0x9,d2                	| [$b54b: ldb    -$9,x]
@@ -9621,15 +9603,9 @@ l_c0bb:
 	LOAD_D                                 	| [$c0c4: ldd    -$2,x]
 	GET_ADDRESS	0x10ce                     	| [$c0c6: subd   $10ce]
 	SUB_W_TO_REG	a0,d1                          	| [...]
-push_sr_9609:
-	PUSH_SR                                	| [...]
-	MAKE_A                                 	| [...]
-	POP_SR                                 	| [...]
 	jmi	l_c0d7                             	| [$c0c9: bmi    $c0d7]
-	MAKE_D
 	cmp.w	#0x0007,d1                       	| [$c0cb: cmpd   #$0007]
 	jcs	l_c0d7                             	| [$c0cf: bcs    $c0d7]
-	MAKE_D
 	cmp.w	#0x00ff,d1                       	| [$c0d1: cmpd   #$00ff]
 	jcs	l_c0d8                             	| [$c0d5: bcs    $c0d8]
 l_c0d7:
@@ -10252,17 +10228,10 @@ l_c508:
 	LOAD_D                                 	| [$c50c: ldd    -$2,u]
 	GET_REG_ADDRESS	-0x2,d2                	| [$c50e: subd   -$2,x]
 	SUB_W_TO_REG	a0,d1                          	| [...]
-push_sr_10238:
-	PUSH_SR                                	| [...]
-	MAKE_A                                 	| [...]
-	POP_SR                                 	| [...]
 	jpl	l_c517                             	| [$c510: bpl    $c517]
-	COM	d0                                 	| [$c512: coma]
-	COM	d1                                 	| [$c513: comb]
-	MAKE_D                                 	| [...]
+	not.w	d1                                 	| [$c512: coma]
+	                                 	| [$c513: comb]
 	addq.w	#0x0001,d1                       	| [$c514: addd   #$0001]
-	                                	| [...]
-	MAKE_A                                 	| [...]
 l_c517:
 	GET_REG_ADDRESS	0x1,d3                 	| [$c517: cmpb   $1,y]
 	cmp.b	(a0),d1                          	| [...]

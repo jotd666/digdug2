@@ -1,13 +1,14 @@
 - seems to crash when repeating insert coins with "5"
 - hide title at start like the original
+- support for nb of start lives
+- sometimes lockup at level 11 for instance, then monsters suicide, very rare
+  but still happens. non-atomic operation with or/and on memory?
 
 minor/optims:
 
 - make it work with CD32load without the hack. Stack has to be relocated
   on resload calls
 - pump appears on top status screen at times
-- sometimes lockup at level 11 for instance, then monsters suicide, very rare
-  but still happens
 
 fix random:
 
