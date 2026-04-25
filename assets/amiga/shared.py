@@ -7,6 +7,7 @@ data_dir = this_dir / ".." / ".."
 src_dir = this_dir / ".." / ".." / "src" / "amiga"
 aga_src_dir = src_dir / "aga"
 ocs_src_dir = src_dir / "ocs"
+ecs_src_dir = src_dir / "ecs"
 
 sheets_path = this_dir / ".." / "sheets"
 dump_dir = this_dir / "dumps"

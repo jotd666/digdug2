@@ -55,6 +55,13 @@ $(AMIGASRC)/aga/graphics.68k: $(ASSETS)/convert_graphics_aga.py
 	cmd /c $(ASSETS)\convert_graphics_aga.py
 $(AMIGASRC)/ecs/graphics.68k: $(ASSETS)/convert_graphics_ecs.py
 	cmd /c $(ASSETS)\convert_graphics_ecs.py
+$(AMIGASRC)/aga/palette.68k: $(ASSETS)/convert_graphics_aga.py
+	cmd /c $(ASSETS)\convert_graphics_aga.py
+$(AMIGASRC)/ecs/palette.68k: $(ASSETS)/convert_graphics_ecs.py
+	cmd /c $(ASSETS)\convert_graphics_ecs.py
+	
+$(AMIGASRC)/sound_entries.68k: $(ASSETS)/convert_sounds.py
+	cmd /c $(ASSETS)\convert_sounds.py
 
 $(AMIGASRC)/sounds.68k: $(ASSETS)/convert_sounds.py $(BASE_ASSETS)/sounds/digdug2_main_tune.mod $(BASE_ASSETS)/sounds/digdug2_others.mod 
 	cmd /c $(ASSETS)\convert_sounds.py

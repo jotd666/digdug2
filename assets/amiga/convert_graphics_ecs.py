@@ -440,13 +440,13 @@ bitplanelib.palette_dump(sprite_palette,dump_dir / "mixed_palette.png",pformat=b
 specific_tile_colors = sorted(set(tile_palette) - set(sprite_palette))
 bitplanelib.palette_dump(specific_tile_colors,dump_dir / "tiles_only_palette.png",pformat=bitplanelib.PALETTE_FORMAT_PNG)
 
-with open(os.path.join(ocs_src_dir,"palette.68k"),"w") as f:
+with open(os.path.join(ecs_src_dir,"palette.68k"),"w") as f:
     full_palette_black = [(0,0,0)]+full_palette[1:]
     bitplanelib.palette_dump(full_palette_black,f,bitplanelib.PALETTE_FORMAT_ASMGNU)
 
 
 
-with open(os.path.join(ocs_src_dir,"graphics.68k"),"w") as f:
+with open(os.path.join(ecs_src_dir,"graphics.68k"),"w") as f:
     f.write("\t.global\tcharacter_table\n")
     f.write("\t.global\ttitle_pic\n")
     f.write("\t.global\thws_table\n")
